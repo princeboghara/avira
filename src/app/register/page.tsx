@@ -3,8 +3,8 @@ import Link from "next/link";
 import RegisterForm from "@/components/forms/RegisterForm";
 
 export const metadata = {
-  title: "Emerald Zenith - Registration",
-  description: "Join the Emerald Zenith elite network with your sponsor code.",
+  title: "Avira Life Care Global - Associate Registration",
+  description: "Join Avira Life Care Global elite network with your sponsor referral code.",
 };
 
 export default function RegisterPage() {
@@ -14,10 +14,10 @@ export default function RegisterPage() {
       <header className="max-w-7xl mx-auto w-full flex items-center justify-between pb-6">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#006d36] to-[#50c878] flex items-center justify-center text-white shadow-sm">
-            <span className="material-symbols-outlined text-[20px]">diamond</span>
+            <span className="material-symbols-outlined text-[20px]">eco</span>
           </div>
-          <span className="font-extrabold text-xl tracking-tight text-[#006d36]">
-            EMERALD ELITE
+          <span className="font-black text-xl tracking-tight text-[#006d36]">
+            AVIRA LIFE CARE GLOBAL
           </span>
         </Link>
         <Link
@@ -37,7 +37,7 @@ export default function RegisterPage() {
       </div>
 
       <footer className="pt-6 text-center text-xs text-[#5f5e5e]/80">
-        © 2026 Emerald Elite Network Global. Real-time Supabase PostgreSQL.
+        © 2026 Avira Life Care Global Network. Real-time Supabase PostgreSQL.
       </footer>
     </div>
   );

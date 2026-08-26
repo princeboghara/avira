@@ -1,16 +1,16 @@
 /**
- * Generates a unique MLM Member ID in the format "AV" + 5 random digits (e.g. AV23900)
+ * Generates a unique MLM Member ID in the format "AV" + 4 random digits (e.g. AV1001 to AV9999)
  */
 export function generateMemberId(existingIds: Set<string> | string[] = new Set()): string {
   const set = existingIds instanceof Set ? existingIds : new Set(existingIds);
   let memberId = "";
   let attempts = 0;
-  const maxAttempts = 1000;
+  const maxAttempts = 5000;
 
   do {
-    // Generate 5 random digits between 10000 and 99999
-    const randomFiveDigits = Math.floor(10000 + Math.random() * 90000);
-    memberId = `AV${randomFiveDigits}`;
+    // Generate 4 random digits between 1000 and 9999
+    const randomFourDigits = Math.floor(1000 + Math.random() * 9000);
+    memberId = `AV${randomFourDigits}`;
     attempts++;
   } while (set.has(memberId) && attempts < maxAttempts);
 
@@ -18,5 +18,5 @@ export function generateMemberId(existingIds: Set<string> | string[] = new Set()
 }
 
 export function isValidMemberId(memberId: string): boolean {
-  return /^AV\d{5}$/.test(memberId.toUpperCase());
+  return /^AV\d{4}$/.test(memberId.toUpperCase());
 }

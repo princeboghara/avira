@@ -1,14 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import confetti from "canvas-confetti";
-import { Loader2, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Eye, EyeOff, Lock } from "lucide-react";
 import MemberCard3D from "@/components/3d/MemberCard3D";
 
 export default function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const urlRef = searchParams.get("ref");
+  const urlPos = searchParams.get("pos");
 
   // Form Fields
   const [firstName, setFirstName] = useState("");
@@ -17,11 +21,16 @@ export default function RegisterForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const [sponsorId, setSponsorId] = useState("AV00001");
+  const [sponsorId, setSponsorId] = useState(urlRef ? urlRef.toUpperCase() : "AV0001");
   const [sponsorName, setSponsorName] = useState("Avira Life Care Global");
   const [isVerifyingSponsor, setIsVerifyingSponsor] = useState(false);
   const [sponsorVerified, setSponsorVerified] = useState(true);
-  const [binaryPosition, setBinaryPosition] = useState<"LEFT" | "RIGHT">("LEFT");
+  const [isSponsorLocked, setIsSponsorLocked] = useState(Boolean(urlRef));
+
+  const [binaryPosition, setBinaryPosition] = useState<"LEFT" | "RIGHT">(
+    urlPos && urlPos.toUpperCase() === "RIGHT" ? "RIGHT" : "LEFT"
+  );
+  const [isPositionLocked, setIsPositionLocked] = useState(Boolean(urlPos));
 
   const [pincode, setPincode] = useState("");
   const [city, setCity] = useState("");
@@ -312,22 +321,34 @@ export default function RegisterForm() {
                   <span className="material-symbols-outlined text-[16px] text-[#006d36]">badge</span>
                   <span>Sponsor Referral ID *</span>
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setSponsorId("AV00001")}
-                  className="text-[10px] font-bold text-[#006d36] hover:underline"
-                >
-                  Use Root (AV00001)
-                </button>
+                {isSponsorLocked ? (
+                  <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                    <Lock className="w-3 h-3" />
+                    <span>Locked from Tree</span>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setSponsorId("AV0001")}
+                    className="text-[10px] font-bold text-[#006d36] hover:underline cursor-pointer"
+                  >
+                    Use Root (AV0001)
+                  </button>
+                )}
               </div>
               <div className="relative">
                 <input
                   type="text"
                   required
-                  placeholder="e.g. AV00001"
+                  readOnly={isSponsorLocked}
+                  placeholder="e.g. AV0001"
                   value={sponsorId}
-                  onChange={(e) => setSponsorId(e.target.value.toUpperCase())}
-                  className="w-full bg-[#f9f9f9] border-none rounded-lg py-2.5 px-3 text-[#1a1c1c] focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm font-mono font-bold tracking-wider"
+                  onChange={(e) => !isSponsorLocked && setSponsorId(e.target.value.toUpperCase())}
+                  className={`w-full border-none rounded-lg py-2.5 px-3 focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm font-mono font-bold tracking-wider ${
+                    isSponsorLocked
+                      ? "bg-[#eef2ee] text-[#006d36] cursor-not-allowed select-none"
+                      : "bg-[#f9f9f9] text-[#1a1c1c]"
+                  }`}
                 />
                 <div className="absolute right-3 top-2.5">
                   {isVerifyingSponsor && <Loader2 className="w-4 h-4 text-[#006d36] animate-spin" />}
@@ -348,18 +369,31 @@ export default function RegisterForm() {
 
             {/* Binary Placement Leg Selection */}
             <div className="p-3.5 rounded-xl bg-white border border-[#e2e2e2] space-y-2 shadow-sm">
-              <label className="text-xs font-bold text-[#1a1c1c] uppercase tracking-wider flex items-center gap-1">
-                <span className="material-symbols-outlined text-[16px] text-[#006d36]">account_tree</span>
-                <span>Binary Placement Leg *</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[#1a1c1c] uppercase tracking-wider flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[16px] text-[#006d36]">account_tree</span>
+                  <span>Binary Placement Leg *</span>
+                </label>
+                {isPositionLocked && (
+                  <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                    <Lock className="w-3 h-3" />
+                    <span>Tree Slot Locked</span>
+                  </span>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => setBinaryPosition("LEFT")}
-                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  disabled={isPositionLocked && binaryPosition !== "LEFT"}
+                  onClick={() => !isPositionLocked && setBinaryPosition("LEFT")}
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                     binaryPosition === "LEFT"
                       ? "bg-emerald-50 border-[#006d36] text-[#006d36] shadow-sm ring-1 ring-[#006d36]"
                       : "bg-[#f9f9f9] border-[#e2e2e2] text-[#5f5e5e] hover:bg-white"
+                  } ${
+                    isPositionLocked && binaryPosition !== "LEFT"
+                      ? "opacity-35 cursor-not-allowed pointer-events-none"
+                      : "cursor-pointer"
                   }`}
                 >
                   <span className="w-2.5 h-2.5 rounded-full border border-current flex items-center justify-center">
@@ -369,11 +403,16 @@ export default function RegisterForm() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setBinaryPosition("RIGHT")}
-                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  disabled={isPositionLocked && binaryPosition !== "RIGHT"}
+                  onClick={() => !isPositionLocked && setBinaryPosition("RIGHT")}
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                     binaryPosition === "RIGHT"
                       ? "bg-emerald-50 border-[#006d36] text-[#006d36] shadow-sm ring-1 ring-[#006d36]"
                       : "bg-[#f9f9f9] border-[#e2e2e2] text-[#5f5e5e] hover:bg-white"
+                  } ${
+                    isPositionLocked && binaryPosition !== "RIGHT"
+                      ? "opacity-35 cursor-not-allowed pointer-events-none"
+                      : "cursor-pointer"
                   }`}
                 >
                   <span className="w-2.5 h-2.5 rounded-full border border-current flex items-center justify-center">

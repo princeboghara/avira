@@ -55,7 +55,7 @@ export default function LoginForm() {
   };
 
   const fillDemoRoot = () => {
-    setLoginIdentifier("AV00001");
+    setLoginIdentifier("AV0001");
     setPassword("admin123");
     setErrorMessage("");
   };
@@ -91,11 +91,11 @@ export default function LoginForm() {
             className="w-full px-3 py-2 text-xs font-bold bg-white hover:bg-emerald-50 border border-emerald-200 text-[#006d36] rounded-xl transition-all text-left shadow-sm cursor-pointer flex items-center justify-between"
           >
             <div>
-              <div className="font-mono font-black text-sm">AV00001</div>
+              <div className="font-mono font-black text-sm">AV0001</div>
               <div className="text-[10px] text-[#5f5e5e]">Avira Life Care Global</div>
             </div>
             <span className="text-[10px] font-mono bg-emerald-100 text-[#006d36] px-2 py-0.5 rounded-md font-bold">
-              Fill AV00001
+              Fill AV0001
             </span>
           </button>
         </div>

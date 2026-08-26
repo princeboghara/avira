@@ -111,39 +111,39 @@ export default function DashboardPage() {
         <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
           <Link
             href="/dashboard"
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl bg-[#50c878] text-[#005025] font-bold shadow-sm"
+            className="flex items-center space-x-3 px-4 py-3 rounded-xl bg-[#006d36] text-white font-bold shadow-sm shadow-[#006d36]/20"
           >
             <span className="material-symbols-outlined text-[20px]">dashboard</span>
             <span>Dashboard</span>
           </Link>
           <Link
-            href="/dashboard/tree"
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-medium hover:text-[#006d36] transition-colors"
+            href="/dashboard/profile"
+            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-bold hover:text-[#006d36] hover:bg-white transition-all"
           >
-            <span className="material-symbols-outlined text-[20px]">account_tree</span>
-            <span>Binary Tree</span>
+            <span className="material-symbols-outlined text-[20px]">person</span>
+            <span>Profile</span>
           </Link>
           <Link
             href="/dashboard/store"
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-medium hover:text-[#006d36] transition-colors"
+            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-bold hover:text-[#006d36] hover:bg-white transition-all"
           >
             <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
-            <span>Packages & PV</span>
+            <span>Shopping</span>
+          </Link>
+          <Link
+            href="/dashboard/community"
+            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-bold hover:text-[#006d36] hover:bg-white transition-all"
+          >
+            <span className="material-symbols-outlined text-[20px]">groups</span>
+            <span>My Community</span>
           </Link>
           <button
-            onClick={() => setWithdrawModalOpen(true)}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-medium hover:text-[#006d36] transition-colors text-left cursor-pointer"
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-600 font-bold hover:bg-red-50 transition-all text-left cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
-            <span>Wallet Payout</span>
+            <span className="material-symbols-outlined text-[20px]">logout</span>
+            <span>Logout</span>
           </button>
-          <a
-            href="#referral"
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-medium hover:text-[#006d36] transition-colors"
-          >
-            <span className="material-symbols-outlined text-[20px]">campaign</span>
-            <span>Referral Engine</span>
-          </a>
         </nav>
 
         {/* Member ID pill in sidebar footer */}
@@ -162,17 +162,43 @@ export default function DashboardPage() {
       <main className="flex-1 flex flex-col min-h-screen">
         {/* Top App Bar (Stitch Layout) */}
         <header className="h-20 bg-[#f9f9f9]/80 backdrop-blur-xl border-b border-[#e2e2e2]/30 shadow-sm sticky top-0 z-30 flex justify-between items-center px-6 max-w-7xl w-full mx-auto">
-          <div className="flex items-center md:hidden gap-2">
-            <span className="font-extrabold text-lg text-[#006d36]">EMERALD ELITE</span>
+          <div className="flex items-center gap-2">
+            <span className="font-black text-sm text-[#006d36] md:hidden">
+              AVIRA LIFE CARE
+            </span>
+            <div className="hidden md:flex items-center gap-3">
+              <span className="text-xs font-mono bg-emerald-50 text-[#006d36] px-3 py-1 rounded-full border border-emerald-200 font-bold">
+                ID: {user.memberId}
+              </span>
+              <span className="text-xs text-[#5f5e5e] font-medium">
+                Sponsor: {user.sponsorId || "Root"}
+              </span>
+            </div>
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
-            <span className="text-xs font-mono bg-emerald-50 text-[#006d36] px-3 py-1 rounded-full border border-emerald-200 font-bold">
-              ID: {user.memberId}
-            </span>
-            <span className="text-xs text-[#5f5e5e] font-medium">
-              Sponsor: {user.sponsorId || "Root"}
-            </span>
+          {/* Quick Menu Bar on Top */}
+          <div className="flex items-center gap-1">
+            <Link
+              href="/dashboard/profile"
+              className="text-xs font-bold text-[#5f5e5e] hover:text-[#006d36] px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 transition-colors flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-[16px]">person</span>
+              <span className="hidden sm:inline">Profile</span>
+            </Link>
+            <Link
+              href="/dashboard/store"
+              className="text-xs font-bold text-[#5f5e5e] hover:text-[#006d36] px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 transition-colors flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-[16px]">shopping_bag</span>
+              <span className="hidden sm:inline">Shopping</span>
+            </Link>
+            <Link
+              href="/dashboard/community"
+              className="text-xs font-bold text-[#5f5e5e] hover:text-[#006d36] px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 transition-colors flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-[16px]">groups</span>
+              <span className="hidden sm:inline">My Community</span>
+            </Link>
           </div>
 
           <div className="flex items-center space-x-4">

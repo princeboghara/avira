@@ -12,6 +12,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { User } from "@/types";
+import MemberNavbar from "@/components/dashboard/MemberNavbar";
 
 const PACKAGES = [
   {
@@ -184,40 +185,8 @@ export default function StorePage() {
 
   return (
     <div className="min-h-screen bg-[#f9f9f9] text-[#1a1c1c] font-sans selection:bg-[#50c878] selection:text-[#005025]">
-      {/* Top Header */}
-      <header className="h-20 bg-white/80 backdrop-blur-xl border-b border-[#e2e2e2] sticky top-0 z-40 px-6 max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard"
-            className="p-2 rounded-xl border border-[#e2e2e2] hover:bg-[#f9f9f9] text-[#5f5e5e] transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-xl font-black text-[#1a1c1c]">Member Package Activation</h1>
-            <span className="text-xs text-[#5f5e5e]">
-              Instant Real-Time 1:1 Binary Volume Distribution • 1 PV = ₹1
-            </span>
-          </div>
-        </div>
-
-        {/* Current Associate Details */}
-        {currentUser && (
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <span className="text-xs font-bold text-[#1a1c1c] block">
-                {currentUser.fullName} ({currentUser.memberId})
-              </span>
-              <span className="text-[10px] text-[#5f5e5e]">
-                Wallet: <strong className="text-[#006d36]">₹{currentUser.walletBalance.toLocaleString()}</strong>
-              </span>
-            </div>
-            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-[#006d36] flex items-center justify-center font-bold text-xs">
-              <ShoppingBag className="w-4 h-4" />
-            </div>
-          </div>
-        )}
-      </header>
+      {/* Universal Member Navigation Menu Bar */}
+      <MemberNavbar user={currentUser} />
 
       {/* Main Activation Section */}
       <main className="max-w-7xl mx-auto p-6 space-y-8">

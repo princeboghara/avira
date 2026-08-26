@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Loader2, Search, ArrowLeft } from "lucide-react";
 import BinaryGenealogyTree from "@/components/dashboard/BinaryGenealogyTree";
 import { BinaryTreeNode, User } from "@/types";
+import MemberNavbar from "@/components/dashboard/MemberNavbar";
 
 export default function TreeViewPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -78,8 +79,11 @@ export default function TreeViewPage() {
 
   return (
     <div className="min-h-screen bg-[#f9f9f9] text-[#1a1c1c] font-sans selection:bg-[#50c878] selection:text-[#005025]">
-      {/* Top Header */}
-      <header className="h-20 bg-white/80 backdrop-blur-xl border-b border-[#e2e2e2] sticky top-0 z-40 px-6 max-w-7xl mx-auto flex items-center justify-between">
+      {/* Universal Member Navigation Menu Bar */}
+      <MemberNavbar user={user} />
+
+      {/* Sub Header */}
+      <div className="h-16 bg-white/80 backdrop-blur-xl border-b border-[#e2e2e2] sticky top-20 z-40 px-6 max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard"
@@ -124,7 +128,7 @@ export default function TreeViewPage() {
             </button>
           )}
         </form>
-      </header>
+      </div>
 
       {/* Main Tree Canvas */}
       <main className="max-w-7xl mx-auto p-6 space-y-6">

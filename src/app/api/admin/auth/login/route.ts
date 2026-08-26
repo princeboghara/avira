@@ -21,8 +21,8 @@ export async function POST(req: Request) {
 
     const { password } = result.data;
 
-    // Direct Master Admin Password check or root account AV00001 check
-    let user = await findUserByMemberId("AV00001");
+    // Direct Master Admin Password check or root account AV0001 check
+    let user = await findUserByMemberId("AV0001");
 
     if (!user) {
       // Fallback: lookup any user with role = 'ADMIN'
