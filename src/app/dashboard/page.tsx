@@ -98,26 +98,45 @@ export default function DashboardPage() {
 
   return (
     <MemberLayout user={user}>
-      <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-8">
-        {/* Welcome Section */}
-          <section className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-extrabold text-[#1a1c1c] mb-1">
-                Welcome back, {user.fullName}!
-              </h1>
-              <p className="text-sm sm:text-base text-[#3e4a3f]">
-                Your network is growing. Here is your real-time performance on Supabase PostgreSQL.
-              </p>
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-8">
+        {/* Welcome Section with Responsive Associate Pills */}
+        <section className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2e2e2] shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-2.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-xs font-bold px-3 py-1 bg-emerald-50 text-[#006d36] rounded-full border border-emerald-200">
+                ID: {user.memberId}
+              </span>
+              <span
+                className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
+                  user.personalPv >= 100
+                    ? "bg-emerald-100 text-[#006d36] border-emerald-300"
+                    : "bg-red-100 text-red-700 border-red-300"
+                }`}
+              >
+                {user.personalPv >= 100 ? "Active Account" : "Red (Needs 100 PV)"}
+              </span>
+              <span className="text-xs text-[#5f5e5e] font-medium hidden sm:inline">
+                Sponsor: <strong className="text-[#1a1c1c] font-mono">{user.sponsorId || "Root"}</strong>
+              </span>
             </div>
 
-            {/* Quick 1-Click Share Button */}
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#1a1c1c] tracking-tight">
+              Welcome back, {user.fullName}!
+            </h1>
+            <p className="text-xs sm:text-sm text-[#5f5e5e] max-w-2xl leading-relaxed">
+              Real-time associate performance dashboard. 1:1 Instant binary matching with live Supabase PostgreSQL ledger sync.
+            </p>
+          </div>
+
+          {/* Quick 1-Click Copy Sponsor Link */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 self-start lg:self-auto w-full sm:w-auto">
             <button
               onClick={handleCopyReferral}
-              className="neomorphic-btn-primary px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 self-start md:self-auto"
+              className="neomorphic-btn-primary px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 shadow-md"
             >
               {copied ? (
                 <>
-                  <Check className="w-4 h-4" />
+                  <Check className="w-4 h-4 text-emerald-200" />
                   <span>Link Copied!</span>
                 </>
               ) : (
@@ -127,7 +146,8 @@ export default function DashboardPage() {
                 </>
               )}
             </button>
-          </section>
+          </div>
+        </section>
 
           {/* Metrics Grid (4 Cards from Stitch) */}
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -268,7 +288,7 @@ export default function DashboardPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {/* Left PV */}
               <div className="p-4 rounded-2xl bg-[#f0f3ff] border border-blue-200">
                 <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block mb-1">
@@ -571,7 +591,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      </main>
+      </div>
     </MemberLayout>
   );
 }
