@@ -3,6 +3,7 @@ import { BinaryTreeNode } from "@/types";
 
 /**
  * Calculates Daily Capping based on Member's Personal PV
+ * < 100 PV -> ₹0 / day (INACTIVE / RED)
  * 100 PV  -> ₹1,000 / day
  * 250 PV  -> ₹2,000 / day
  * 500 PV  -> ₹3,000 / day
@@ -12,7 +13,8 @@ export function calculateDailyCapping(personalPv: number): number {
   if (personalPv >= 1000) return 5000;
   if (personalPv >= 500) return 3000;
   if (personalPv >= 250) return 2000;
-  return 1000; // Default minimum capping for 100 PV
+  if (personalPv >= 100) return 1000;
+  return 0; // Below 100 PV: Red / Inactive with 0 Capping
 }
 
 /**
@@ -106,18 +108,87 @@ export async function linkBinaryNode(
 }
 
 /**
- * Records an Activation or Repurchase purchase:
+ * Executes INSTANT 1:1 Binary matching for a single user if:
+ * - left_pv > 0 AND right_pv > 0
+ * - personal_pv >= 100 (if < 100, capping is 0 so no payout is distributed until activation)
+ */
+async function matchBinaryForUser(client: any, userId: string) {
+  const userRes = await client.query(
+    `SELECT id, member_id, full_name, personal_pv, left_pv, right_pv, wallet_balance, total_earnings 
+     FROM users WHERE id = $1 FOR UPDATE`,
+    [userId]
+  );
+
+  if (userRes.rows.length === 0) return null;
+  const user = userRes.rows[0];
+
+  const personalPv = parseFloat(user.personal_pv || "0");
+  if (personalPv < 100) {
+    // Under 100 PV: Red / Inactive, capping is 0. Volume remains intact until activation.
+    return null;
+  }
+
+  const leftPv = parseFloat(user.left_pv || "0");
+  const rightPv = parseFloat(user.right_pv || "0");
+  const matchedPv = Math.min(leftPv, rightPv);
+
+  if (matchedPv <= 0) return null;
+
+  const capping = calculateDailyCapping(personalPv);
+  const payout = Math.min(matchedPv, capping);
+
+  const newLeft = leftPv - matchedPv;
+  const newRight = rightPv - matchedPv;
+
+  await client.query(
+    `UPDATE users 
+     SET left_pv = $1, 
+         right_pv = $2, 
+         carry_left_pv = $1, 
+         carry_right_pv = $2, 
+         wallet_balance = wallet_balance + $3, 
+         total_earnings = total_earnings + $3, 
+         today_earnings = today_earnings + $3, 
+         updated_at = NOW() 
+     WHERE id = $4`,
+    [newLeft, newRight, payout, user.id]
+  );
+
+  const dateStr = new Date().toISOString().replace("T", " ").substring(0, 16);
+  const txId = `tx_${Date.now()}_bin_${user.member_id}`;
+  const desc = `Instant 1:1 Binary Match ${matchedPv} PV (L: ${leftPv} PV, R: ${rightPv} PV). Daily Cap ₹${capping}. Payout: ₹${payout}. Carry: L:${newLeft}, R:${newRight}`;
+
+  await client.query(
+    `INSERT INTO transactions (id, user_id, type, amount, description, status, date)
+     VALUES ($1, $2, 'BINARY_MATCHING', $3, $4, 'COMPLETED', $5)`,
+    [txId, user.id, payout, desc, dateStr]
+  );
+
+  return { memberId: user.member_id, matchedPv, payout, newLeft, newRight };
+}
+
+/**
+ * Records an Activation purchase:
  * - Updates user's personal_pv
- * - Recomputes user's daily_capping
+ * - Computes user's daily_capping (<100 PV = 0 / Red, >=100 PV = 1000+ / Green)
  * - Propagates PV UPWARD through the binary ancestor chain
+ * - Automatically executes REAL-TIME 1:1 Binary Matching for every ancestor with matching legs!
  */
 export async function creditPurchasePV(
   userId: string,
   pv: number,
-  purchaseType: "ACTIVATION" | "REPURCHASE",
+  purchaseType: "ACTIVATION" | "REPURCHASE" = "ACTIVATION",
   packageName: string,
   amount: number
-): Promise<{ newPersonalPv: number; newCapping: number }> {
+): Promise<{
+  newPersonalPv: number;
+  newCapping: number;
+  instantMatches: Array<{
+    memberId: string;
+    matchedPv: number;
+    payout: number;
+  }>;
+}> {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -143,18 +214,25 @@ export async function creditPurchasePV(
     const currentPv = parseFloat(userRes.rows[0].personal_pv || "0");
     const updatedPersonalPv = currentPv + pv;
     const updatedCapping = calculateDailyCapping(updatedPersonalPv);
+    const newStatus = updatedPersonalPv >= 100 ? "ACTIVE" : "INACTIVE";
 
     await client.query(
       `UPDATE users 
        SET personal_pv = $1, 
            daily_capping = $2, 
-           status = 'ACTIVE',
+           status = $3,
            updated_at = NOW() 
-       WHERE id = $3`,
-      [updatedPersonalPv, updatedCapping, userId]
+       WHERE id = $4`,
+      [updatedPersonalPv, updatedCapping, newStatus, userId]
     );
 
-    // 3. Propagate PV UPWARD through ancestors in the binary tree
+    const instantMatches: Array<{ memberId: string; matchedPv: number; payout: number }> = [];
+
+    // Check if the user themselves has matching volume ready now that they are activated
+    const selfMatch = await matchBinaryForUser(client, userId);
+    if (selfMatch) instantMatches.push(selfMatch);
+
+    // 3. Propagate PV UPWARD through ancestors in the binary tree & execute INSTANT matching
     let currentChildId = userId;
     let parentId = userRes.rows[0].binary_parent_id;
 
@@ -182,6 +260,10 @@ export async function creditPurchasePV(
         );
       }
 
+      // INSTANT MATCHING: Check and credit matching bonus to parent immediately!
+      const parentMatch = await matchBinaryForUser(client, parent.id);
+      if (parentMatch) instantMatches.push(parentMatch);
+
       // Climb up
       currentChildId = parent.id;
       parentId = parent.binary_parent_id;
@@ -192,6 +274,7 @@ export async function creditPurchasePV(
     return {
       newPersonalPv: updatedPersonalPv,
       newCapping: updatedCapping,
+      instantMatches,
     };
   } catch (err) {
     await client.query("ROLLBACK");
@@ -202,11 +285,7 @@ export async function creditPurchasePV(
 }
 
 /**
- * Runs the 1:1 Daily Binary Matching Cutoff Calculation
- * - Matches 1:1 on Left PV vs Right PV
- * - Limits payout by Member's Daily Capping
- * - Carries forward remaining unmatched PV in the stronger leg
- * - Credits member's wallet and creates ledger audit entry
+ * Manual / Audit Run for 1:1 Binary Matching across all active members
  */
 export async function runBinaryMatchingCutoff(): Promise<{
   processedCount: number;
@@ -225,11 +304,10 @@ export async function runBinaryMatchingCutoff(): Promise<{
   try {
     await client.query("BEGIN");
 
-    // Fetch members who have PV on both Left AND Right legs
     const candidates = await client.query(
-      `SELECT id, member_id, full_name, left_pv, right_pv, personal_pv, daily_capping, wallet_balance, total_earnings
+      `SELECT id, member_id, full_name, left_pv, right_pv, personal_pv, daily_capping
        FROM users
-       WHERE left_pv > 0 AND right_pv > 0
+       WHERE left_pv > 0 AND right_pv > 0 AND personal_pv >= 100
        FOR UPDATE`
     );
 
@@ -244,20 +322,13 @@ export async function runBinaryMatchingCutoff(): Promise<{
       const personalPv = parseFloat(row.personal_pv || "0");
       const capping = calculateDailyCapping(personalPv);
 
-      // 1:1 Match
       const matchedPv = Math.min(leftPv, rightPv);
-
       if (matchedPv <= 0) continue;
 
-      // Payout = 1 PV = 1 Rupee (capped at member daily capping)
-      const rawPayout = matchedPv;
-      const finalPayout = Math.min(rawPayout, capping);
-
-      // Carry forward
+      const finalPayout = Math.min(matchedPv, capping);
       const carryLeft = leftPv - matchedPv;
       const carryRight = rightPv - matchedPv;
 
-      // Update user balances and PV
       await client.query(
         `UPDATE users
          SET left_pv = $1,
@@ -272,9 +343,8 @@ export async function runBinaryMatchingCutoff(): Promise<{
         [carryLeft, carryRight, finalPayout, row.id]
       );
 
-      // Record transaction
       const txId = `tx_${Date.now()}_bin_${row.member_id}`;
-      const description = `1:1 Binary Match ${matchedPv} PV (Left ${leftPv} PV, Right ${rightPv} PV). Daily Cap ₹${capping}. Carry: L:${carryLeft}, R:${carryRight}`;
+      const description = `1:1 Binary Match ${matchedPv} PV (L: ${leftPv} PV, R: ${rightPv} PV). Daily Cap ₹${capping}. Payout ₹${finalPayout}. Carry: L:${carryLeft}, R:${carryRight}`;
 
       await client.query(
         `INSERT INTO transactions (id, user_id, type, amount, description, status, date)
@@ -310,7 +380,7 @@ export async function runBinaryMatchingCutoff(): Promise<{
 }
 
 /**
- * Builds recursive Binary Tree structure up to 3 levels deep for visual UI
+ * Builds recursive Binary Tree structure up to 4 levels deep for visual UI
  */
 export async function getBinaryTree(
   rootMemberId: string,
@@ -332,6 +402,9 @@ export async function getBinaryTree(
       if (res.rows.length === 0) return null;
 
       const row = res.rows[0];
+      const pPv = parseFloat(row.personal_pv || "0");
+      const status = pPv >= 100 ? "ACTIVE" : "INACTIVE";
+      const capping = calculateDailyCapping(pPv);
 
       const leftChild = row.left_child_id ? await fetchNode(row.left_child_id, depth + 1) : null;
       const rightChild = row.right_child_id ? await fetchNode(row.right_child_id, depth + 1) : null;
@@ -340,11 +413,11 @@ export async function getBinaryTree(
         id: row.id,
         memberId: row.member_id,
         fullName: row.full_name,
-        status: row.status,
-        personalPv: parseFloat(row.personal_pv || "0"),
+        status,
+        personalPv: pPv,
         leftPv: parseFloat(row.left_pv || "0"),
         rightPv: parseFloat(row.right_pv || "0"),
-        dailyCapping: parseFloat(row.daily_capping || "1000"),
+        dailyCapping: capping,
         position: row.binary_position,
         leftChild,
         rightChild,

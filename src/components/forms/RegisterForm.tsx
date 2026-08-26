@@ -545,17 +545,24 @@ export default function RegisterForm() {
               <button
                 type="button"
                 onClick={() => {
-                  navigator.clipboard.writeText(registeredMember.memberId);
-                  alert(`Copied Member ID: ${registeredMember.memberId}`);
+                  setRegisteredMember(null);
+                  setFirstName("");
+                  setLastName("");
+                  setMobile("");
+                  setPassword("");
+                  setPincode("");
+                  setCity("");
+                  setStateName("");
                 }}
-                className="flex-1 py-3 border border-[#006d36] text-[#006d36] font-bold rounded-xl hover:bg-emerald-50 transition-colors text-xs"
+                className="flex-1 py-3 border border-[#006d36] text-[#006d36] font-bold rounded-xl hover:bg-emerald-50 transition-colors text-xs flex items-center justify-center gap-1 cursor-pointer"
               >
-                Copy Member ID
+                <span className="material-symbols-outlined text-[16px]">person_add</span>
+                <span>Register Another</span>
               </button>
               <button
                 type="button"
                 onClick={() => router.push("/dashboard")}
-                className="flex-1 py-3 bg-[#006d36] hover:bg-[#005025] text-white font-bold rounded-xl shadow-md transition-all text-xs flex items-center justify-center gap-1.5"
+                className="flex-1 py-3 bg-[#006d36] hover:bg-[#005025] text-white font-bold rounded-xl shadow-md transition-all text-xs flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <span>Go to Dashboard</span>
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>

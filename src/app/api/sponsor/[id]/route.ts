@@ -30,5 +30,7 @@ export async function GET(
     memberId: sponsor.memberId,
     fullName: sponsor.fullName,
     status: sponsor.status,
+    personalPv: sponsor.personalPv,
+    dailyCapping: sponsor.dailyCapping,
   });
 }

@@ -33,7 +33,7 @@ function mapRowToUser(row: any): User {
     city: row.city,
     state: row.state,
     role: row.role as "MEMBER" | "ADMIN",
-    status: row.status as "ACTIVE" | "PENDING" | "BLOCKED",
+    status: row.status as "ACTIVE" | "PENDING" | "BLOCKED" | "INACTIVE",
     walletBalance: Number(row.wallet_balance || 0),
     totalEarnings: Number(row.total_earnings || 0),
     directReferralsCount: Number(row.direct_referrals_count || 0),

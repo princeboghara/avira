@@ -232,21 +232,26 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <div className="px-3.5 py-2 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-bold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#50c878] animate-pulse" />
+              <span>Real-Time 1:1 Matching: LIVE</span>
+            </div>
+
             <button
               type="button"
               onClick={handleRunCutoff}
               disabled={runningCutoff}
-              className="px-4 py-2.5 bg-gradient-to-r from-[#006d36] to-[#50c878] hover:from-[#005025] hover:to-[#006d36] text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-[#006d36]/30 flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+              className="px-3.5 py-2 bg-white/5 hover:bg-white/10 text-[#bdcabc] hover:text-white text-xs font-bold rounded-xl border border-white/10 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
             >
               {runningCutoff ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Calculating Matching Payouts...</span>
+                  <span>Syncing...</span>
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-[16px]">account_tree</span>
-                  <span>Run 1:1 Daily Binary Cutoff</span>
+                  <span className="material-symbols-outlined text-[16px]">sync</span>
+                  <span>Sync / Audit Ledgers</span>
                 </>
               )}
             </button>
@@ -256,7 +261,7 @@ export default function AdminDashboardPage() {
               target="_blank"
               className="text-xs font-bold text-[#50c878] hover:underline flex items-center gap-1 bg-white/5 px-3 py-2 rounded-xl border border-white/10"
             >
-              <span>Preview Public Member Portal</span>
+              <span>Preview Member Portal</span>
               <span className="material-symbols-outlined text-[14px]">open_in_new</span>
             </Link>
           </div>

@@ -15,46 +15,70 @@ export default function BinaryGenealogyTree({ rootNode }: BinaryGenealogyTreePro
     setSelectedNode(node);
   };
 
+  const isSelectedRed = selectedNode ? selectedNode.personalPv < 100 : false;
+
   return (
     <div className="w-full space-y-6">
       {/* Quick Summary of Selected Node */}
       {selectedNode && (
-        <div className="bg-white rounded-2xl p-5 border border-emerald-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div
+          className={`rounded-2xl p-5 border shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 transition-all ${
+            isSelectedRed ? "bg-red-50/40 border-red-200" : "bg-white border-emerald-200"
+          }`}
+        >
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#006d36] to-[#50c878] text-white flex items-center justify-center font-bold text-lg shadow-md">
+            <div
+              className={`w-12 h-12 rounded-xl text-white flex items-center justify-center font-bold text-lg shadow-md ${
+                isSelectedRed
+                  ? "bg-gradient-to-tr from-red-600 to-rose-400"
+                  : "bg-gradient-to-tr from-[#006d36] to-[#50c878]"
+              }`}
+            >
               {selectedNode.fullName.charAt(0)}
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="font-extrabold text-base text-[#1a1c1c]">{selectedNode.fullName}</h4>
                 <span className="font-mono text-xs font-bold text-[#006d36] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                   {selectedNode.memberId}
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                  {selectedNode.status}
+                <span
+                  className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                    isSelectedRed
+                      ? "text-red-700 bg-red-100 border-red-300"
+                      : "text-emerald-800 bg-emerald-100 border-emerald-300"
+                  }`}
+                >
+                  {isSelectedRed ? "RED (<100 PV • ₹0 Cap)" : "ACTIVE (GREEN)"}
                 </span>
               </div>
-              <p className="text-xs text-[#5f5e5e] mt-0.5">
-                Self PV: <strong className="text-[#006d36]">{selectedNode.personalPv} PV</strong> • Daily
-                Capping Limit: <strong className="text-[#006d36]">₹{selectedNode.dailyCapping.toLocaleString()} / day</strong>
+              <p className="text-xs text-[#5f5e5e] mt-1">
+                Self PV:{" "}
+                <strong className={isSelectedRed ? "text-red-600 font-bold" : "text-[#006d36]"}>
+                  {selectedNode.personalPv} PV
+                </strong>{" "}
+                • Daily Capping Limit:{" "}
+                <strong className={isSelectedRed ? "text-red-600 font-bold" : "text-[#006d36]"}>
+                  ₹{selectedNode.dailyCapping.toLocaleString()} / day
+                </strong>
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-4 text-xs">
-            <div className="bg-emerald-50/80 px-4 py-2 rounded-xl border border-emerald-200 text-center">
+            <div className="bg-white px-4 py-2 rounded-xl border border-[#e2e2e2] text-center shadow-xs">
               <span className="text-[10px] text-[#5f5e5e] uppercase tracking-wider font-bold block">
                 Left Leg Volume
               </span>
-              <span className="text-base font-mono font-black text-[#006d36]">
+              <span className="text-base font-mono font-black text-blue-700">
                 {selectedNode.leftPv.toLocaleString()} PV
               </span>
             </div>
-            <div className="bg-emerald-50/80 px-4 py-2 rounded-xl border border-emerald-200 text-center">
+            <div className="bg-white px-4 py-2 rounded-xl border border-[#e2e2e2] text-center shadow-xs">
               <span className="text-[10px] text-[#5f5e5e] uppercase tracking-wider font-bold block">
                 Right Leg Volume
               </span>
-              <span className="text-base font-mono font-black text-[#006d36]">
+              <span className="text-base font-mono font-black text-purple-700">
                 {selectedNode.rightPv.toLocaleString()} PV
               </span>
             </div>
@@ -208,6 +232,8 @@ function TreeNodeCard({
   leg: string;
   isSmall?: boolean;
 }) {
+  const isRed = node.personalPv < 100;
+
   return (
     <button
       type="button"
@@ -216,7 +242,11 @@ function TreeNodeCard({
         isSmall ? "w-36 text-[10px]" : "w-52 text-xs"
       } ${
         isSelected
-          ? "bg-white border-[#006d36] shadow-lg ring-2 ring-[#006d36]"
+          ? isRed
+            ? "bg-white border-red-500 shadow-lg ring-2 ring-red-400"
+            : "bg-white border-[#006d36] shadow-lg ring-2 ring-[#006d36]"
+          : isRed
+          ? "bg-red-50/50 border-red-300 hover:border-red-400 shadow-sm"
           : "bg-white border-[#e2e2e2] shadow-sm hover:border-[#50c878] hover:shadow-md"
       }`}
     >
@@ -224,28 +254,41 @@ function TreeNodeCard({
         <span
           className={`font-mono font-extrabold ${
             isSmall ? "text-[10px]" : "text-xs"
-          } text-[#006d36]`}
+          } ${isRed ? "text-red-700" : "text-[#006d36]"}`}
         >
           {node.memberId}
         </span>
-        <span
-          className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
-            leg === "LEFT"
-              ? "bg-blue-50 text-blue-700"
-              : leg === "RIGHT"
-              ? "bg-purple-50 text-purple-700"
-              : "bg-emerald-50 text-emerald-800"
-          }`}
-        >
-          {leg}
-        </span>
+        <div className="flex items-center gap-1">
+          <span
+            className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase ${
+              isRed
+                ? "bg-red-100 text-red-700 border border-red-300"
+                : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+            }`}
+          >
+            {isRed ? "RED" : "ACTIVE"}
+          </span>
+          <span
+            className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
+              leg === "LEFT"
+                ? "bg-blue-50 text-blue-700"
+                : leg === "RIGHT"
+                ? "bg-purple-50 text-purple-700"
+                : "bg-emerald-50 text-emerald-800"
+            }`}
+          >
+            {leg}
+          </span>
+        </div>
       </div>
 
       <div className="font-bold text-[#1a1c1c] truncate mb-1">{node.fullName}</div>
 
       <div className="flex items-center justify-between text-[9px] text-[#5f5e5e] pt-1 border-t border-[#e2e2e2]/60">
-        <span>Self: {node.personalPv} PV</span>
-        <span className="font-bold text-[#006d36]">Cap: ₹{node.dailyCapping}</span>
+        <span className={isRed ? "text-red-600 font-semibold" : ""}>Self: {node.personalPv} PV</span>
+        <span className={`font-bold ${isRed ? "text-red-600" : "text-[#006d36]"}`}>
+          Cap: ₹{node.dailyCapping.toLocaleString()}
+        </span>
       </div>
 
       <div className="grid grid-cols-2 gap-1 mt-1.5 text-center font-mono font-bold text-[9px]">

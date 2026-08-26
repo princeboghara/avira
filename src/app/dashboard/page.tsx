@@ -350,6 +350,30 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {user.personalPv < 100 && (
+              <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-red-600 text-[22px] flex-shrink-0">
+                    warning
+                  </span>
+                  <div>
+                    <span className="font-extrabold block text-sm">
+                      Account Status: RED (Inactive • ₹0 Daily Capping)
+                    </span>
+                    <span>
+                      Your ID has {user.personalPv} PV (&lt; 100 PV). Activate a package to turn Green and unlock daily 1:1 matching income!
+                    </span>
+                  </div>
+                </div>
+                <Link
+                  href="/dashboard/store"
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs whitespace-nowrap shadow-sm text-center"
+                >
+                  Activate ID Now
+                </Link>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Left PV */}
               <div className="p-4 rounded-2xl bg-[#f0f3ff] border border-blue-200">

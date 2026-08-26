@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       city: city.trim(),
       state: state.trim(),
       role: "MEMBER",
-      status: "ACTIVE",
+      status: "INACTIVE", // Red status (<100 PV)
       walletBalance: 0,
       totalEarnings: 0,
       directReferralsCount: 0,
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       carryRightPv: 0,
       binaryParentId: binarySpot.parentId,
       binaryPosition: binarySpot.position,
-      dailyCapping: 1000,
+      dailyCapping: 0, // 0 Capping until 100+ PV activation
     };
 
     // Saves to Supabase PostgreSQL & links binary parent/child
@@ -121,22 +121,29 @@ export async function POST(request: NextRequest) {
       refreshToken,
     });
 
-    // Set secure HTTP-only cookies
-    response.cookies.set("avira_access_token", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 2, // 2 hours
-      sameSite: "lax",
-    });
+    // Only set login cookies if there is NO active session already!
+    // If a logged-in associate is registering downlines, preserve their active session!
+    const activeSession =
+      request.cookies.get("avira_access_token")?.value ||
+      request.cookies.get("admin_access_token")?.value;
 
-    response.cookies.set("avira_refresh_token", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      sameSite: "lax",
-    });
+    if (!activeSession) {
+      response.cookies.set("avira_access_token", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 2, // 2 hours
+        sameSite: "lax",
+      });
+
+      response.cookies.set("avira_refresh_token", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+        sameSite: "lax",
+      });
+    }
 
     return response;
   } catch (error) {

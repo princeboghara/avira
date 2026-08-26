@@ -10,7 +10,7 @@ export interface User {
   city: string;
   state: string;
   role: 'MEMBER' | 'ADMIN';
-  status: 'ACTIVE' | 'PENDING' | 'BLOCKED';
+  status: 'ACTIVE' | 'PENDING' | 'BLOCKED' | 'INACTIVE';
   walletBalance: number;
   totalEarnings: number;
   directReferralsCount: number;
