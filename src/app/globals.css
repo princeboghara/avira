@@ -152,3 +152,15 @@
 .glow-bg {
   background: radial-gradient(circle at 50% 50%, rgba(80, 200, 120, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
 }
+
+/* Hide Next.js Dev Indicator Badge ("N" logo in bottom left) */
+nextjs-portal,
+[data-nextjs-dev-tools-button],
+[data-nextjs-indicator],
+[data-nextjs-toast],
+div[data-nextjs-dev-tools-button] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
