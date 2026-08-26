@@ -15,6 +15,11 @@ import {
   LogOut,
   RefreshCw,
   SlidersHorizontal,
+  Menu,
+  X,
+  LayoutDashboard,
+  ExternalLink,
+  Zap,
 } from "lucide-react";
 import { User } from "@/types";
 
@@ -48,6 +53,8 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   // Load Admin Profile & Data
   const loadAdminData = async () => {
@@ -168,8 +175,22 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-[#07130c] text-white flex flex-col font-sans selection:bg-[#50c878] selection:text-[#005025]">
       {/* Top Master Admin Bar */}
-      <header className="h-20 bg-[#0e1d14]/90 backdrop-blur-xl border-b border-[#006d36]/30 sticky top-0 z-50 px-6 max-w-7xl w-full mx-auto flex items-center justify-between">
+      <header className="h-20 bg-[#0e1d14]/90 backdrop-blur-xl border-b border-[#006d36]/30 sticky top-0 z-50 px-4 sm:px-6 w-full flex items-center justify-between">
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== "undefined" && window.innerWidth >= 768) {
+                setSidebarOpen((prev) => !prev);
+              } else {
+                setMobileDrawerOpen((prev) => !prev);
+              }
+            }}
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#bdcabc] hover:text-white border border-white/10 transition-colors cursor-pointer"
+            title="Toggle Admin Side Menubar"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#006d36] to-[#50c878] flex items-center justify-center text-white shadow-lg border border-[#50c878]/30">
             <ShieldCheck className="w-6 h-6 text-white" />
           </div>
@@ -220,8 +241,169 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
-      {/* Main Admin Content */}
-      <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-8">
+      {/* Body Container: Side Menubar + Main Content */}
+      <div className="flex-1 flex relative min-h-0">
+        {/* Desktop / Laptop Side Menubar */}
+        <aside
+          className={`bg-[#0a160e] border-r border-[#006d36]/30 hidden md:flex flex-col shrink-0 transition-all duration-300 ease-in-out z-30 sticky top-20 h-[calc(100vh-5rem)] ${
+            sidebarOpen ? "w-64 min-w-[16rem]" : "w-0 min-w-0 opacity-0 overflow-hidden border-none pointer-events-none"
+          }`}
+        >
+          {/* Admin Identity Card */}
+          <div className="p-4 border-b border-[#006d36]/20 bg-[#07130c]/60">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#006d36] border border-[#50c878]/40 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                A
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="font-extrabold text-xs text-white block truncate">
+                  {adminUser?.fullName}
+                </span>
+                <span className="font-mono text-[11px] text-[#50c878] block">
+                  {adminUser?.memberId}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Nav Items */}
+          <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto">
+            <a
+              href="#overview"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold bg-[#006d36] text-white shadow-sm"
+            >
+              <LayoutDashboard className="w-4 h-4 shrink-0" />
+              <span>Master Overview</span>
+            </a>
+            <a
+              href="#members"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#bdcabc] hover:text-white hover:bg-white/5 transition-all"
+            >
+              <Users className="w-4 h-4 shrink-0" />
+              <span>Associate Directory</span>
+            </a>
+            <button
+              type="button"
+              onClick={handleRunCutoff}
+              disabled={runningCutoff}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#50c878] hover:bg-emerald-950/40 transition-all text-left cursor-pointer"
+            >
+              <Zap className="w-4 h-4 shrink-0" />
+              <span>{runningCutoff ? "Matching..." : "1:1 Binary Cutoff"}</span>
+            </button>
+            <a
+              href="#transactions"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#bdcabc] hover:text-white hover:bg-white/5 transition-all"
+            >
+              <Wallet className="w-4 h-4 shrink-0" />
+              <span>Ledger Transactions</span>
+            </a>
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#bdcabc] hover:text-white hover:bg-white/5 transition-all"
+            >
+              <ExternalLink className="w-4 h-4 shrink-0" />
+              <span>Preview Member Portal</span>
+            </Link>
+            <button
+              type="button"
+              onClick={handleAdminLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-red-400 hover:bg-red-950/40 transition-all text-left cursor-pointer"
+            >
+              <LogOut className="w-4 h-4 shrink-0" />
+              <span>Logout</span>
+            </button>
+          </nav>
+        </aside>
+
+        {/* Mobile / Tablet Admin Drawer */}
+        {mobileDrawerOpen && (
+          <div className="fixed inset-0 z-50 flex md:hidden">
+            <div
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setMobileDrawerOpen(false)}
+            />
+            <div className="relative bg-[#0a160e] border-r border-[#006d36]/30 w-72 max-w-[85vw] h-full p-5 space-y-4 flex flex-col justify-between shadow-2xl z-10">
+              <div>
+                <div className="flex items-center justify-between pb-3 border-b border-[#006d36]/30">
+                  <span className="font-extrabold text-sm text-[#50c878]">Admin Navigation</span>
+                  <button
+                    type="button"
+                    onClick={() => setMobileDrawerOpen(false)}
+                    className="p-1 rounded-lg text-[#bdcabc] hover:bg-white/10"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="py-3 border-b border-[#006d36]/30 mb-3 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#006d36] text-white flex items-center justify-center font-bold text-xs">
+                    A
+                  </div>
+                  <div>
+                    <span className="font-bold text-xs text-white block">{adminUser?.fullName}</span>
+                    <span className="font-mono text-[10px] text-[#50c878]">ID: {adminUser?.memberId}</span>
+                  </div>
+                </div>
+                <nav className="space-y-1">
+                  <a
+                    href="#overview"
+                    onClick={() => setMobileDrawerOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold bg-[#006d36] text-white"
+                  >
+                    <LayoutDashboard className="w-4 h-4 shrink-0" />
+                    <span>Master Overview</span>
+                  </a>
+                  <a
+                    href="#members"
+                    onClick={() => setMobileDrawerOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#bdcabc] hover:text-white"
+                  >
+                    <Users className="w-4 h-4 shrink-0" />
+                    <span>Associate Directory</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileDrawerOpen(false);
+                      handleRunCutoff();
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#50c878] text-left"
+                  >
+                    <Zap className="w-4 h-4 shrink-0" />
+                    <span>1:1 Binary Cutoff</span>
+                  </button>
+                  <a
+                    href="#transactions"
+                    onClick={() => setMobileDrawerOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#bdcabc] hover:text-white"
+                  >
+                    <Wallet className="w-4 h-4 shrink-0" />
+                    <span>Ledger Transactions</span>
+                  </a>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileDrawerOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#bdcabc] hover:text-white"
+                  >
+                    <ExternalLink className="w-4 h-4 shrink-0" />
+                    <span>Preview Member Portal</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleAdminLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-red-400 text-left"
+                  >
+                    <LogOut className="w-4 h-4 shrink-0" />
+                    <span>Logout</span>
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Admin Content */}
+        <main className="flex-1 min-w-0 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-8 overflow-y-auto" id="overview">
         {/* Welcome & Overview Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -524,6 +706,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </main>
+      </div>
     </div>
   );
 }
