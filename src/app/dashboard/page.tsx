@@ -110,18 +110,18 @@ export default function DashboardPage() {
 
         <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
           <Link
-            href="/dashboard"
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl bg-[#006d36] text-white font-bold shadow-sm shadow-[#006d36]/20"
-          >
-            <span className="material-symbols-outlined text-[20px]">dashboard</span>
-            <span>Dashboard</span>
-          </Link>
-          <Link
             href="/dashboard/profile"
             className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-bold hover:text-[#006d36] hover:bg-white transition-all"
           >
             <span className="material-symbols-outlined text-[20px]">person</span>
             <span>Profile</span>
+          </Link>
+          <Link
+            href="/dashboard"
+            className="flex items-center space-x-3 px-4 py-3 rounded-xl bg-[#006d36] text-white font-bold shadow-sm shadow-[#006d36]/20"
+          >
+            <span className="material-symbols-outlined text-[20px]">dashboard</span>
+            <span>Dashboard</span>
           </Link>
           <Link
             href="/dashboard/store"

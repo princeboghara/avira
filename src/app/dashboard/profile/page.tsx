@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import MemberNavbar from "@/components/dashboard/MemberNavbar";
+import MemberLayout from "@/components/dashboard/MemberLayout";
 import { User } from "@/types";
 import {
   Loader2,
@@ -61,11 +61,8 @@ export default function ProfilePage() {
   const isUserActive = user.personalPv >= 100;
 
   return (
-    <div className="min-h-screen bg-[#f9f9f9] text-[#1a1c1c] font-sans selection:bg-[#50c878] selection:text-[#005025]">
-      {/* Universal Member Navigation Menu Bar */}
-      <MemberNavbar user={user} />
-
-      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+    <MemberLayout user={user}>
+      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 w-full">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -210,6 +207,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
-    </div>
+    </MemberLayout>
   );
 }

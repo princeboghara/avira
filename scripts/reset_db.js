@@ -18,7 +18,7 @@ async function resetDb() {
     await client.query("DELETE FROM transactions;");
     await client.query("DELETE FROM users;");
 
-    console.log("2. Seeding sole root 4-digit member: AV0001 (Avira Life Care Global)...");
+    console.log("2. Seeding sole root 5-digit member: AV00001 (Avira Life Care Global)...");
     const adminHash = bcrypt.hashSync("admin123", 10);
 
     await client.query(
@@ -34,12 +34,12 @@ async function resetDb() {
       );
     `,
       [
-        "usr_av0001_root",
-        "AV0001",
+        "usr_av00001_root",
+        "AV00001",
         "Avira Life Care Global",
         "9876543210",
         adminHash,
-        "AV0001",
+        "AV00001",
         "Avira Root System",
         "380001",
         "Ahmedabad",
@@ -52,15 +52,15 @@ async function resetDb() {
         0,
         0.0,
         "2026-01-01",
-        1000.0, // 1000 PV
+        1000.0,
         0.0,
         0.0,
-        5000.0, // 5000 capping
+        5000.0,
         "ROOT",
       ]
     );
 
-    console.log("SUCCESS! Supabase database reset with 4-Digit Root Member AV0001:");
+    console.log("SUCCESS! Supabase database reset with 5-Digit Root Member AV00001:");
     const res = await client.query(
       "SELECT member_id, full_name, mobile, sponsor_id, role, status, personal_pv, daily_capping, wallet_balance FROM users;"
     );

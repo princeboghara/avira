@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import confetti from "canvas-confetti";
-import { Loader2, CheckCircle2, AlertCircle, Eye, EyeOff, Lock } from "lucide-react";
-import MemberCard3D from "@/components/3d/MemberCard3D";
+import { Loader2, CheckCircle2, AlertCircle, Eye, EyeOff, Lock, Copy, X } from "lucide-react";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -21,7 +20,7 @@ export default function RegisterForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const [sponsorId, setSponsorId] = useState(urlRef ? urlRef.toUpperCase() : "AV0001");
+  const [sponsorId, setSponsorId] = useState(urlRef ? urlRef.toUpperCase() : "AV00001");
   const [sponsorName, setSponsorName] = useState("Avira Life Care Global");
   const [isVerifyingSponsor, setIsVerifyingSponsor] = useState(false);
   const [sponsorVerified, setSponsorVerified] = useState(true);
@@ -46,8 +45,7 @@ export default function RegisterForm() {
   const [registeredMember, setRegisteredMember] = useState<{
     memberId: string;
     fullName: string;
-    sponsorId: string;
-    joinedDate: string;
+    passwordText: string;
   } | null>(null);
 
   // 1. Live Sponsor ID Verification Debounced
@@ -189,8 +187,7 @@ export default function RegisterForm() {
       setRegisteredMember({
         memberId: data.user.memberId,
         fullName: data.user.fullName,
-        sponsorId: data.user.sponsorId,
-        joinedDate: data.user.joinedDate,
+        passwordText: password,
       });
 
       triggerConfetti();
@@ -329,10 +326,10 @@ export default function RegisterForm() {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => setSponsorId("AV0001")}
+                    onClick={() => setSponsorId("AV00001")}
                     className="text-[10px] font-bold text-[#006d36] hover:underline cursor-pointer"
                   >
-                    Use Root (AV0001)
+                    Use Root (AV00001)
                   </button>
                 )}
               </div>
@@ -341,7 +338,7 @@ export default function RegisterForm() {
                   type="text"
                   required
                   readOnly={isSponsorLocked}
-                  placeholder="e.g. AV0001"
+                  placeholder="e.g. AV00001"
                   value={sponsorId}
                   onChange={(e) => !isSponsorLocked && setSponsorId(e.target.value.toUpperCase())}
                   className={`w-full border-none rounded-lg py-2.5 px-3 focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm font-mono font-bold tracking-wider ${
@@ -546,41 +543,110 @@ export default function RegisterForm() {
         </div>
       </main>
 
-      {/* SUCCESS CELEBRATION MODAL WITH 3D MEMBER CARD */}
+      {/* COMPACT CREDENTIALS POPUP WITH CLOSE (X) BUTTON */}
       {registeredMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fadeIn">
-          <div className="bg-white max-w-lg w-full rounded-3xl p-6 sm:p-8 border border-[#50c878] shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white max-w-sm w-full rounded-3xl p-6 border border-[#50c878] shadow-2xl relative animate-scaleIn">
+            {/* Close (X) button at top-right */}
+            <button
+              type="button"
+              onClick={() => {
+                setRegisteredMember(null);
+                setFirstName("");
+                setLastName("");
+                setMobile("");
+                setPassword("");
+                setPincode("");
+                setCity("");
+                setStateName("");
+              }}
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
             <div className="text-center mb-4">
-              <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-50 border border-emerald-300 flex items-center justify-center shadow-md">
-                <CheckCircle2 className="w-8 h-8 text-[#006d36]" />
+              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-emerald-50 border border-emerald-300 flex items-center justify-center shadow-xs">
+                <CheckCircle2 className="w-6 h-6 text-[#006d36]" />
               </div>
-              <h3 className="text-2xl font-black text-[#1a1c1c]">
-                Congratulations! Registered Successfully
-              </h3>
-              <p className="text-xs text-[#5f5e5e] mt-1">
-                Saved into Supabase PostgreSQL with your Unique 5-Digit Member ID.
+              <h3 className="text-lg font-black text-[#1a1c1c]">Registration Successful</h3>
+              <p className="text-[11px] text-[#5f5e5e] mt-0.5">
+                New associate profile created in Supabase PostgreSQL
               </p>
             </div>
 
-            {/* 3D Holographic Card */}
-            <div className="my-2">
-              <MemberCard3D
-                memberId={registeredMember.memberId}
-                fullName={registeredMember.fullName}
-                sponsorId={registeredMember.sponsorId}
-                joinedDate={registeredMember.joinedDate}
-                status="ACTIVE"
-              />
+            {/* ONLY Name, ID Number, and Password */}
+            <div className="bg-[#f9f9f9] rounded-2xl p-4 border border-[#e2e2e2] space-y-3 mb-5">
+              <div>
+                <span className="text-[10px] text-[#5f5e5e] font-bold uppercase tracking-wider block">
+                  Associate Name
+                </span>
+                <span className="text-sm font-extrabold text-[#1a1c1c]">
+                  {registeredMember.fullName}
+                </span>
+              </div>
+
+              <div className="pt-2 border-t border-[#e2e2e2]/60 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-[#5f5e5e] font-bold uppercase tracking-wider block">
+                    Member ID
+                  </span>
+                  <span className="text-xl font-mono font-black text-[#006d36] tracking-wider">
+                    {registeredMember.memberId}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(registeredMember.memberId);
+                    alert(`Copied ID: ${registeredMember.memberId}`);
+                  }}
+                  className="p-1.5 hover:bg-emerald-100 text-[#006d36] rounded-lg transition-colors cursor-pointer"
+                  title="Copy ID"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="pt-2 border-t border-[#e2e2e2]/60 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-[#5f5e5e] font-bold uppercase tracking-wider block">
+                    Password
+                  </span>
+                  <span className="text-sm font-mono font-black text-[#1a1c1c] tracking-wide">
+                    {registeredMember.passwordText}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(registeredMember.passwordText);
+                    alert(`Copied Password!`);
+                  }}
+                  className="p-1.5 hover:bg-emerald-100 text-[#006d36] rounded-lg transition-colors cursor-pointer"
+                  title="Copy Password"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            <div className="bg-[#eeeeee]/60 rounded-xl p-3 border border-[#e2e2e2] text-center space-y-1 mb-4">
-              <span className="text-xs text-[#5f5e5e] block">Your Permanent Login Member ID</span>
-              <span className="text-2xl font-mono font-black text-[#006d36] tracking-wider">
-                {registeredMember.memberId}
-              </span>
-            </div>
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const details = `Avira Life Care Global\nName: ${registeredMember.fullName}\nMember ID: ${registeredMember.memberId}\nPassword: ${registeredMember.passwordText}`;
+                  navigator.clipboard.writeText(details);
+                  alert("Copied all details to clipboard!");
+                }}
+                className="flex-1 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-[#006d36] font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy Details</span>
+              </button>
 
-            <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -593,18 +659,9 @@ export default function RegisterForm() {
                   setCity("");
                   setStateName("");
                 }}
-                className="flex-1 py-3 border border-[#006d36] text-[#006d36] font-bold rounded-xl hover:bg-emerald-50 transition-colors text-xs flex items-center justify-center gap-1 cursor-pointer"
+                className="flex-1 py-2.5 bg-[#006d36] hover:bg-[#005025] text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[16px]">person_add</span>
-                <span>Register Another</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push("/dashboard")}
-                className="flex-1 py-3 bg-[#006d36] hover:bg-[#005025] text-white font-bold rounded-xl shadow-md transition-all text-xs flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <span>Go to Dashboard</span>
-                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                Done / Close
               </button>
             </div>
           </div>

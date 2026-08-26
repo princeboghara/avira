@@ -52,7 +52,7 @@ async function migrateBinary() {
         daily_capping = 5000.00,
         binary_parent_id = NULL,
         binary_position = 'ROOT'
-      WHERE member_id = 'AV0001';
+      WHERE member_id = 'AV00001';
     `);
 
     console.log("SUCCESS! Binary columns and orders table migrated to Supabase.");

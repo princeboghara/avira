@@ -88,7 +88,7 @@ export default function BinaryGenealogyTree({ rootNode }: BinaryGenealogyTreePro
 
       {/* Interactive Visual Binary Tree Diagram */}
       <div className="bg-[#f9f9f9] rounded-3xl p-6 sm:p-10 border border-[#e2e2e2] shadow-inner overflow-x-auto">
-        <div className="min-w-[700px] flex flex-col items-center">
+        <div className="min-w-[650px] flex flex-col items-center">
           {/* LEVEL 1: ROOT */}
           <div className="flex justify-center mb-6">
             <TreeNodeCard
@@ -104,112 +104,127 @@ export default function BinaryGenealogyTree({ rootNode }: BinaryGenealogyTreePro
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#006d36]" />
           </div>
 
-          {/* LEVEL 2: LEFT & RIGHT CHILDREN */}
-          <div className="grid grid-cols-2 gap-12 w-full max-w-2xl mb-6">
-            {/* Left Branch */}
+          {/* LEVEL 2 & 3: CHILDREN & GRANDCHILDREN */}
+          <div className="grid grid-cols-2 gap-8 w-full max-w-3xl">
+            {/* LEFT BRANCH */}
             <div className="flex flex-col items-center">
               {rootNode.leftChild ? (
-                <TreeNodeCard
-                  node={rootNode.leftChild}
-                  isSelected={selectedNode?.id === rootNode.leftChild.id}
-                  onSelect={handleSelect}
-                  leg="LEFT"
-                />
+                <>
+                  <TreeNodeCard
+                    node={rootNode.leftChild}
+                    isSelected={selectedNode?.id === rootNode.leftChild.id}
+                    onSelect={handleSelect}
+                    leg="LEFT"
+                  />
+
+                  {/* Connection Line to Level 3 Children under Left Child */}
+                  <div className="w-1/2 h-5 border-t-2 border-l-2 border-r-2 border-blue-500 my-4 relative">
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-blue-500" />
+                  </div>
+
+                  {/* Level 3 Children under Left Child */}
+                  <div className="grid grid-cols-2 gap-3 w-full">
+                    <div className="flex justify-center">
+                      {rootNode.leftChild.leftChild ? (
+                        <TreeNodeCard
+                          node={rootNode.leftChild.leftChild}
+                          isSelected={selectedNode?.id === rootNode.leftChild.leftChild.id}
+                          onSelect={handleSelect}
+                          leg="LEFT"
+                          isSmall
+                        />
+                      ) : (
+                        <VacantSlot
+                          parentId={rootNode.leftChild.memberId}
+                          position="LEFT"
+                          isSmall
+                        />
+                      )}
+                    </div>
+
+                    <div className="flex justify-center">
+                      {rootNode.leftChild.rightChild ? (
+                        <TreeNodeCard
+                          node={rootNode.leftChild.rightChild}
+                          isSelected={selectedNode?.id === rootNode.leftChild.rightChild.id}
+                          onSelect={handleSelect}
+                          leg="RIGHT"
+                          isSmall
+                        />
+                      ) : (
+                        <VacantSlot
+                          parentId={rootNode.leftChild.memberId}
+                          position="RIGHT"
+                          isSmall
+                        />
+                      )}
+                    </div>
+                  </div>
+                </>
               ) : (
+                /* Left is vacant: Show ONLY this slot, NO grandchildren underneath! */
                 <VacantSlot parentId={rootNode.memberId} position="LEFT" />
               )}
             </div>
 
-            {/* Right Branch */}
+            {/* RIGHT BRANCH */}
             <div className="flex flex-col items-center">
               {rootNode.rightChild ? (
-                <TreeNodeCard
-                  node={rootNode.rightChild}
-                  isSelected={selectedNode?.id === rootNode.rightChild.id}
-                  onSelect={handleSelect}
-                  leg="RIGHT"
-                />
+                <>
+                  <TreeNodeCard
+                    node={rootNode.rightChild}
+                    isSelected={selectedNode?.id === rootNode.rightChild.id}
+                    onSelect={handleSelect}
+                    leg="RIGHT"
+                  />
+
+                  {/* Connection Line to Level 3 Children under Right Child */}
+                  <div className="w-1/2 h-5 border-t-2 border-l-2 border-r-2 border-purple-500 my-4 relative">
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-purple-500" />
+                  </div>
+
+                  {/* Level 3 Children under Right Child */}
+                  <div className="grid grid-cols-2 gap-3 w-full">
+                    <div className="flex justify-center">
+                      {rootNode.rightChild.leftChild ? (
+                        <TreeNodeCard
+                          node={rootNode.rightChild.leftChild}
+                          isSelected={selectedNode?.id === rootNode.rightChild.leftChild.id}
+                          onSelect={handleSelect}
+                          leg="LEFT"
+                          isSmall
+                        />
+                      ) : (
+                        <VacantSlot
+                          parentId={rootNode.rightChild.memberId}
+                          position="LEFT"
+                          isSmall
+                        />
+                      )}
+                    </div>
+
+                    <div className="flex justify-center">
+                      {rootNode.rightChild.rightChild ? (
+                        <TreeNodeCard
+                          node={rootNode.rightChild.rightChild}
+                          isSelected={selectedNode?.id === rootNode.rightChild.rightChild.id}
+                          onSelect={handleSelect}
+                          leg="RIGHT"
+                          isSmall
+                        />
+                      ) : (
+                        <VacantSlot
+                          parentId={rootNode.rightChild.memberId}
+                          position="RIGHT"
+                          isSmall
+                        />
+                      )}
+                    </div>
+                  </div>
+                </>
               ) : (
+                /* Right is vacant: Show ONLY this slot, NO grandchildren underneath! */
                 <VacantSlot parentId={rootNode.memberId} position="RIGHT" />
-              )}
-            </div>
-          </div>
-
-          {/* LEVEL 3: GRANDCHILDREN */}
-          <div className="grid grid-cols-4 gap-4 w-full">
-            {/* L-L */}
-            <div className="flex justify-center">
-              {rootNode.leftChild?.leftChild ? (
-                <TreeNodeCard
-                  node={rootNode.leftChild.leftChild}
-                  isSelected={selectedNode?.id === rootNode.leftChild.leftChild.id}
-                  onSelect={handleSelect}
-                  leg="LEFT"
-                  isSmall
-                />
-              ) : (
-                <VacantSlot
-                  parentId={rootNode.leftChild?.memberId || rootNode.memberId}
-                  position="LEFT"
-                  isSmall
-                />
-              )}
-            </div>
-
-            {/* L-R */}
-            <div className="flex justify-center">
-              {rootNode.leftChild?.rightChild ? (
-                <TreeNodeCard
-                  node={rootNode.leftChild.rightChild}
-                  isSelected={selectedNode?.id === rootNode.leftChild.rightChild.id}
-                  onSelect={handleSelect}
-                  leg="RIGHT"
-                  isSmall
-                />
-              ) : (
-                <VacantSlot
-                  parentId={rootNode.leftChild?.memberId || rootNode.memberId}
-                  position="RIGHT"
-                  isSmall
-                />
-              )}
-            </div>
-
-            {/* R-L */}
-            <div className="flex justify-center">
-              {rootNode.rightChild?.leftChild ? (
-                <TreeNodeCard
-                  node={rootNode.rightChild.leftChild}
-                  isSelected={selectedNode?.id === rootNode.rightChild.leftChild.id}
-                  onSelect={handleSelect}
-                  leg="LEFT"
-                  isSmall
-                />
-              ) : (
-                <VacantSlot
-                  parentId={rootNode.rightChild?.memberId || rootNode.memberId}
-                  position="LEFT"
-                  isSmall
-                />
-              )}
-            </div>
-
-            {/* R-R */}
-            <div className="flex justify-center">
-              {rootNode.rightChild?.rightChild ? (
-                <TreeNodeCard
-                  node={rootNode.rightChild.rightChild}
-                  isSelected={selectedNode?.id === rootNode.rightChild.rightChild.id}
-                  onSelect={handleSelect}
-                  leg="RIGHT"
-                  isSmall
-                />
-              ) : (
-                <VacantSlot
-                  parentId={rootNode.rightChild?.memberId || rootNode.memberId}
-                  position="RIGHT"
-                  isSmall
-                />
               )}
             </div>
           </div>

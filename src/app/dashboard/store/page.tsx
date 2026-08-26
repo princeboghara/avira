@@ -12,7 +12,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { User } from "@/types";
-import MemberNavbar from "@/components/dashboard/MemberNavbar";
+import MemberLayout from "@/components/dashboard/MemberLayout";
 
 const PACKAGES = [
   {
@@ -184,12 +184,9 @@ export default function StorePage() {
   const isTargetActive = targetMemberPv >= 100;
 
   return (
-    <div className="min-h-screen bg-[#f9f9f9] text-[#1a1c1c] font-sans selection:bg-[#50c878] selection:text-[#005025]">
-      {/* Universal Member Navigation Menu Bar */}
-      <MemberNavbar user={currentUser} />
-
+    <MemberLayout user={currentUser}>
       {/* Main Activation Section */}
-      <main className="max-w-7xl mx-auto p-6 space-y-8">
+      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 w-full">
         {/* Step 1: Member ID Input with Live Name Fetch */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-sm space-y-4">
           <div className="flex items-center gap-2">
@@ -405,6 +402,6 @@ export default function StorePage() {
           </div>
         </div>
       </main>
-    </div>
+    </MemberLayout>
   );
 }
