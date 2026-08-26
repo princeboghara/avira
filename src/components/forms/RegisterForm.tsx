@@ -21,6 +21,7 @@ export default function RegisterForm() {
   const [sponsorName, setSponsorName] = useState("Avira Life Care Global");
   const [isVerifyingSponsor, setIsVerifyingSponsor] = useState(false);
   const [sponsorVerified, setSponsorVerified] = useState(true);
+  const [binaryPosition, setBinaryPosition] = useState<"LEFT" | "RIGHT">("LEFT");
 
   const [pincode, setPincode] = useState("");
   const [city, setCity] = useState("");
@@ -163,6 +164,7 @@ export default function RegisterForm() {
           pincode: pincode.trim(),
           city: city.trim(),
           state: stateName.trim(),
+          position: binaryPosition,
         }),
       });
 
@@ -342,6 +344,44 @@ export default function RegisterForm() {
                   </span>
                 </div>
               )}
+            </div>
+
+            {/* Binary Placement Leg Selection */}
+            <div className="p-3.5 rounded-xl bg-white border border-[#e2e2e2] space-y-2 shadow-sm">
+              <label className="text-xs font-bold text-[#1a1c1c] uppercase tracking-wider flex items-center gap-1">
+                <span className="material-symbols-outlined text-[16px] text-[#006d36]">account_tree</span>
+                <span>Binary Placement Leg *</span>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setBinaryPosition("LEFT")}
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    binaryPosition === "LEFT"
+                      ? "bg-emerald-50 border-[#006d36] text-[#006d36] shadow-sm ring-1 ring-[#006d36]"
+                      : "bg-[#f9f9f9] border-[#e2e2e2] text-[#5f5e5e] hover:bg-white"
+                  }`}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full border border-current flex items-center justify-center">
+                    {binaryPosition === "LEFT" && <span className="w-1.5 h-1.5 rounded-full bg-[#006d36]" />}
+                  </span>
+                  <span>Left Power Leg</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBinaryPosition("RIGHT")}
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    binaryPosition === "RIGHT"
+                      ? "bg-emerald-50 border-[#006d36] text-[#006d36] shadow-sm ring-1 ring-[#006d36]"
+                      : "bg-[#f9f9f9] border-[#e2e2e2] text-[#5f5e5e] hover:bg-white"
+                  }`}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full border border-current flex items-center justify-center">
+                    {binaryPosition === "RIGHT" && <span className="w-1.5 h-1.5 rounded-full bg-[#006d36]" />}
+                  </span>
+                  <span>Right Power Leg</span>
+                </button>
+              </div>
             </div>
 
             {/* Pincode with Auto-Fetch City & State */}

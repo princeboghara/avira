@@ -43,6 +43,7 @@ export default function AdminDashboardPage() {
   const [adminUser, setAdminUser] = useState<User | null>(null);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [members, setMembers] = useState<User[]>([]);
+  const [runningCutoff, setRunningCutoff] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -128,6 +129,31 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleRunCutoff = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to execute the 1:1 Daily Binary Matching Cutoff now? This will match Left PV vs Right PV, carry forward the stronger leg, and distribute bonuses to wallets."
+      )
+    )
+      return;
+
+    setRunningCutoff(true);
+    try {
+      const res = await fetch("/api/admin/binary/cutoff", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        await loadAdminData();
+      } else {
+        alert(data.message || "Cutoff failed");
+      }
+    } catch {
+      alert("Network error executing cutoff");
+    } finally {
+      setRunningCutoff(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#07130c] text-white flex flex-col items-center justify-center font-sans">
@@ -205,7 +231,26 @@ export default function AdminDashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleRunCutoff}
+              disabled={runningCutoff}
+              className="px-4 py-2.5 bg-gradient-to-r from-[#006d36] to-[#50c878] hover:from-[#005025] hover:to-[#006d36] text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-[#006d36]/30 flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+            >
+              {runningCutoff ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Calculating Matching Payouts...</span>
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-[16px]">account_tree</span>
+                  <span>Run 1:1 Daily Binary Cutoff</span>
+                </>
+              )}
+            </button>
+
             <Link
               href="/login"
               target="_blank"

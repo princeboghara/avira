@@ -116,27 +116,27 @@ export default function DashboardPage() {
             <span className="material-symbols-outlined text-[20px]">dashboard</span>
             <span>Dashboard</span>
           </Link>
-          <a
-            href="#network"
+          <Link
+            href="/dashboard/tree"
             className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-medium hover:text-[#006d36] transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">group</span>
-            <span>My Network</span>
-          </a>
+            <span className="material-symbols-outlined text-[20px]">account_tree</span>
+            <span>Binary Tree</span>
+          </Link>
+          <Link
+            href="/dashboard/store"
+            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-medium hover:text-[#006d36] transition-colors"
+          >
+            <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
+            <span>Packages & PV</span>
+          </Link>
           <button
             onClick={() => setWithdrawModalOpen(true)}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-medium hover:text-[#006d36] transition-colors text-left"
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-medium hover:text-[#006d36] transition-colors text-left cursor-pointer"
           >
             <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
             <span>Wallet Payout</span>
           </button>
-          <Link
-            href="/"
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-medium hover:text-[#006d36] transition-colors"
-          >
-            <span className="material-symbols-outlined text-[20px]">shopping_cart</span>
-            <span>Store / Products</span>
-          </Link>
           <a
             href="#referral"
             className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-medium hover:text-[#006d36] transition-colors"
@@ -314,6 +314,94 @@ export default function DashboardPage() {
               >
                 Withdraw Funds
               </button>
+            </div>
+          </section>
+
+          {/* Binary MLM Performance & Volume Engine */}
+          <section className="mb-8 bg-white rounded-3xl p-6 md:p-8 border border-emerald-200 shadow-sm relative overflow-hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#006d36]">account_tree</span>
+                  <h3 className="text-xl font-extrabold text-[#1a1c1c]">
+                    1:1 Binary Matching & Leg Performance
+                  </h3>
+                </div>
+                <p className="text-xs text-[#5f5e5e] mt-1">
+                  1 PV = ₹1 • Capping determined by Self Volume ({user.personalPv} PV = ₹{user.dailyCapping.toLocaleString()} / day limit)
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/dashboard/tree"
+                  className="px-4 py-2 bg-[#006d36] hover:bg-[#005025] text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[16px]">account_tree</span>
+                  <span>View Binary Tree</span>
+                </Link>
+                <Link
+                  href="/dashboard/store"
+                  className="px-4 py-2 border border-[#006d36] text-[#006d36] hover:bg-emerald-50 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[16px]">shopping_bag</span>
+                  <span>Add PV / Packages</span>
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Left PV */}
+              <div className="p-4 rounded-2xl bg-[#f0f3ff] border border-blue-200">
+                <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block mb-1">
+                  Left Leg Volume
+                </span>
+                <span className="text-2xl font-mono font-black text-blue-900">
+                  {user.leftPv.toLocaleString()} PV
+                </span>
+                <span className="text-[10px] text-blue-600 block mt-1 font-semibold">
+                  {user.leftPv >= user.rightPv ? "Power Leg (Carry Forward)" : "Volume Active"}
+                </span>
+              </div>
+
+              {/* Right PV */}
+              <div className="p-4 rounded-2xl bg-[#f5f0ff] border border-purple-200">
+                <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider block mb-1">
+                  Right Leg Volume
+                </span>
+                <span className="text-2xl font-mono font-black text-purple-900">
+                  {user.rightPv.toLocaleString()} PV
+                </span>
+                <span className="text-[10px] text-purple-600 block mt-1 font-semibold">
+                  {user.rightPv >= user.leftPv ? "Power Leg (Carry Forward)" : "Volume Active"}
+                </span>
+              </div>
+
+              {/* Next Expected 1:1 Matching */}
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+                <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block mb-1">
+                  Next 1:1 Matching
+                </span>
+                <span className="text-2xl font-mono font-black text-[#006d36]">
+                  {Math.min(user.leftPv, user.rightPv).toLocaleString()} PV
+                </span>
+                <span className="text-[10px] text-emerald-700 block mt-1 font-semibold">
+                  Est. Payout: ₹{Math.min(Math.min(user.leftPv, user.rightPv), user.dailyCapping).toLocaleString()}
+                </span>
+              </div>
+
+              {/* Self PV & Daily Capping */}
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
+                <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block mb-1">
+                  Self Volume & Capping
+                </span>
+                <span className="text-2xl font-mono font-black text-amber-900">
+                  {user.personalPv} PV
+                </span>
+                <span className="text-[10px] text-amber-700 block mt-1 font-bold">
+                  Daily Cap: ₹{user.dailyCapping.toLocaleString()} / day
+                </span>
+              </div>
             </div>
           </section>
 

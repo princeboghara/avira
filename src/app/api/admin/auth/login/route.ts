@@ -29,30 +29,10 @@ export async function POST(req: Request) {
       const client = await pool.connect();
       try {
         const res = await client.query(
-          "SELECT * FROM users WHERE role = 'ADMIN' ORDER BY created_at ASC LIMIT 1"
+          "SELECT member_id FROM users WHERE role = 'ADMIN' ORDER BY created_at ASC LIMIT 1"
         );
         if (res.rows.length > 0) {
-          const row = res.rows[0];
-          user = {
-            id: row.id,
-            memberId: row.member_id,
-            fullName: row.full_name,
-            mobile: row.mobile,
-            passwordHash: row.password_hash,
-            sponsorId: row.sponsor_id,
-            sponsorName: row.sponsor_name,
-            pincode: row.pincode,
-            city: row.city,
-            state: row.state,
-            role: row.role,
-            status: row.status,
-            walletBalance: parseFloat(row.wallet_balance || "0"),
-            totalEarnings: parseFloat(row.total_earnings || "0"),
-            directReferralsCount: parseInt(row.direct_referrals_count || "0", 10),
-            totalTeamCount: parseInt(row.total_team_count || "0", 10),
-            todayEarnings: parseFloat(row.today_earnings || "0"),
-            joinedDate: row.joined_date,
-          };
+          user = await findUserByMemberId(res.rows[0].member_id);
         }
       } finally {
         client.release();

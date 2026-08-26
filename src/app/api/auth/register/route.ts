@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { findUserByMobile, findUserByMemberId, getAllMemberIds, saveUser } from "@/lib/db";
 import { generateMemberId } from "@/lib/memberId";
 import { signAccessToken, signRefreshToken } from "@/lib/jwt";
+import { findAvailableBinarySpot } from "@/lib/binary";
 import { User } from "@/types";
 
 const registerSchema = z.object({
@@ -14,6 +15,7 @@ const registerSchema = z.object({
   pincode: z.string().length(6, "Pincode must be 6 digits"),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
+  position: z.enum(["LEFT", "RIGHT"]).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -26,7 +28,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: errorMsg }, { status: 400 });
     }
 
-    const { sponsorId, fullName, mobile, password, pincode, city, state } = validatedData.data;
+    const { sponsorId, fullName, mobile, password, pincode, city, state, position } =
+      validatedData.data;
 
     // 1. Check if sponsor exists in Supabase PostgreSQL
     const sponsor = await findUserByMemberId(sponsorId);
@@ -41,20 +44,27 @@ export async function POST(request: NextRequest) {
     const existingMobile = await findUserByMobile(mobile);
     if (existingMobile) {
       return NextResponse.json(
-        { success: false, message: `Mobile number ${mobile} is already registered with Member ID ${existingMobile.memberId}.` },
+        {
+          success: false,
+          message: `Mobile number ${mobile} is already registered with Member ID ${existingMobile.memberId}.`,
+        },
         { status: 409 }
       );
     }
 
-    // 3. Generate Unique 5-Digit Member ID (AV + 5 digits)
+    // 3. Find binary placement spot in chosen leg (LEFT or RIGHT)
+    const targetLeg = position || "LEFT";
+    const binarySpot = await findAvailableBinarySpot(sponsor.memberId, targetLeg);
+
+    // 4. Generate Unique 5-Digit Member ID (AV + 5 digits)
     const existingIds = await getAllMemberIds();
     const newMemberId = generateMemberId(existingIds);
 
-    // 4. Hash password
+    // 5. Hash password
     const salt = bcrypt.genSaltSync(10);
     const passwordHash = bcrypt.hashSync(password, salt);
 
-    // 5. Create new Member profile
+    // 6. Create new Member profile with binary attributes
     const newUser: User = {
       id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       memberId: newMemberId,
@@ -68,18 +78,28 @@ export async function POST(request: NextRequest) {
       state: state.trim(),
       role: "MEMBER",
       status: "ACTIVE",
-      walletBalance: 500, // Promotional welcome bonus in wallet
-      totalEarnings: 500,
+      walletBalance: 0,
+      totalEarnings: 0,
       directReferralsCount: 0,
       totalTeamCount: 0,
-      todayEarnings: 500,
+      todayEarnings: 0,
       joinedDate: new Date().toISOString().split("T")[0],
+
+      // Binary Placement
+      personalPv: 0,
+      leftPv: 0,
+      rightPv: 0,
+      carryLeftPv: 0,
+      carryRightPv: 0,
+      binaryParentId: binarySpot.parentId,
+      binaryPosition: binarySpot.position,
+      dailyCapping: 1000,
     };
 
-    // Saves to Supabase PostgreSQL & records welcome bonus transaction
+    // Saves to Supabase PostgreSQL & links binary parent/child
     await saveUser(newUser);
 
-    // 6. Generate JWT Access & Refresh Tokens
+    // 7. Generate JWT Access & Refresh Tokens
     const tokenPayload = {
       userId: newUser.id,
       memberId: newUser.memberId,

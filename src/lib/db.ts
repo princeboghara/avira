@@ -40,6 +40,18 @@ function mapRowToUser(row: any): User {
     totalTeamCount: Number(row.total_team_count || 0),
     todayEarnings: Number(row.today_earnings || 0),
     joinedDate: row.joined_date,
+
+    // Binary Fields
+    personalPv: Number(row.personal_pv || 0),
+    leftPv: Number(row.left_pv || 0),
+    rightPv: Number(row.right_pv || 0),
+    carryLeftPv: Number(row.carry_left_pv || 0),
+    carryRightPv: Number(row.carry_right_pv || 0),
+    binaryParentId: row.binary_parent_id || null,
+    binaryPosition: row.binary_position || null,
+    leftChildId: row.left_child_id || null,
+    rightChildId: row.right_child_id || null,
+    dailyCapping: Number(row.daily_capping || 1000),
   };
 }
 
@@ -60,7 +72,7 @@ export async function findUserByMemberId(memberId: string): Promise<User | null>
   try {
     const res = await client.query(
       "SELECT * FROM users WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
-      [memberId.trim()]
+      [memberId]
     );
     if (res.rows.length === 0) return null;
     return mapRowToUser(res.rows[0]);
@@ -72,10 +84,7 @@ export async function findUserByMemberId(memberId: string): Promise<User | null>
 export async function findUserByMobile(mobile: string): Promise<User | null> {
   const client = await pool.connect();
   try {
-    const res = await client.query(
-      "SELECT * FROM users WHERE mobile = $1 LIMIT 1",
-      [mobile.trim()]
-    );
+    const res = await client.query("SELECT * FROM users WHERE mobile = $1 LIMIT 1", [mobile]);
     if (res.rows.length === 0) return null;
     return mapRowToUser(res.rows[0]);
   } finally {
@@ -84,38 +93,52 @@ export async function findUserByMobile(mobile: string): Promise<User | null> {
 }
 
 export async function findUserByIdentifier(identifier: string): Promise<User | null> {
-  const clean = identifier.trim();
-  if (clean.toUpperCase().startsWith("AV")) {
-    return findUserByMemberId(clean);
-  }
-  const byMobile = await findUserByMobile(clean);
-  if (byMobile) return byMobile;
-  return findUserByMemberId(clean);
-}
-
-export async function getAllMemberIds(): Promise<Set<string>> {
   const client = await pool.connect();
   try {
-    const res = await client.query("SELECT member_id FROM users");
-    return new Set(res.rows.map((r) => r.member_id.toUpperCase()));
+    const res = await client.query(
+      "SELECT * FROM users WHERE UPPER(member_id) = UPPER($1) OR mobile = $1 LIMIT 1",
+      [identifier]
+    );
+    if (res.rows.length === 0) return null;
+    return mapRowToUser(res.rows[0]);
   } finally {
     client.release();
   }
 }
 
-export async function saveUser(user: User): Promise<void> {
+export async function getAllMemberIds(): Promise<string[]> {
+  const client = await pool.connect();
+  try {
+    const res = await client.query("SELECT member_id FROM users");
+    return res.rows.map((r) => r.member_id);
+  } finally {
+    client.release();
+  }
+}
+
+export async function saveUser(user: User): Promise<User> {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    // Insert user into Supabase PostgreSQL
     await client.query(
       `
       INSERT INTO users (
         id, member_id, full_name, mobile, password_hash, sponsor_id, sponsor_name,
         pincode, city, state, role, status, wallet_balance, total_earnings,
-        direct_referrals_count, total_team_count, today_earnings, joined_date
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        direct_referrals_count, total_team_count, today_earnings, joined_date,
+        personal_pv, left_pv, right_pv, carry_left_pv, carry_right_pv,
+        binary_parent_id, binary_position, left_child_id, right_child_id, daily_capping
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
+        $19, $20, $21, $22, $23, $24, $25, $26, $27, $28
+      )
+      ON CONFLICT (member_id) DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        mobile = EXCLUDED.mobile,
+        wallet_balance = EXCLUDED.wallet_balance,
+        total_earnings = EXCLUDED.total_earnings,
+        updated_at = NOW();
     `,
       [
         user.id,
@@ -136,10 +159,29 @@ export async function saveUser(user: User): Promise<void> {
         user.totalTeamCount,
         user.todayEarnings,
         user.joinedDate,
+        user.personalPv || 0,
+        user.leftPv || 0,
+        user.rightPv || 0,
+        user.carryLeftPv || 0,
+        user.carryRightPv || 0,
+        user.binaryParentId || null,
+        user.binaryPosition || null,
+        user.leftChildId || null,
+        user.rightChildId || null,
+        user.dailyCapping || 1000,
       ]
     );
 
-    // If user has a sponsor, update sponsor's metrics & award welcome referral incentive
+    // If binary parent is defined, link parent's left_child_id or right_child_id
+    if (user.binaryParentId && user.binaryPosition) {
+      const childCol = user.binaryPosition === "LEFT" ? "left_child_id" : "right_child_id";
+      await client.query(
+        `UPDATE users SET ${childCol} = $1, updated_at = NOW() WHERE id = $2`,
+        [user.id, user.binaryParentId]
+      );
+    }
+
+    // If user has a sponsor, update sponsor's metrics
     if (user.sponsorId) {
       await client.query(
         `
@@ -147,59 +189,15 @@ export async function saveUser(user: User): Promise<void> {
         SET 
           direct_referrals_count = direct_referrals_count + 1,
           total_team_count = total_team_count + 1,
-          wallet_balance = wallet_balance + 1000,
-          total_earnings = total_earnings + 1000,
-          today_earnings = today_earnings + 1000,
           updated_at = NOW()
         WHERE UPPER(member_id) = UPPER($1)
       `,
         [user.sponsorId]
       );
-
-      // Fetch sponsor id to link transaction
-      const sponsorRes = await client.query(
-        "SELECT id FROM users WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
-        [user.sponsorId]
-      );
-
-      if (sponsorRes.rows.length > 0) {
-        const sponsorDbId = sponsorRes.rows[0].id;
-        await client.query(
-          `
-          INSERT INTO transactions (id, user_id, type, amount, description, status, date)
-          VALUES ($1, $2, $3, $4, $5, $6, $7)
-        `,
-          [
-            `tx_${Date.now()}_ref`,
-            sponsorDbId,
-            "DIRECT_REFERRAL",
-            1000.0,
-            `Direct Referral Incentive for onboarding ${user.fullName} (${user.memberId})`,
-            "COMPLETED",
-            new Date().toISOString().replace("T", " ").substring(0, 16),
-          ]
-        );
-      }
     }
 
-    // Insert welcome bonus transaction for the new user
-    await client.query(
-      `
-      INSERT INTO transactions (id, user_id, type, amount, description, status, date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `,
-      [
-        `tx_${Date.now()}_wel`,
-        user.id,
-        "WELCOME_BONUS",
-        500.0,
-        "Avira Member Welcome Enrollment Credit",
-        "COMPLETED",
-        new Date().toISOString().replace("T", " ").substring(0, 16),
-      ]
-    );
-
     await client.query("COMMIT");
+    return user;
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;
