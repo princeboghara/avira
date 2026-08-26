@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { User, Transaction } from "@/types";
 import { Loader2, Check, Copy } from "lucide-react";
 import MemberCard3D from "@/components/3d/MemberCard3D";
+import MemberLayout from "@/components/dashboard/MemberLayout";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -96,142 +97,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="bg-[#f9f9f9] text-[#1a1c1c] font-sans min-h-screen flex selection:bg-[#50c878] selection:text-[#005025]">
-      {/* Side Navigation (Stitch Layout) */}
-      <aside className="w-64 neo-base hidden md:flex flex-col h-screen sticky top-0 border-r border-[#e2e2e2]/40 z-40">
-        <div className="h-20 flex items-center justify-center border-b border-[#e2e2e2]/40 gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#006d36] to-[#50c878] flex items-center justify-center text-white">
-            <span className="material-symbols-outlined text-[18px]">diamond</span>
-          </div>
-          <span className="font-extrabold text-sm tracking-tight text-[#006d36]">
-            AVIRA LIFE CARE GLOBAL
-          </span>
-        </div>
-
-        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
-          <Link
-            href="/dashboard/profile"
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-bold hover:text-[#006d36] hover:bg-white transition-all"
-          >
-            <span className="material-symbols-outlined text-[20px]">person</span>
-            <span>Profile</span>
-          </Link>
-          <Link
-            href="/dashboard"
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl bg-[#006d36] text-white font-bold shadow-sm shadow-[#006d36]/20"
-          >
-            <span className="material-symbols-outlined text-[20px]">dashboard</span>
-            <span>Dashboard</span>
-          </Link>
-          <Link
-            href="/dashboard/store"
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-bold hover:text-[#006d36] hover:bg-white transition-all"
-          >
-            <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
-            <span>Shopping</span>
-          </Link>
-          <Link
-            href="/dashboard/community"
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[#5f5e5e] font-bold hover:text-[#006d36] hover:bg-white transition-all"
-          >
-            <span className="material-symbols-outlined text-[20px]">groups</span>
-            <span>My Community</span>
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-600 font-bold hover:bg-red-50 transition-all text-left cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[20px]">logout</span>
-            <span>Logout</span>
-          </button>
-        </nav>
-
-        {/* Member ID pill in sidebar footer */}
-        <div className="p-4 border-t border-[#e2e2e2]/40 bg-white/50">
-          <div className="text-[10px] uppercase font-bold text-[#5f5e5e] tracking-wider mb-1">
-            Unique Member ID
-          </div>
-          <div className="font-mono font-black text-sm text-[#006d36] flex items-center justify-between">
-            <span>{user.memberId}</span>
-            <span className="w-2 h-2 rounded-full bg-[#50c878] animate-ping" />
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content Area (Stitch Layout) */}
-      <main className="flex-1 flex flex-col min-h-screen">
-        {/* Top App Bar (Stitch Layout) */}
-        <header className="h-20 bg-[#f9f9f9]/80 backdrop-blur-xl border-b border-[#e2e2e2]/30 shadow-sm sticky top-0 z-30 flex justify-between items-center px-6 max-w-7xl w-full mx-auto">
-          <div className="flex items-center gap-2">
-            <span className="font-black text-sm text-[#006d36] md:hidden">
-              AVIRA LIFE CARE
-            </span>
-            <div className="hidden md:flex items-center gap-3">
-              <span className="text-xs font-mono bg-emerald-50 text-[#006d36] px-3 py-1 rounded-full border border-emerald-200 font-bold">
-                ID: {user.memberId}
-              </span>
-              <span className="text-xs text-[#5f5e5e] font-medium">
-                Sponsor: {user.sponsorId || "Root"}
-              </span>
-            </div>
-          </div>
-
-          {/* Quick Menu Bar on Top */}
-          <div className="flex items-center gap-1">
-            <Link
-              href="/dashboard/profile"
-              className="text-xs font-bold text-[#5f5e5e] hover:text-[#006d36] px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 transition-colors flex items-center gap-1"
-            >
-              <span className="material-symbols-outlined text-[16px]">person</span>
-              <span className="hidden sm:inline">Profile</span>
-            </Link>
-            <Link
-              href="/dashboard/store"
-              className="text-xs font-bold text-[#5f5e5e] hover:text-[#006d36] px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 transition-colors flex items-center gap-1"
-            >
-              <span className="material-symbols-outlined text-[16px]">shopping_bag</span>
-              <span className="hidden sm:inline">Shopping</span>
-            </Link>
-            <Link
-              href="/dashboard/community"
-              className="text-xs font-bold text-[#5f5e5e] hover:text-[#006d36] px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 transition-colors flex items-center gap-1"
-            >
-              <span className="material-symbols-outlined text-[16px]">groups</span>
-              <span className="hidden sm:inline">My Community</span>
-            </Link>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => alert("All Supabase ledger records are in sync.")}
-              className="text-[#5f5e5e] hover:text-[#006d36] transition-colors p-2 rounded-full relative"
-              title="Notifications"
-            >
-              <span className="material-symbols-outlined text-[22px]">notifications</span>
-              <span className="absolute top-1 right-1 w-2 h-2 bg-[#ba1a1a] rounded-full" />
-            </button>
-
-            <div className="flex items-center space-x-3 pl-4 border-l border-[#e2e2e2]">
-              <div className="text-right hidden sm:block">
-                <p className="font-bold text-sm text-[#1a1c1c]">{user.fullName}</p>
-                <p className="text-xs text-[#006d36] font-medium">Emerald Associate</p>
-              </div>
-              <div className="w-10 h-10 rounded-full border-2 border-[#50c878] bg-emerald-100 flex items-center justify-center font-bold text-sm text-[#006d36] shadow-sm">
-                {user.fullName.charAt(0)}
-              </div>
-              <button
-                onClick={handleLogout}
-                className="text-[#ba1a1a] hover:bg-red-50 p-2 rounded-xl transition-colors"
-                title="Logout"
-              >
-                <span className="material-symbols-outlined text-[20px]">logout</span>
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <div className="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full">
-          {/* Welcome Section */}
+    <MemberLayout user={user}>
+      <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-8">
+        {/* Welcome Section */}
           <section className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-extrabold text-[#1a1c1c] mb-1">
@@ -637,8 +505,6 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        </div>
-      </main>
 
       {/* WITHDRAWAL MODAL */}
       {withdrawModalOpen && (
@@ -705,31 +571,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Bottom Navigation (Mobile Only from Stitch) */}
-      <nav className="md:hidden fixed bottom-0 w-full bg-[#f9f9f9]/95 backdrop-blur-md border-t border-[#e2e2e2] flex justify-around items-center h-16 z-40">
-        <Link href="/dashboard" className="flex flex-col items-center justify-center w-full h-full text-[#006d36]">
-          <span className="material-symbols-outlined text-[20px]">dashboard</span>
-          <span className="text-[10px] font-bold mt-0.5">Home</span>
-        </Link>
-        <a href="#network" className="flex flex-col items-center justify-center w-full h-full text-[#5f5e5e] hover:text-[#006d36]">
-          <span className="material-symbols-outlined text-[20px]">group</span>
-          <span className="text-[10px] font-medium mt-0.5">Network</span>
-        </a>
-        <button
-          onClick={() => setWithdrawModalOpen(true)}
-          className="flex flex-col items-center justify-center w-full h-full text-[#5f5e5e] hover:text-[#006d36]"
-        >
-          <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
-          <span className="text-[10px] font-medium mt-0.5">Wallet</span>
-        </button>
-        <button
-          onClick={handleLogout}
-          className="flex flex-col items-center justify-center w-full h-full text-[#ba1a1a]"
-        >
-          <span className="material-symbols-outlined text-[20px]">logout</span>
-          <span className="text-[10px] font-medium mt-0.5">Logout</span>
-        </button>
-      </nav>
-    </div>
+      </main>
+    </MemberLayout>
   );
 }
