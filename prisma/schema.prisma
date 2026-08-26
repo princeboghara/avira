@@ -1,0 +1,120 @@
+// This is your Prisma schema file for Avira MLM platform
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  MEMBER
+  ADMIN
+  LEADER
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+}
+
+enum TransactionType {
+  DIRECT_REFERRAL
+  LEVEL_BONUS
+  MATCHING_BONUS
+  ROI_PAYOUT
+  WITHDRAWAL
+  WELCOME_BONUS
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
+
+model User {
+  id              String         @id @default(cuid())
+  memberId        String         @unique // Unique "AV23900" (AV + 5 random digits)
+  fullName        String
+  mobile          String         @unique
+  passwordHash    String
+  
+  // Sponsor MLM Relationship
+  sponsorId       String?
+  sponsor         User?          @relation("SponsorTree", fields: [sponsorId], references: [memberId])
+  downline        User[]         @relation("SponsorTree")
+  
+  // Address auto-fetched from Postal Pincode
+  pincode         String
+  city            String
+  state           String
+  
+  // Account status & credentials
+  role            Role           @default(MEMBER)
+  status          UserStatus     @default(ACTIVE)
+  
+  // Double-entry ledger balances
+  walletBalance   Decimal        @default(0.00) @db.Decimal(12, 2)
+  totalEarnings   Decimal        @default(0.00) @db.Decimal(12, 2)
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  // Relations
+  refreshTokens   RefreshToken[]
+  transactions    Transaction[]
+  queueJobs       CommissionQueueJob[]
+
+  @@index([memberId])
+  @@index([sponsorId])
+  @@index([mobile])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Transaction {
+  id          String            @id @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        TransactionType
+  amount      Decimal           @db.Decimal(12, 2)
+  description String
+  status      TransactionStatus @default(COMPLETED)
+  referenceId String?
+  createdAt   DateTime          @default(now())
+
+  @@index([userId])
+  @@index([type])
+}
+
+// Model for BullMQ + Redis background processing jobs (Level & Binary commission calculation)
+model CommissionQueueJob {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  jobType     String    // "CALCULATE_BINARY", "DISTRIBUTE_LEVEL_INCOME", "PAY_ROI"
+  payloadJson Json
+  status      String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  attempts    Int       @default(0)
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([status])
+}

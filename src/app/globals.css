@@ -1,26 +1,154 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-primary: #006d36;
+    --color-primary-container: #50c878;
+    --color-on-primary: #ffffff;
+    --color-on-primary-container: #005025;
+    --color-background: #f9f9f9;
+    --color-surface: #f9f9f9;
+    --color-surface-bright: #f9f9f9;
+    --color-surface-container-lowest: #ffffff;
+    --color-surface-container-low: #f3f3f4;
+    --color-surface-container: #eeeeee;
+    --color-surface-container-high: #e8e8e8;
+    --color-surface-container-highest: #e2e2e2;
+    --color-surface-variant: #e2e2e2;
+    --color-on-surface: #1a1c1c;
+    --color-on-surface-variant: #3e4a3f;
+    --color-secondary: #5f5e5e;
+    --color-outline: #6e7a6e;
+    --color-outline-variant: #bdcabc;
+    --color-error: #ba1a1a;
+  }
+
+  body {
+    background-color: #f9f9f9;
+    color: #1a1c1c;
+    font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-heading {
+    font-family: var(--font-montserrat), sans-serif;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Material Symbols Outlined Icon Font */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'liga';
+}
+
+/* Neomorphic & Glassmorphism Utilities from Stitch */
+.neomorphic-btn-primary {
+  background-color: #006d36;
+  color: #ffffff;
+  box-shadow: -4px -4px 10px #ffffff, 4px 4px 10px rgba(80, 200, 120, 0.2);
+  transition: all 0.3s ease;
+}
+
+.neomorphic-btn-primary:hover {
+  box-shadow: -2px -2px 5px #ffffff, 2px 2px 5px rgba(80, 200, 120, 0.3);
+  transform: translateY(-1px);
+}
+
+.neomorphic-btn-primary:active {
+  transform: scale(0.95);
+}
+
+.neomorphic-btn-secondary {
+  background-color: #ffffff;
+  color: #006d36;
+  box-shadow: -4px -4px 10px #ffffff, 4px 4px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.neomorphic-btn-secondary:hover {
+  box-shadow: -2px -2px 5px #ffffff, 2px 2px 5px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.neomorphic-btn-secondary:active {
+  transform: scale(0.95);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 226, 226, 0.6);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.03);
+}
+
+.neo-shadow {
+  box-shadow: -8px -8px 16px #ffffff, 8px 8px 16px rgba(80, 200, 120, 0.1);
+}
+
+.neo-inset {
+  box-shadow: inset -4px -4px 8px #ffffff, inset 4px 4px 8px rgba(80, 200, 120, 0.15);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.neo-base {
+  background: linear-gradient(145deg, #ffffff, #f0f0f0);
+  box-shadow: 12px 12px 24px rgba(80, 200, 120, 0.05), -12px -12px 24px #ffffff;
+}
+
+.glass-overlay {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.neo-input {
+  background: #f9f9f9;
+  box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.05), inset -4px -4px 8px #ffffff;
+  border: 1px solid transparent;
+}
+
+.neo-input:focus {
+  border-color: #006d36;
+  outline: none;
+}
+
+/* Animations */
+@keyframes floatUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.float-in {
+  animation: floatUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.glow-bg {
+  background: radial-gradient(circle at 50% 50%, rgba(80, 200, 120, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
 }

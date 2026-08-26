@@ -1,0 +1,129 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import bcrypt from "bcryptjs";
+import { findUserByMobile, findUserByMemberId, getAllMemberIds, saveUser } from "@/lib/db";
+import { generateMemberId } from "@/lib/memberId";
+import { signAccessToken, signRefreshToken } from "@/lib/jwt";
+import { User } from "@/types";
+
+const registerSchema = z.object({
+  sponsorId: z.string().min(3, "Sponsor ID is required"),
+  fullName: z.string().min(2, "Full Name must be at least 2 characters"),
+  mobile: z.string().regex(/^[6-9]\d{9}$/, "Please enter a valid 10-digit Indian mobile number"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  pincode: z.string().length(6, "Pincode must be 6 digits"),
+  city: z.string().min(2, "City is required"),
+  state: z.string().min(2, "State is required"),
+});
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const validatedData = registerSchema.safeParse(body);
+
+    if (!validatedData.success) {
+      const errorMsg = validatedData.error.issues[0]?.message || "Invalid registration data";
+      return NextResponse.json({ success: false, message: errorMsg }, { status: 400 });
+    }
+
+    const { sponsorId, fullName, mobile, password, pincode, city, state } = validatedData.data;
+
+    // 1. Check if sponsor exists in Supabase PostgreSQL
+    const sponsor = await findUserByMemberId(sponsorId);
+    if (!sponsor) {
+      return NextResponse.json(
+        { success: false, message: `Sponsor ID "${sponsorId}" does not exist in the Avira network.` },
+        { status: 400 }
+      );
+    }
+
+    // 2. Check if mobile already exists in Supabase PostgreSQL
+    const existingMobile = await findUserByMobile(mobile);
+    if (existingMobile) {
+      return NextResponse.json(
+        { success: false, message: `Mobile number ${mobile} is already registered with Member ID ${existingMobile.memberId}.` },
+        { status: 409 }
+      );
+    }
+
+    // 3. Generate Unique 5-Digit Member ID (AV + 5 digits)
+    const existingIds = await getAllMemberIds();
+    const newMemberId = generateMemberId(existingIds);
+
+    // 4. Hash password
+    const salt = bcrypt.genSaltSync(10);
+    const passwordHash = bcrypt.hashSync(password, salt);
+
+    // 5. Create new Member profile
+    const newUser: User = {
+      id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      memberId: newMemberId,
+      fullName: fullName.trim(),
+      mobile: mobile.trim(),
+      passwordHash,
+      sponsorId: sponsor.memberId,
+      sponsorName: sponsor.fullName,
+      pincode: pincode.trim(),
+      city: city.trim(),
+      state: state.trim(),
+      role: "MEMBER",
+      status: "ACTIVE",
+      walletBalance: 500, // Promotional welcome bonus in wallet
+      totalEarnings: 500,
+      directReferralsCount: 0,
+      totalTeamCount: 0,
+      todayEarnings: 500,
+      joinedDate: new Date().toISOString().split("T")[0],
+    };
+
+    // Saves to Supabase PostgreSQL & records welcome bonus transaction
+    await saveUser(newUser);
+
+    // 6. Generate JWT Access & Refresh Tokens
+    const tokenPayload = {
+      userId: newUser.id,
+      memberId: newUser.memberId,
+      role: newUser.role,
+      fullName: newUser.fullName,
+    };
+
+    const accessToken = signAccessToken(tokenPayload);
+    const refreshToken = signRefreshToken(tokenPayload);
+
+    // Strip passwordHash before returning to client
+    const { passwordHash: _, ...safeUser } = newUser;
+
+    const response = NextResponse.json({
+      success: true,
+      message: `Registration successful! Your Unique Member ID is ${newUser.memberId}`,
+      user: safeUser,
+      token: accessToken,
+      refreshToken,
+    });
+
+    // Set secure HTTP-only cookies
+    response.cookies.set("avira_access_token", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 2, // 2 hours
+      sameSite: "lax",
+    });
+
+    response.cookies.set("avira_refresh_token", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      sameSite: "lax",
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Registration error:", error);
+    return NextResponse.json(
+      { success: false, message: "Internal server error during registration." },
+      { status: 500 }
+    );
+  }
+}
