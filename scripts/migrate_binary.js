@@ -42,6 +42,7 @@ async function migrateBinary() {
       );
 
       CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+      ALTER TABLE users DROP CONSTRAINT IF EXISTS users_mobile_key;
     `);
 
     // Ensure root AV00001 has default 1000 PV and 5000 capping

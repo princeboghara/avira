@@ -114,7 +114,7 @@ export default function LoginForm() {
               htmlFor="loginIdentifier"
               className="text-xs text-[#3e4a3f] block ml-1 uppercase tracking-wider font-bold"
             >
-              Member ID or Mobile
+              Member ID (Only) *
             </label>
             <div className="relative">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#5f5e5e]/50 select-none text-[20px]">
@@ -126,10 +126,10 @@ export default function LoginForm() {
                 type="text"
                 autoComplete="username"
                 value={loginIdentifier}
-                onChange={(e) => setLoginIdentifier(e.target.value)}
-                placeholder="e.g. AV23900 or 9988776655"
+                onChange={(e) => setLoginIdentifier(e.target.value.toUpperCase())}
+                placeholder="e.g. AV00001"
                 required
-                className="w-full pl-12 pr-4 py-3 bg-[#f9f9f9] border-none rounded-xl neo-inset text-[#1a1c1c] focus:ring-2 focus:ring-[#50c878]/50 transition-all text-sm font-semibold placeholder-[#5f5e5e]/40 outline-none"
+                className="w-full pl-12 pr-4 py-3 bg-[#f9f9f9] border-none rounded-xl neo-inset text-[#1a1c1c] focus:ring-2 focus:ring-[#006d36] transition-all text-sm font-mono font-bold tracking-wider placeholder-[#5f5e5e]/40 outline-none"
               />
             </div>
           </div>

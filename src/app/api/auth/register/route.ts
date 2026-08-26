@@ -40,19 +40,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Check if mobile already exists in Supabase PostgreSQL
-    const existingMobile = await findUserByMobile(mobile);
-    if (existingMobile) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `Mobile number ${mobile} is already registered with Member ID ${existingMobile.memberId}.`,
-        },
-        { status: 409 }
-      );
-    }
-
-    // 3. Find binary placement spot in chosen leg (LEFT or RIGHT)
+    // 2. Binary placement spot in chosen leg (LEFT or RIGHT)
     const targetLeg = position || "LEFT";
     const binarySpot = await findAvailableBinarySpot(sponsor.memberId, targetLeg);
 

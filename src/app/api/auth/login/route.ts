@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { findUserByIdentifier } from "@/lib/db";
+import { findUserByMemberId } from "@/lib/db";
 import { signAccessToken, signRefreshToken } from "@/lib/jwt";
 
 const loginSchema = z.object({
@@ -21,12 +21,13 @@ export async function POST(request: NextRequest) {
 
     const { loginIdentifier, password } = validatedData.data;
 
-    // Lookup user by Member ID or Mobile in Supabase PostgreSQL
-    const user = await findUserByIdentifier(loginIdentifier);
+    // Lookup user strictly by Member ID only in Supabase PostgreSQL
+    const cleanMemberId = loginIdentifier.trim().toUpperCase();
+    const user = await findUserByMemberId(cleanMemberId);
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: "No account found with this Member ID or Mobile Number." },
+        { success: false, message: `No account found with Member ID "${cleanMemberId}". Please enter your valid 5-digit Member ID (e.g. AV00001).` },
         { status: 401 }
       );
     }
