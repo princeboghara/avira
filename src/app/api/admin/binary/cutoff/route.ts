@@ -1,7 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { runBinaryMatchingCutoff } from "@/lib/binary";
+import { requireAdminSession } from "@/lib/auth";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const auth = await requireAdminSession(req);
+  if (auth.errorResponse) return auth.errorResponse;
+
   try {
     const result = await runBinaryMatchingCutoff();
 

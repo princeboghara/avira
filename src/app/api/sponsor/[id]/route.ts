@@ -10,7 +10,7 @@ export async function GET(
 
   if (!sponsorId) {
     return NextResponse.json(
-      { exists: false, message: "Sponsor ID is required" },
+      { exists: false, message: "Member ID is required" },
       { status: 400 }
     );
   }
@@ -21,16 +21,15 @@ export async function GET(
     return NextResponse.json({
       exists: false,
       memberId: sponsorId,
-      message: "Sponsor ID not found in Avira network",
+      message: "Member ID not found in Avira network",
     });
   }
 
+  // Sanitize: Do NOT leak personal phone number or private physical address to anonymous lookups
   return NextResponse.json({
     exists: true,
     memberId: sponsor.memberId,
     fullName: sponsor.fullName,
     status: sponsor.status,
-    personalPv: sponsor.personalPv,
-    dailyCapping: sponsor.dailyCapping,
   });
 }

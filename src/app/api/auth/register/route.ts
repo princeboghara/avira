@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { findUserByMobile, findUserByMemberId, getAllMemberIds, saveUser } from "@/lib/db";
-import { generateMemberId } from "@/lib/memberId";
+import { findUserByMobile, findUserByMemberId, saveUser } from "@/lib/db";
+import { generateUniqueMemberId } from "@/lib/memberId";
 import { signAccessToken, signRefreshToken } from "@/lib/jwt";
 import { findAvailableBinarySpot } from "@/lib/binary";
 import { User } from "@/types";
@@ -31,7 +31,16 @@ export async function POST(request: NextRequest) {
     const { sponsorId, fullName, mobile, password, pincode, city, state, position } =
       validatedData.data;
 
-    // 1. Check if sponsor exists in Supabase PostgreSQL
+    // 1. Check if mobile number is already registered to avoid unique constraint crash
+    const existingMobileUser = await findUserByMobile(mobile.trim());
+    if (existingMobileUser) {
+      return NextResponse.json(
+        { success: false, message: `Mobile number ${mobile} is already registered with an existing account. Please log in or use a different number.` },
+        { status: 400 }
+      );
+    }
+
+    // 2. Check if sponsor exists in Supabase PostgreSQL
     const sponsor = await findUserByMemberId(sponsorId);
     if (!sponsor) {
       return NextResponse.json(
@@ -40,17 +49,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Binary placement spot in chosen leg (LEFT or RIGHT)
+    // 3. Binary placement spot in chosen leg (LEFT or RIGHT)
     const targetLeg = position || "LEFT";
     const binarySpot = await findAvailableBinarySpot(sponsor.memberId, targetLeg);
 
-    // 4. Generate Unique 5-Digit Member ID (AV + 5 digits)
-    const existingIds = await getAllMemberIds();
-    const newMemberId = generateMemberId(existingIds);
+    // 4. Generate Unique 5-Digit Member ID (AV + 5 digits) via direct collision check
+    const newMemberId = await generateUniqueMemberId();
 
-    // 5. Hash password
-    const salt = bcrypt.genSaltSync(10);
-    const passwordHash = bcrypt.hashSync(password, salt);
+    // 5. Asynchronously hash password without blocking event loop
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
 
     // 6. Create new Member profile with binary attributes
     const newUser: User = {
@@ -67,6 +75,7 @@ export async function POST(request: NextRequest) {
       role: "MEMBER",
       status: "INACTIVE", // Red status (<100 PV)
       walletBalance: 0,
+      rpWallet: 0,
       totalEarnings: 0,
       directReferralsCount: 0,
       totalTeamCount: 0,

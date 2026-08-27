@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
+import { requireAdminSession } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAdminSession(req);
+  if (auth.errorResponse) return auth.errorResponse;
+
   const search = req.nextUrl.searchParams.get("search") || "";
   const client = await pool.connect();
 

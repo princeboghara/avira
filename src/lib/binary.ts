@@ -179,7 +179,9 @@ export async function creditPurchasePV(
   pv: number,
   purchaseType: "ACTIVATION" | "REPURCHASE" = "ACTIVATION",
   packageName: string,
-  amount: number
+  amount: number,
+  items: any[] = [],
+  skipOrderCreation: boolean = false
 ): Promise<{
   newPersonalPv: number;
   newCapping: number;
@@ -193,13 +195,15 @@ export async function creditPurchasePV(
   try {
     await client.query("BEGIN");
 
-    // 1. Create order record
-    const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    await client.query(
-      `INSERT INTO orders (id, user_id, purchase_type, package_name, amount, pv)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [orderId, userId, purchaseType, packageName, amount, pv]
-    );
+    // 1. Create order record only if not skipped (prevents duplicate orders)
+    if (!skipOrderCreation) {
+      const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      await client.query(
+        `INSERT INTO orders (id, user_id, purchase_type, package_name, amount, pv, items, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [orderId, userId, purchaseType, packageName, amount, pv, JSON.stringify(items), "APPROVED"]
+      );
+    }
 
     // 2. Update user's personal_pv and daily_capping
     const userRes = await client.query(
@@ -337,7 +341,7 @@ export async function runBinaryMatchingCutoff(): Promise<{
              carry_right_pv = $2,
              wallet_balance = wallet_balance + $3,
              total_earnings = total_earnings + $3,
-             today_earnings = $3,
+             today_earnings = today_earnings + $3,
              updated_at = NOW()
          WHERE id = $4`,
         [carryLeft, carryRight, finalPayout, row.id]

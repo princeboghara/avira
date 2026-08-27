@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { findUserByMemberId, pool } from "@/lib/db";
+import { findUserByMemberId, findUserByIdentifier, pool } from "@/lib/db";
 import { signAccessToken, signRefreshToken } from "@/lib/jwt";
 
 const adminLoginSchema = z.object({
@@ -19,40 +19,64 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: errorMsg }, { status: 400 });
     }
 
-    const { password } = result.data;
+    const { password, loginIdentifier } = result.data;
 
-    // Direct Master Admin Password check or root account AV00001 check
-    let user = await findUserByMemberId("AV00001");
+    let user = null;
 
-    if (!user) {
-      // Fallback: lookup any user with role = 'ADMIN'
-      const client = await pool.connect();
-      try {
-        const res = await client.query(
-          "SELECT member_id FROM users WHERE role = 'ADMIN' ORDER BY created_at ASC LIMIT 1"
-        );
-        if (res.rows.length > 0) {
-          user = await findUserByMemberId(res.rows[0].member_id);
+    if (loginIdentifier && loginIdentifier.trim()) {
+      user = await findUserByIdentifier(loginIdentifier.trim());
+    } else {
+      user = await findUserByMemberId("AV00001");
+      if (!user) {
+        // Fallback: lookup earliest user with role = 'ADMIN'
+        const client = await pool.connect();
+        try {
+          const res = await client.query(
+            "SELECT member_id FROM users WHERE role = 'ADMIN' ORDER BY created_at ASC LIMIT 1"
+          );
+          if (res.rows.length > 0) {
+            user = await findUserByMemberId(res.rows[0].member_id);
+          }
+        } finally {
+          client.release();
         }
-      } finally {
-        client.release();
       }
     }
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: "No Master Administrator account found in system." },
+        { success: false, message: "No Administrator account found with the specified identifier." },
         { status: 404 }
       );
     }
 
-    // Verify Master Password: either matches "admin123" directly or bcrypt matches hash
-    const isMasterMatch =
-      password === "admin123" || (user.passwordHash && bcrypt.compareSync(password, user.passwordHash));
-
-    if (!isMasterMatch) {
+    if (user.role !== "ADMIN") {
       return NextResponse.json(
-        { success: false, message: "Incorrect Master Administrator Password." },
+        { success: false, message: "Access denied. Account does not possess Administrator privileges." },
+        { status: 403 }
+      );
+    }
+
+    if (user.status === "BLOCKED") {
+      return NextResponse.json(
+        { success: false, message: "Administrator account is suspended. Contact system director." },
+        { status: 403 }
+      );
+    }
+
+    // Verify Password using asynchronous bcrypt
+    if (!user.passwordHash) {
+      return NextResponse.json(
+        { success: false, message: "Account has no password configured. Please contact administrator." },
+        { status: 401 }
+      );
+    }
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+
+    if (!isMatch) {
+      return NextResponse.json(
+        { success: false, message: "Incorrect Administrator Password." },
         { status: 401 }
       );
     }
@@ -85,7 +109,7 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({
       success: true,
-      message: `Welcome, Master Administrator (${user.fullName})`,
+      message: `Welcome, Administrator (${user.fullName})`,
       user: safeUser,
       token: accessToken,
     });

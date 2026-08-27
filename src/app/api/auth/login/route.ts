@@ -39,9 +39,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify Password
+    // Verify Password asynchronously to avoid blocking Node.js event loop
     const isPasswordValid = user.passwordHash
-      ? bcrypt.compareSync(password, user.passwordHash)
+      ? await bcrypt.compare(password, user.passwordHash)
       : false;
 
     if (!isPasswordValid) {

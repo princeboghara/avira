@@ -2,57 +2,54 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, Search, ArrowLeft } from "lucide-react";
-import BinaryGenealogyTree from "@/components/dashboard/BinaryGenealogyTree";
-import { BinaryTreeNode, User } from "@/types";
+import {
+  Loader2,
+  Search,
+  ArrowLeft,
+  RotateCcw,
+  Sparkles,
+} from "lucide-react";
+import BinaryGenealogyTree, { TreeNode } from "@/components/dashboard/BinaryGenealogyTree";
 import MemberLayout from "@/components/dashboard/MemberLayout";
 
 export default function TreeViewPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [tree, setTree] = useState<BinaryTreeNode | null>(null);
+  const [tree, setTree] = useState<TreeNode | null>(null);
   const [searchId, setSearchId] = useState("");
   const [currentRootId, setCurrentRootId] = useState<string>("");
+  const [myMemberId, setMyMemberId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  useEffect(() => {
-    async function init() {
-      try {
-        const meRes = await fetch("/api/auth/me");
-        const meData = await meRes.json();
-        if (meData.success && meData.user) {
-          setUser(meData.user);
-          setCurrentRootId(meData.user.memberId);
-          await loadTree(meData.user.memberId);
-        }
-      } catch (err) {
-        console.error("Init error:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    init();
-  }, []);
-
-  const loadTree = async (memberId: string) => {
+  const loadTree = async (memberId?: string) => {
     setSearching(true);
     setErrorMsg("");
     try {
-      const res = await fetch(`/api/binary/tree/${memberId}`);
+      const url = memberId
+        ? `/api/member/tree?root=${encodeURIComponent(memberId)}`
+        : "/api/member/tree";
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success && data.tree) {
         setTree(data.tree);
-        setCurrentRootId(memberId);
+        setCurrentRootId(data.tree.memberId);
+        if (!myMemberId && !memberId) {
+          setMyMemberId(data.tree.memberId);
+        }
       } else {
-        setErrorMsg(data.message || "Member tree not found.");
+        setErrorMsg(data.message || "Associate tree not found.");
       }
     } catch {
-      setErrorMsg("Network error fetching tree hierarchy.");
+      setErrorMsg("Network error fetching binary tree.");
     } finally {
+      setLoading(false);
       setSearching(false);
     }
   };
+
+  useEffect(() => {
+    loadTree();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,87 +59,96 @@ export default function TreeViewPage() {
   };
 
   const handleResetToSelf = () => {
-    if (user) {
-      setSearchId("");
-      loadTree(user.memberId);
+    setSearchId("");
+    if (myMemberId) {
+      loadTree(myMemberId);
+    } else {
+      loadTree();
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f9f9f9] flex flex-col items-center justify-center font-sans">
-        <Loader2 className="w-10 h-10 animate-spin text-[#006d36] mb-3" />
-        <span className="text-sm font-bold text-[#006d36]">Loading Binary Genealogy Tree...</span>
-      </div>
+      <MemberLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-[#006d36]">
+          <Loader2 className="w-8 h-8 animate-spin mb-2" />
+          <span className="text-xs font-bold">Loading Binary Tree...</span>
+        </div>
+      </MemberLayout>
     );
   }
 
   return (
-    <MemberLayout user={user}>
-      {/* Sub Header */}
-      <div className="h-16 bg-white border-b border-[#e2e2e2] sticky top-0 z-30 px-6 max-w-7xl w-full mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard"
-            className="p-2 rounded-xl border border-[#e2e2e2] hover:bg-[#f9f9f9] text-[#5f5e5e] transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
+    <MemberLayout>
+      <div className="space-y-6 animate-fadeIn max-w-7xl mx-auto pb-12">
+        {/* Top Header & Search Bar */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-black text-[#1a1c1c]">Binary Genealogy Tree</h1>
-            <span className="text-xs text-[#5f5e5e]">
-              Viewing Downline of: <strong className="font-mono text-[#006d36]">{currentRootId}</strong>
-            </span>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-[#006d36] font-mono text-[10px] font-black uppercase tracking-wider">
+                My Community
+              </span>
+              <span className="text-xs text-[#5f5e5e] font-medium">
+                3. My Tree (Binary Hierarchy)
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#1a1c1c] tracking-tight">
+              Interactive Binary Genealogy Tree
+            </h1>
+            <p className="text-xs text-[#5f5e5e] mt-1">
+              Rooted at Associate: <strong className="font-mono text-[#006d36]">{currentRootId}</strong>. Hover any node to view PV matching and credentials.
+            </p>
           </div>
+
+          {/* Search Downline ID Form */}
+          <form onSubmit={handleSearch} className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search Downline ID..."
+                value={searchId}
+                onChange={(e) => setSearchId(e.target.value.toUpperCase())}
+                className="w-48 sm:w-56 bg-[#f9f9f9] border border-[#e2e2e2] rounded-xl py-2.5 pl-10 pr-3 font-mono font-bold text-xs text-[#1a1c1c] uppercase outline-none focus:border-[#006d36]"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={searching}
+              className="px-4 py-2.5 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs cursor-pointer shadow-xs disabled:opacity-60"
+            >
+              {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : "View"}
+            </button>
+
+            {currentRootId !== myMemberId && (
+              <button
+                type="button"
+                onClick={handleResetToSelf}
+                className="p-2.5 rounded-xl border border-[#e2e2e2] text-[#5f5e5e] hover:bg-emerald-50 hover:text-[#006d36] cursor-pointer transition-colors"
+                title="Reset Tree to My Root"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            )}
+          </form>
         </div>
 
-        {/* Tree Search Box */}
-        <form onSubmit={handleSearch} className="flex items-center gap-2">
-          <div className="relative w-48 sm:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#5f5e5e]/50" />
-            <input
-              type="text"
-              placeholder="Search Member ID (AVxxxxx)..."
-              value={searchId}
-              onChange={(e) => setSearchId(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-xs bg-[#f9f9f9] border border-[#e2e2e2] rounded-xl focus:ring-1 focus:ring-[#006d36] outline-none font-mono"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={searching}
-            className="px-4 py-2 bg-[#006d36] hover:bg-[#005025] text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50"
-          >
-            {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Explore"}
-          </button>
-          {user && currentRootId !== user.memberId && (
-            <button
-              type="button"
-              onClick={handleResetToSelf}
-              className="px-3 py-2 border border-[#006d36] text-[#006d36] text-xs font-bold rounded-xl hover:bg-emerald-50 transition-colors"
-            >
-              My Root
-            </button>
-          )}
-        </form>
-      </div>
-
-      {/* Main Tree Canvas */}
-      <main className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Error Notification */}
         {errorMsg && (
-          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
+          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold">
             {errorMsg}
           </div>
         )}
 
-        {tree ? (
-          <BinaryGenealogyTree rootNode={tree} />
-        ) : (
-          <div className="text-center py-12 bg-white rounded-3xl border border-[#e2e2e2]">
-            <p className="text-sm text-[#5f5e5e]">No tree found for this member ID.</p>
-          </div>
+        {/* Visual Binary Tree Canvas */}
+        {tree && (
+          <BinaryGenealogyTree
+            rootNode={tree}
+            onSelectRootId={(id) => loadTree(id)}
+          />
         )}
-      </main>
+      </div>
     </MemberLayout>
   );
 }

@@ -1,7 +1,28 @@
 import jwt from "jsonwebtoken";
 
-const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || "avira_mlm_emerald_secret_key_2026_x789";
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "avira_mlm_refresh_secret_key_2026_r456";
+const isProduction = process.env.NODE_ENV === "production";
+
+function getAccessSecret(): string {
+  const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET;
+  if (!secret) {
+    if (isProduction) {
+      throw new Error("CRITICAL SECURITY ERROR: JWT_ACCESS_SECRET is not configured in production environment.");
+    }
+    return "dev_avira_mlm_access_secret_key_2026_x789";
+  }
+  return secret;
+}
+
+function getRefreshSecret(): string {
+  const secret = process.env.JWT_REFRESH_SECRET;
+  if (!secret) {
+    if (isProduction) {
+      throw new Error("CRITICAL SECURITY ERROR: JWT_REFRESH_SECRET is not configured in production environment.");
+    }
+    return "dev_avira_mlm_refresh_secret_key_2026_r456";
+  }
+  return secret;
+}
 
 export interface TokenPayload {
   userId: string;
@@ -11,28 +32,30 @@ export interface TokenPayload {
 }
 
 export function signAccessToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_ACCESS_SECRET, {
+  return jwt.sign(payload, getAccessSecret(), {
     expiresIn: "2h",
   });
 }
 
 export function signRefreshToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_REFRESH_SECRET, {
+  return jwt.sign(payload, getRefreshSecret(), {
     expiresIn: "30d",
   });
 }
 
 export function verifyAccessToken(token: string): TokenPayload | null {
+  if (!token) return null;
   try {
-    return jwt.verify(token, JWT_ACCESS_SECRET) as TokenPayload;
+    return jwt.verify(token, getAccessSecret()) as TokenPayload;
   } catch {
     return null;
   }
 }
 
 export function verifyRefreshToken(token: string): TokenPayload | null {
+  if (!token) return null;
   try {
-    return jwt.verify(token, JWT_REFRESH_SECRET) as TokenPayload;
+    return jwt.verify(token, getRefreshSecret()) as TokenPayload;
   } catch {
     return null;
   }

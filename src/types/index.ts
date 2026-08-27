@@ -9,9 +9,11 @@ export interface User {
   pincode: string;
   city: string;
   state: string;
+  address?: string;
   role: 'MEMBER' | 'ADMIN';
   status: 'ACTIVE' | 'PENDING' | 'BLOCKED' | 'INACTIVE';
   walletBalance: number;
+  rpWallet: number; // 2% Repurchase Wallet from Binary Income
   totalEarnings: number;
   directReferralsCount: number;
   totalTeamCount: number;
@@ -30,6 +32,34 @@ export interface User {
   leftChildId?: string | null;
   rightChildId?: string | null;
   dailyCapping: number; // 1000, 2000, 3000, 5000
+
+  // KYC and Banking Fields
+  email?: string;
+  gstNumber?: string;
+  panNumber?: string;
+  aadhaarNumber?: string;
+  aadhaarName?: string;
+  aadhaarFrontUrl?: string;
+  aadhaarBackUrl?: string;
+  panCardUrl?: string;
+  bankProofUrl?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  ifscCode?: string;
+  upiId?: string;
+  nomineeName?: string;
+  nomineeRelation?: string;
+  kycDocumentUrl?: string;
+  kycStatus?: 'NOT_SUBMITTED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
+  aadhaarStatus?: 'NOT_SUBMITTED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
+  panStatus?: 'NOT_SUBMITTED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
+  bankStatus?: 'NOT_SUBMITTED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
+  aadhaarRejectionReason?: string;
+  panRejectionReason?: string;
+  bankRejectionReason?: string;
+  kycSubmittedAt?: string;
+  kycVerifiedAt?: string;
+  kycRejectionReason?: string;
 }
 
 export interface BinaryTreeNode {
@@ -89,18 +119,95 @@ export interface Transaction {
   id: string;
   userId: string;
   type: 'DIRECT_REFERRAL' | 'LEVEL_BONUS' | 'BINARY_MATCHING' | 'WITHDRAWAL' | 'WELCOME_BONUS';
-  amount: number;
+  amount: number; // Gross amount
+  tdsAmount?: number; // 3% TDS
+  adminCharge?: number; // 8% Admin Fee
+  rpWalletAmount?: number; // 2% Repurchase Wallet
+  netAmount?: number; // Net paid to wallet (87%)
   description: string;
   status: 'COMPLETED' | 'PENDING' | 'PROCESSING';
   date: string;
 }
 
+export interface SupportTicket {
+  id: string;
+  userId: string;
+  memberId: string;
+  fullName: string;
+  mobile?: string;
+  subject: string;
+  category: string;
+  message: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED';
+  adminResponse?: string;
+  createdAt: string;
+  resolvedAt?: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  itemCount?: number;
+  createdAt?: string;
+}
+
+export interface HsnCode {
+  id: string;
+  hsnCode: string;
+  sgst: number;
+  cgst: number;
+  igst: number;
+  description?: string;
+  createdAt?: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  categoryId?: string;
+  category: string;
+  hsnCode?: string;
+  description?: string;
+  netQuantity: string;
+  stockQuantity?: number; // Available inventory stock units
+  mrp: number; // Maximum Retail Price in INR
+  discountPrice?: number; // Offer / Associate DP Price in INR
+  pv: number;  // Point Value (e.g. 12 PV)
+  imageUrl?: string;
+  tag?: string;
+  inStock: boolean;
+  imageIcon?: string;
+  createdAt?: string;
+}
+
+export interface OrderItem {
+  productId: string;
+  name: string;
+  quantity: number;
+  mrp: number;
+  pv: number;
+  subtotalMrp: number;
+  subtotalPv: number;
+}
+
 export interface Order {
   id: string;
   userId: string;
+  memberId?: string;
+  date?: string;
+  billedBy?: string;
+  customerName?: string;
+  customerMobile?: string;
+  shippingAddress?: string;
+  transactionId?: string;
+  paymentSlip?: string;
+  rejectionReason?: string;
   purchaseType: 'ACTIVATION' | 'REPURCHASE';
   packageName: string;
   amount: number;
   pv: number;
+  items?: OrderItem[];
+  status?: string;
   createdAt: string;
 }

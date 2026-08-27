@@ -2,406 +2,335 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  Loader2,
-  ArrowLeft,
-  CheckCircle2,
-  AlertCircle,
-  Zap,
   ShoppingBag,
-  UserCheck,
+  Plus,
+  Minus,
+  Sparkles,
+  CheckCircle2,
+  Package,
+  ArrowRight,
+  Loader2,
 } from "lucide-react";
-import { User } from "@/types";
 import MemberLayout from "@/components/dashboard/MemberLayout";
+import { Product, User } from "@/types";
 
-const PACKAGES = [
-  {
-    id: "pkg_100",
-    name: "100 PV Starter Kit",
-    amount: 1000,
-    pv: 100,
-    capping: 1000,
-    description: "Foundational Cellular Wellness Pack. Unlocks ₹1,000 daily matching limit.",
-    tag: "100 PV • ₹1,000 / day Cap",
-  },
-  {
-    id: "pkg_250",
-    name: "250 PV Executive Kit",
-    amount: 2500,
-    pv: 250,
-    capping: 2000,
-    description: "Complete Nutritional & Skin Vitality Pack. Elevates daily cap to ₹2,000 / day.",
-    tag: "250 PV • ₹2,000 / day Cap",
-  },
-  {
-    id: "pkg_500",
-    name: "500 PV Premium Leader Kit",
-    amount: 5000,
-    pv: 500,
-    capping: 3000,
-    description: "Comprehensive Wellness & Aromatherapy Collection. Upgrades cap to ₹3,000 / day.",
-    tag: "500 PV • ₹3,000 / day Cap",
-  },
-  {
-    id: "pkg_1000",
-    name: "1000 PV Royal Elite Kit",
-    amount: 10000,
-    pv: 1000,
-    capping: 5000,
-    description: "Full Avira Lifestyle & Luxury Diffuser Suite. Maximum ₹5,000 / day capping.",
-    tag: "1000 PV • ₹5,000 / day Cap",
-  },
-];
+interface CartItem {
+  product: Product;
+  quantity: number;
+}
 
-export default function StorePage() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+export default function MemberCreateOrderShowcasePage() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [addedToast, setAddedToast] = useState<string | null>(null);
 
-  // Target Member for Activation
-  const [targetMemberId, setTargetMemberId] = useState("");
-  const [targetMemberName, setTargetMemberName] = useState<string | null>(null);
-  const [targetMemberPv, setTargetMemberPv] = useState<number>(0);
-  const [targetMemberCapping, setTargetMemberCapping] = useState<number>(0);
-  const [isVerifyingMember, setIsVerifyingMember] = useState(false);
-  const [memberError, setMemberError] = useState("");
-
-  const [buyingId, setBuyingId] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState("");
-
-  // Load current user
-  const loadUser = async () => {
-    try {
-      const res = await fetch("/api/auth/me");
-      const data = await res.json();
-      if (data.success && data.user) {
-        setCurrentUser(data.user);
-        if (!targetMemberId) {
-          setTargetMemberId(data.user.memberId);
-        }
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Load User & Cart from localStorage
   useEffect(() => {
-    loadUser();
-  }, []);
-
-  // Live Member ID Verification & Name Fetch
-  useEffect(() => {
-    const cleanId = targetMemberId.trim().toUpperCase();
-    if (!cleanId || cleanId.length < 3) {
-      setTargetMemberName(null);
-      setMemberError("");
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setIsVerifyingMember(true);
-      setMemberError("");
+    async function loadData() {
       try {
-        const res = await fetch(`/api/sponsor/${cleanId}`);
-        const data = await res.json();
+        const [userData, prodData] = await Promise.all([
+          fetch("/api/auth/me").then((r) => r.json()).catch(() => null),
+          fetch("/api/products", { cache: "no-store" }).then((r) => r.json()).catch(() => null),
+        ]);
 
-        if (data.exists) {
-          setTargetMemberName(data.fullName);
-          setTargetMemberPv(data.personalPv || 0);
-          setTargetMemberCapping(data.dailyCapping || 0);
-        } else {
-          setTargetMemberName(null);
-          setMemberError(`Member ID "${cleanId}" not found in Avira network.`);
+        if (userData?.success && userData.user) {
+          setUser(userData.user);
+        }
+
+        if (prodData?.success && Array.isArray(prodData.products)) {
+          setProducts(prodData.products);
+        }
+      } catch (err) {
+        console.error("Error loading products:", err);
+      } finally {
+        setLoading(false);
+      }
+
+      try {
+        const saved = localStorage.getItem("aviracare_cart");
+        if (saved) {
+          setCart(JSON.parse(saved));
         }
       } catch {
-        setTargetMemberName(null);
-        setMemberError("Error verifying Member ID.");
-      } finally {
-        setIsVerifyingMember(false);
+        // ignore parse error
       }
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [targetMemberId]);
-
-  const handlePurchase = async (pkg: (typeof PACKAGES)[0]) => {
-    const cleanId = targetMemberId.trim().toUpperCase();
-
-    if (!cleanId || !targetMemberName) {
-      alert("Please enter a valid Member ID before activating package.");
-      return;
     }
+    loadData();
+  }, []);
 
-    setBuyingId(pkg.id);
-    setSuccessMessage("");
-
+  const saveCart = (newCart: CartItem[]) => {
+    setCart(newCart);
     try {
-      const res = await fetch("/api/products/purchase", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          memberId: cleanId,
-          packageName: pkg.name,
-          amount: pkg.amount,
-          pv: pkg.pv,
-          purchaseType: "ACTIVATION",
-        }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        setSuccessMessage(data.message);
-        // Refresh target member stats
-        setTargetMemberPv((prev) => prev + pkg.pv);
-        const newCap =
-          targetMemberPv + pkg.pv >= 1000
-            ? 5000
-            : targetMemberPv + pkg.pv >= 500
-            ? 3000
-            : targetMemberPv + pkg.pv >= 250
-            ? 2000
-            : 1000;
-        setTargetMemberCapping(newCap);
-        await loadUser(); // Reload logged-in stats
-      } else {
-        alert(data.message || "Activation failed.");
-      }
+      localStorage.setItem("aviracare_cart", JSON.stringify(newCart));
     } catch {
-      alert("Network error processing activation.");
-    } finally {
-      setBuyingId(null);
+      // ignore
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f9f9f9] flex flex-col items-center justify-center font-sans">
-        <Loader2 className="w-10 h-10 animate-spin text-[#006d36] mb-3" />
-        <span className="text-sm font-bold text-[#006d36]">Loading Activation Store...</span>
-      </div>
-    );
-  }
+  const categories = ["ALL", ...Array.from(new Set(products.map((p) => p.category)))];
 
-  const isTargetActive = targetMemberPv >= 100;
+  const filteredProducts = products.filter((p) => {
+    if (selectedCategory === "ALL") return true;
+    return p.category === selectedCategory;
+  });
+
+  const getItemQuantity = (productId: string) => {
+    const found = cart.find((it) => it.product.id === productId);
+    return found ? found.quantity : 0;
+  };
+
+  const handleAddToCart = (product: Product, qty: number = 1) => {
+    const existing = cart.find((it) => it.product.id === product.id);
+    let updated: CartItem[];
+    if (existing) {
+      updated = cart.map((it) =>
+        it.product.id === product.id ? { ...it, quantity: it.quantity + qty } : it
+      );
+    } else {
+      updated = [...cart, { product, quantity: qty }];
+    }
+    saveCart(updated);
+
+    setAddedToast(`Added ${product.name} to cart!`);
+    setTimeout(() => setAddedToast(null), 2500);
+  };
+
+  const handleUpdateQuantity = (productId: string, newQty: number) => {
+    let updated: CartItem[];
+    if (newQty <= 0) {
+      updated = cart.filter((it) => it.product.id !== productId);
+    } else {
+      updated = cart.map((it) =>
+        it.product.id === productId ? { ...it, quantity: newQty } : it
+      );
+    }
+    saveCart(updated);
+  };
+
+  const totalCartAmount = cart.reduce(
+    (sum, it) => sum + (it.product.discountPrice || it.product.mrp) * it.quantity,
+    0
+  );
+  const totalCartPv = cart.reduce((sum, it) => sum + it.product.pv * it.quantity, 0);
+  const totalItemsCount = cart.reduce((sum, it) => sum + it.quantity, 0);
 
   return (
-    <MemberLayout user={currentUser}>
-      {/* Main Activation Section */}
-      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 w-full">
-        {/* Step 1: Member ID Input with Live Name Fetch */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-sm space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-[#006d36] flex items-center justify-center">
-              <UserCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-black text-[#1a1c1c]">
-                Select Member to Activate Package
-              </h2>
-              <p className="text-xs text-[#5f5e5e]">
-                Type your own Member ID or any downline associate ID. The system automatically fetches their name and current status.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            <div>
-              <label
-                htmlFor="targetMemberInput"
-                className="block text-xs font-bold text-[#1a1c1c] uppercase tracking-wider mb-1.5"
-              >
-                Member ID (AVxxxxx) *
-              </label>
-              <div className="relative">
-                <input
-                  id="targetMemberInput"
-                  type="text"
-                  placeholder="e.g. AV00001 or AV95608"
-                  value={targetMemberId}
-                  onChange={(e) => setTargetMemberId(e.target.value.toUpperCase())}
-                  className="w-full bg-[#f9f9f9] border border-[#e2e2e2] rounded-xl py-3 pl-4 pr-10 text-sm font-mono font-black text-[#1a1c1c] focus:border-[#006d36] focus:ring-1 focus:ring-[#006d36] outline-none"
-                />
-                <div className="absolute right-3 top-3">
-                  {isVerifyingMember && <Loader2 className="w-5 h-5 text-[#006d36] animate-spin" />}
-                  {!isVerifyingMember && targetMemberName && (
-                    <CheckCircle2 className="w-5 h-5 text-[#006d36]" />
-                  )}
-                  {!isVerifyingMember && memberError && (
-                    <AlertCircle className="w-5 h-5 text-red-500" />
-                  )}
-                </div>
-              </div>
-              {memberError && (
-                <p className="text-xs text-red-600 font-semibold mt-1.5">{memberError}</p>
-              )}
-            </div>
-
-            {/* Target Member Verified Status Card */}
-            <div>
-              <label className="block text-xs font-bold text-[#1a1c1c] uppercase tracking-wider mb-1.5">
-                Verified Associate Profile
-              </label>
-              <div
-                className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
-                  targetMemberName
-                    ? isTargetActive
-                      ? "bg-emerald-50/70 border-emerald-300"
-                      : "bg-red-50/70 border-red-200"
-                    : "bg-[#f9f9f9] border-[#e2e2e2] text-[#5f5e5e]"
-                }`}
-              >
-                {targetMemberName ? (
-                  <>
-                    <div>
-                      <span className="font-extrabold text-sm text-[#1a1c1c] block">
-                        {targetMemberName}
-                      </span>
-                      <span className="text-[11px] text-[#5f5e5e]">
-                        Current PV: <strong className="text-[#006d36]">{targetMemberPv} PV</strong> •{" "}
-                        Daily Cap:{" "}
-                        <strong className={isTargetActive ? "text-[#006d36]" : "text-red-600"}>
-                          ₹{targetMemberCapping.toLocaleString()} / day
-                        </strong>
-                      </span>
-                    </div>
-
-                    <span
-                      className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
-                        isTargetActive
-                          ? "bg-emerald-100 text-[#006d36] border-emerald-300"
-                          : "bg-red-100 text-red-700 border-red-300"
-                      }`}
-                    >
-                      {isTargetActive ? "ACTIVE (Green)" : "INACTIVE (Red / <100 PV)"}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-xs text-[#5f5e5e] italic py-2">
-                    Enter Member ID on the left to verify account...
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {successMessage && (
-          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-sm animate-fadeIn">
-            <CheckCircle2 className="w-5 h-5 text-[#006d36] flex-shrink-0" />
-            <span>{successMessage}</span>
+    <MemberLayout user={user}>
+      <div className="space-y-6 animate-fadeIn max-w-7xl mx-auto pb-12">
+        {/* Toast Notification */}
+        {addedToast && (
+          <div className="fixed bottom-6 right-6 z-50 bg-[#006d36] text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 font-bold text-xs animate-slideUp">
+            <CheckCircle2 className="w-4 h-4 text-[#50c878]" />
+            <span>{addedToast}</span>
           </div>
         )}
 
-        {/* Step 2: Available Activation Packages */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-black text-[#1a1c1c]">Available Activation Packages</h2>
-              <p className="text-xs text-[#5f5e5e]">
-                Select package to add PV. Minimum 100 PV turns ID Active (Green) and unlocks ₹1,000 daily capping limit.
-              </p>
+        {/* Top Sticky Showcase Banner with View Cart Button */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-20 z-30 backdrop-blur-md bg-white/95">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-[#006d36] font-mono text-[10px] font-black uppercase tracking-wider">
+                Shopping Portal
+              </span>
+              <span className="text-xs text-[#5f5e5e] font-medium">
+                1. Create New Order
+              </span>
             </div>
-            <span className="text-xs font-bold text-[#006d36] bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
-              1 PV = ₹1
-            </span>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#1a1c1c] tracking-tight">
+              Product Showcase Catalog
+            </h1>
+            <p className="text-xs text-[#5f5e5e] mt-1">
+              Select wellness products, adjust quantities, and click &quot;View Cart&quot; to checkout.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {PACKAGES.map((pkg) => {
-              const isBuying = buyingId === pkg.id;
+          {/* View Cart & Checkout Button */}
+          <Link
+            href="/dashboard/cart"
+            className="px-6 py-3.5 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs flex items-center gap-2.5 shadow-md shadow-[#006d36]/20 transition-all cursor-pointer group self-start sm:self-auto"
+          >
+            <ShoppingBag className="w-4 h-4 text-[#50c878] group-hover:scale-110 transition-transform" />
+            <span>View Cart & Checkout</span>
+            {totalItemsCount > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-white/20 text-white font-mono text-[11px] font-black">
+                {totalItemsCount} • ₹{totalCartAmount.toLocaleString("en-IN")}
+              </span>
+            )}
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </div>
+
+        {/* Category Filter Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                selectedCategory === cat
+                  ? "bg-[#006d36] text-white shadow-xs"
+                  : "bg-white border border-[#e2e2e2] text-[#5f5e5e] hover:text-[#1a1c1c] hover:border-emerald-300"
+              }`}
+            >
+              {cat === "ALL" ? "All Products" : cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Products Showcase Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((n) => (
+              <div
+                key={n}
+                className="bg-white rounded-3xl p-5 border border-[#e2e2e2] animate-pulse space-y-4"
+              >
+                <div className="w-full aspect-square bg-[#f0f0f0] rounded-2xl" />
+                <div className="h-4 bg-[#f0f0f0] rounded w-3/4" />
+                <div className="h-3 bg-[#f0f0f0] rounded w-1/2" />
+                <div className="h-8 bg-[#f0f0f0] rounded-xl w-full" />
+              </div>
+            ))}
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="bg-white rounded-3xl p-12 border border-[#e2e2e2] text-center space-y-3">
+            <Package className="w-12 h-12 text-[#5f5e5e]/40 mx-auto" />
+            <h3 className="text-lg font-bold text-[#1a1c1c]">No Products Available</h3>
+            <p className="text-xs text-[#5f5e5e] max-w-sm mx-auto">
+              There are currently no products available in this category.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filteredProducts.map((p) => {
+              const inCartQty = getItemQuantity(p.id);
+              const sellingPrice = p.discountPrice || p.mrp;
+
               return (
                 <div
-                  key={pkg.id}
-                  className="bg-white rounded-3xl p-6 border border-[#e2e2e2] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative group hover:border-[#006d36]"
+                  key={p.id}
+                  className="bg-white rounded-3xl p-5 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-lg transition-all flex flex-col justify-between group"
                 >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-extrabold uppercase tracking-widest bg-emerald-50 text-[#006d36] px-2.5 py-1 rounded-full border border-emerald-200">
-                        {pkg.tag}
-                      </span>
-                      <span className="text-xs font-mono font-black text-[#006d36]">
-                        {pkg.pv} PV
-                      </span>
-                    </div>
-
-                    <div>
-                      <h3 className="text-xl font-extrabold text-[#1a1c1c]">{pkg.name}</h3>
-                      <p className="text-xs text-[#5f5e5e] mt-1 leading-relaxed">
-                        {pkg.description}
-                      </p>
-                    </div>
-
-                    <div className="p-3 bg-[#f9f9f9] rounded-xl border border-[#e2e2e2] space-y-1">
-                      <div className="text-[10px] text-[#5f5e5e] uppercase tracking-wider font-bold">
-                        Unlocks Daily Binary Limit
-                      </div>
-                      <div className="text-base font-mono font-black text-[#006d36]">
-                        ₹{pkg.capping.toLocaleString()} / day
+                  <div>
+                    {/* Product Image & PV Badge */}
+                    <div className="relative w-full aspect-square bg-[#f9f9f9] rounded-2xl p-4 flex items-center justify-center border border-[#e2e2e2]/60 overflow-hidden mb-4">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={p.imageUrl || "/images/hero-products.webp"}
+                        alt={p.name}
+                        className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-[#006d36] text-white font-mono font-black text-[10px] shadow-xs flex items-center gap-1">
+                        <Sparkles className="w-2.5 h-2.5 text-[#50c878]" />
+                        <span>+{p.pv} PV</span>
                       </div>
                     </div>
+
+                    {/* Product Details */}
+                    <span className="text-[10px] uppercase font-bold text-[#006d36] tracking-wider block">
+                      {p.category}
+                    </span>
+                    <h3 className="font-bold text-base text-[#1a1c1c] leading-tight line-clamp-1 mt-0.5">
+                      {p.name}
+                    </h3>
+                    <p className="text-[11px] text-[#5f5e5e] line-clamp-2 mt-1 min-h-[32px]">
+                      {p.description || "Natural wellness supplement engineered for cellular purity."}
+                    </p>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-[#e2e2e2] space-y-3">
-                    <div className="flex items-baseline justify-between">
-                      <span className="text-xs text-[#5f5e5e]">Amount</span>
-                      <span className="text-2xl font-mono font-black text-[#1a1c1c]">
-                        ₹{pkg.amount.toLocaleString()}
+                  {/* Pricing and Cart Actions */}
+                  <div className="pt-4 mt-2 border-t border-[#f0f0f0] flex items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-lg font-black text-[#1a1c1c] font-mono">
+                          ₹{sellingPrice}
+                        </span>
+                        {p.mrp > sellingPrice && (
+                          <span className="text-xs text-[#5f5e5e] line-through font-mono">
+                            ₹{p.mrp}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-[#50c878] font-bold block">
+                        Net: {p.netQuantity || "1 Unit"}
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handlePurchase(pkg)}
-                      disabled={isBuying || !targetMemberName}
-                      className="w-full py-3 px-4 bg-[#006d36] hover:bg-[#005025] text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isBuying ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Activating & Matching PV...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Zap className="w-4 h-4 fill-white" />
-                          <span>
-                            Activate for {targetMemberName ? targetMemberId : "Selected Member"}
-                          </span>
-                        </>
-                      )}
-                    </button>
+                    {/* Cart Quantity Counter or Add Button */}
+                    {inCartQty > 0 ? (
+                      <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-2 py-1">
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateQuantity(p.id, inCartQty - 1)}
+                          className="w-6 h-6 rounded-lg bg-white text-[#006d36] hover:bg-emerald-100 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="font-mono font-bold text-xs text-[#006d36] min-w-[16px] text-center">
+                          {inCartQty}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateQuantity(p.id, inCartQty + 1)}
+                          className="w-6 h-6 rounded-lg bg-[#006d36] text-white hover:bg-[#005025] flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleAddToCart(p, 1)}
+                        className="px-3.5 py-2 rounded-xl bg-emerald-100 hover:bg-[#006d36] text-[#006d36] hover:text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs group/btn"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-[#006d36] group-hover/btn:text-white" />
+                        <span>Add</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
+        )}
 
-        {/* Real-Time Binary Rules Banner */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-sm space-y-4">
-          <h3 className="text-lg font-black text-[#1a1c1c]">
-            Real-Time Automatic 1:1 Binary Matching Rules
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-[#5f5e5e] leading-relaxed">
-            <div className="p-4 bg-[#f9f9f9] rounded-2xl border border-[#e2e2e2]">
-              <strong className="text-[#1a1c1c] block text-sm mb-1">
-                1. Below 100 PV = Red (0 Capping)
-              </strong>
-              Any associate ID with under 100 PV is displayed in RED with ₹0 daily capping. To earn binary bonuses, an ID must activate with at least 100 PV.
+        {/* Bottom Cart Floating Bar if Cart has items */}
+        {totalItemsCount > 0 && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#1a1c1c] text-white px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-8 border border-white/10 animate-slideUp max-w-xl w-[90%]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#006d36] flex items-center justify-center">
+                <ShoppingBag className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <span className="text-xs text-white/70 block">
+                  {totalItemsCount} item{totalItemsCount > 1 ? "s" : ""} selected
+                </span>
+                <span className="text-sm font-black font-mono text-white">
+                  ₹{totalCartAmount.toLocaleString("en-IN")}{" "}
+                  <span className="text-[#50c878] font-normal text-xs">
+                    (+{totalCartPv} PV)
+                  </span>
+                </span>
+              </div>
             </div>
-            <div className="p-4 bg-[#f9f9f9] rounded-2xl border border-[#e2e2e2]">
-              <strong className="text-[#1a1c1c] block text-sm mb-1">
-                2. Instant Automatic Matching
-              </strong>
-              No manual button click needed! As soon as PV is activated, it propagates up the binary tree and immediately pays 1:1 matching bonuses to every qualified ancestor.
-            </div>
-            <div className="p-4 bg-[#f9f9f9] rounded-2xl border border-[#e2e2e2]">
-              <strong className="text-[#1a1c1c] block text-sm mb-1">
-                3. Stronger Leg Carry Forward
-              </strong>
-              Remaining volume in the stronger leg carries forward indefinitely for future matching cycles!
-            </div>
+
+            <Link
+              href="/dashboard/cart"
+              className="ml-auto px-5 py-2.5 rounded-xl bg-[#006d36] hover:bg-[#50c878] hover:text-[#005025] text-white font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-md"
+            >
+              <span>Review & Place Order</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-        </div>
-      </main>
+        )}
+      </div>
     </MemberLayout>
   );
 }

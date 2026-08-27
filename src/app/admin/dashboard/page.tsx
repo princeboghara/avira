@@ -1,90 +1,98 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Loader2,
-  Users,
-  Wallet,
   TrendingUp,
+  Package,
+  Users,
   ShieldCheck,
-  Search,
-  CheckCircle,
-  XCircle,
-  LogOut,
-  RefreshCw,
-  SlidersHorizontal,
-  Menu,
-  X,
-  LayoutDashboard,
-  ExternalLink,
-  Zap,
+  ArrowRight,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  FileCheck,
+  ShoppingBag,
+  Plus,
+  FolderPlus,
+  Percent,
 } from "lucide-react";
+import AdminLayout from "@/components/admin/AdminLayout";
 import { User } from "@/types";
 
-interface AdminStats {
-  totalMembers: number;
-  activeMembers: number;
-  blockedMembers: number;
-  totalWalletLiability: number;
-  totalEarningsDistributed: number;
-  totalTransactionsCount: number;
-  totalVolume: number;
-  recentTransactions: Array<{
-    id: string;
-    type: string;
-    amount: number;
-    description: string;
-    status: string;
-    date: string;
-    member_id: string;
-    full_name: string;
-  }>;
+interface DashboardSummary {
+  totalOrders: number;
+  pendingOrders: number;
+  approvedOrders: number;
+  completedOrders: number;
+  rejectedOrders: number;
+  totalRevenue: number;
+  totalPv: number;
 }
 
-export default function AdminDashboardPage() {
-  const router = useRouter();
+interface RecentOrder {
+  id: string;
+  billedBy: string;
+  memberId: string;
+  fullName: string;
+  amount: number;
+  pv: number;
+  status: string;
+  createdAt: string;
+}
+
+export default function AdminOverviewDashboardPage() {
   const [adminUser, setAdminUser] = useState<User | null>(null);
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [members, setMembers] = useState<User[]>([]);
-  const [runningCutoff, setRunningCutoff] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
-  // Load Admin Profile & Data
-  const loadAdminData = async () => {
+  const [summary, setSummary] = useState<DashboardSummary>({
+    totalOrders: 0,
+    pendingOrders: 0,
+    approvedOrders: 0,
+    completedOrders: 0,
+    rejectedOrders: 0,
+    totalRevenue: 0,
+    totalPv: 0,
+  });
+
+  const [totalMembers, setTotalMembers] = useState(0);
+  const [pendingKyc, setPendingKyc] = useState(0);
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+
+  const loadDashboardData = async () => {
     try {
       setRefreshing(true);
-      // 1. Verify Admin Session
-      const meRes = await fetch("/api/admin/auth/me");
-      const meData = await meRes.json();
 
-      if (!meRes.ok || !meData.success || !meData.admin) {
-        router.push("/admin/login");
-        return;
-      }
-      setAdminUser(meData.admin);
+      const [userData, ordersData, memData, kycData] = await Promise.all([
+        fetch("/api/auth/me").then((r) => r.json()).catch(() => null),
+        fetch("/api/admin/orders").then((r) => r.json()).catch(() => null),
+        fetch("/api/admin/members").then((r) => r.json()).catch(() => null),
+        fetch("/api/admin/kyc").then((r) => r.json()).catch(() => null),
+      ]);
 
-      // 2. Fetch Live Stats
-      const statsRes = await fetch("/api/admin/stats");
-      const statsData = await statsRes.json();
-      if (statsData.success) {
-        setStats(statsData.data);
+      if (userData?.success && userData.user) {
+        setAdminUser(userData.user);
       }
 
-      // 3. Fetch Live Users
-      const usersRes = await fetch(`/api/admin/users?search=${encodeURIComponent(searchQuery)}`);
-      const usersData = await usersRes.json();
-      if (usersData.success) {
-        setMembers(usersData.users);
+      if (ordersData?.success) {
+        if (ordersData.summary) setSummary(ordersData.summary);
+        if (ordersData.orders) setRecentOrders(ordersData.orders.slice(0, 6));
+      }
+
+      if (memData?.success && memData.members) {
+        setTotalMembers(memData.members.length);
+      }
+
+      if (kycData?.success && kycData.submissions) {
+        const pending = kycData.submissions.filter(
+          (k: any) => k.kycStatus === "PENDING"
+        ).length;
+        setPendingKyc(pending);
       }
     } catch (err) {
-      console.error("Admin dashboard fetch error:", err);
+      console.error("Error loading admin dashboard metrics:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -92,546 +100,405 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
-    loadAdminData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery]);
-
-  const handleAdminLogout = async () => {
-    try {
-      await fetch("/api/admin/auth/logout", { method: "POST" });
-    } catch {
-      // Ignore
-    }
-    router.push("/admin/login");
-  };
-
-  // 1-Click Toggle Member Status (ACTIVE <-> BLOCKED)
-  const handleToggleStatus = async (user: User) => {
-    const nextStatus = user.status === "ACTIVE" ? "BLOCKED" : "ACTIVE";
-    setStatusUpdatingId(user.id);
-
-    try {
-      const res = await fetch(`/api/admin/users/${user.id}/status`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nextStatus }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        setMembers((prev) =>
-          prev.map((m) => (m.id === user.id ? { ...m, status: nextStatus } : m))
-        );
-        // Refresh stats
-        const statsRes = await fetch("/api/admin/stats");
-        const statsData = await statsRes.json();
-        if (statsData.success) setStats(statsData.data);
-      } else {
-        alert(data.message || "Failed to update member status.");
-      }
-    } catch {
-      alert("Error contacting Supabase.");
-    } finally {
-      setStatusUpdatingId(null);
-    }
-  };
-
-  const handleRunCutoff = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to execute the 1:1 Daily Binary Matching Cutoff now? This will match Left PV vs Right PV, carry forward the stronger leg, and distribute bonuses to wallets."
-      )
-    )
-      return;
-
-    setRunningCutoff(true);
-    try {
-      const res = await fetch("/api/admin/binary/cutoff", { method: "POST" });
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message);
-        await loadAdminData();
-      } else {
-        alert(data.message || "Cutoff failed");
-      }
-    } catch {
-      alert("Network error executing cutoff");
-    } finally {
-      setRunningCutoff(false);
-    }
-  };
+    loadDashboardData();
+  }, []);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#07130c] text-white flex flex-col items-center justify-center font-sans">
-        <Loader2 className="w-10 h-10 animate-spin text-[#50c878] mb-3" />
-        <span className="text-sm font-mono tracking-wider text-[#50c878]">
-          Authenticating Master Admin Session...
-        </span>
-      </div>
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-[#006d36]">
+          <Loader2 className="w-10 h-10 animate-spin mb-3" />
+          <span className="text-sm font-bold">
+            Loading Central Operations Overview...
+          </span>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#07130c] text-white flex flex-col font-sans selection:bg-[#50c878] selection:text-[#005025]">
-      {/* Top Master Admin Bar */}
-      <header className="h-20 bg-[#0e1d14]/90 backdrop-blur-xl border-b border-[#006d36]/30 sticky top-0 z-50 px-4 sm:px-6 w-full flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof window !== "undefined" && window.innerWidth >= 768) {
-                setSidebarOpen((prev) => !prev);
-              } else {
-                setMobileDrawerOpen((prev) => !prev);
-              }
-            }}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#bdcabc] hover:text-white border border-white/10 transition-colors cursor-pointer"
-            title="Toggle Admin Side Menubar"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#006d36] to-[#50c878] flex items-center justify-center text-white shadow-lg border border-[#50c878]/30">
-            <ShieldCheck className="w-6 h-6 text-white" />
-          </div>
-          <div>
+    <AdminLayout user={adminUser} onRefresh={loadDashboardData} refreshing={refreshing}>
+      <div className="space-y-8 animate-fadeIn">
+        {/* ========================================================
+            1. TOP HERO WELCOME BANNER
+           ======================================================== */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-lg text-white tracking-wider">
-                AVIRA LIFE CARE GLOBAL
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#006d36] font-mono text-[10px] font-black uppercase">
+                System Live
               </span>
-              <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-[#006d36] text-white rounded-md tracking-widest uppercase">
-                Master Admin
+              <span className="text-xs text-[#5f5e5e] font-medium">
+                {new Date().toLocaleDateString("en-IN", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </span>
             </div>
-            <span className="text-[11px] text-[#bdcabc]/70 font-mono flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#50c878] animate-pulse" />
-              <span>Supabase PostgreSQL Live</span>
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button
-            onClick={loadAdminData}
-            disabled={refreshing}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#bdcabc] hover:text-white transition-colors"
-            title="Refresh Data"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
-          </button>
-
-          <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-white/10">
-            <div className="text-right">
-              <span className="text-xs font-bold text-white block">{adminUser?.fullName}</span>
-              <span className="text-[10px] font-mono text-[#50c878]">ID: {adminUser?.memberId}</span>
-            </div>
-            <div className="w-9 h-9 rounded-full bg-[#006d36] border border-[#50c878] flex items-center justify-center font-bold text-xs">
-              A
-            </div>
-          </div>
-
-          <button
-            onClick={handleAdminLogout}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-800/60 text-red-300 text-xs font-bold transition-colors cursor-pointer"
-            title="Sign out of Admin Panel"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Logout</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Body Container: Side Menubar + Main Content */}
-      <div className="flex-1 flex relative min-h-0">
-        {/* Desktop / Laptop Side Menubar */}
-        <aside
-          className={`bg-[#0a160e] border-r border-[#006d36]/30 hidden md:flex flex-col shrink-0 transition-all duration-300 ease-in-out z-30 sticky top-20 h-[calc(100vh-5rem)] ${
-            sidebarOpen ? "w-64 min-w-[16rem]" : "w-0 min-w-0 opacity-0 overflow-hidden border-none pointer-events-none"
-          }`}
-        >
-          {/* Admin Identity Card */}
-          <div className="p-4 border-b border-[#006d36]/20 bg-[#07130c]/60">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#006d36] border border-[#50c878]/40 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                A
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="font-extrabold text-xs text-white block truncate">
-                  {adminUser?.fullName}
-                </span>
-                <span className="font-mono text-[11px] text-[#50c878] block">
-                  {adminUser?.memberId}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Nav Items */}
-          <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto">
-            <a
-              href="#overview"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold bg-[#006d36] text-white shadow-sm"
-            >
-              <LayoutDashboard className="w-4 h-4 shrink-0" />
-              <span>Master Overview</span>
-            </a>
-            <a
-              href="#members"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#bdcabc] hover:text-white hover:bg-white/5 transition-all"
-            >
-              <Users className="w-4 h-4 shrink-0" />
-              <span>Associate Directory</span>
-            </a>
-            <button
-              type="button"
-              onClick={handleRunCutoff}
-              disabled={runningCutoff}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#50c878] hover:bg-emerald-950/40 transition-all text-left cursor-pointer"
-            >
-              <Zap className="w-4 h-4 shrink-0" />
-              <span>{runningCutoff ? "Matching..." : "1:1 Binary Cutoff"}</span>
-            </button>
-            <a
-              href="#transactions"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#bdcabc] hover:text-white hover:bg-white/5 transition-all"
-            >
-              <Wallet className="w-4 h-4 shrink-0" />
-              <span>Ledger Transactions</span>
-            </a>
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#bdcabc] hover:text-white hover:bg-white/5 transition-all"
-            >
-              <ExternalLink className="w-4 h-4 shrink-0" />
-              <span>Preview Member Portal</span>
-            </Link>
-            <button
-              type="button"
-              onClick={handleAdminLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-red-400 hover:bg-red-950/40 transition-all text-left cursor-pointer"
-            >
-              <LogOut className="w-4 h-4 shrink-0" />
-              <span>Logout</span>
-            </button>
-          </nav>
-        </aside>
-
-        {/* Mobile / Tablet Admin Drawer */}
-        {mobileDrawerOpen && (
-          <div className="fixed inset-0 z-50 flex md:hidden">
-            <div
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm"
-              onClick={() => setMobileDrawerOpen(false)}
-            />
-            <div className="relative bg-[#0a160e] border-r border-[#006d36]/30 w-72 max-w-[85vw] h-full p-5 space-y-4 flex flex-col justify-between shadow-2xl z-10">
-              <div>
-                <div className="flex items-center justify-between pb-3 border-b border-[#006d36]/30">
-                  <span className="font-extrabold text-sm text-[#50c878]">Admin Navigation</span>
-                  <button
-                    type="button"
-                    onClick={() => setMobileDrawerOpen(false)}
-                    className="p-1 rounded-lg text-[#bdcabc] hover:bg-white/10"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="py-3 border-b border-[#006d36]/30 mb-3 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#006d36] text-white flex items-center justify-center font-bold text-xs">
-                    A
-                  </div>
-                  <div>
-                    <span className="font-bold text-xs text-white block">{adminUser?.fullName}</span>
-                    <span className="font-mono text-[10px] text-[#50c878]">ID: {adminUser?.memberId}</span>
-                  </div>
-                </div>
-                <nav className="space-y-1">
-                  <a
-                    href="#overview"
-                    onClick={() => setMobileDrawerOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold bg-[#006d36] text-white"
-                  >
-                    <LayoutDashboard className="w-4 h-4 shrink-0" />
-                    <span>Master Overview</span>
-                  </a>
-                  <a
-                    href="#members"
-                    onClick={() => setMobileDrawerOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#bdcabc] hover:text-white"
-                  >
-                    <Users className="w-4 h-4 shrink-0" />
-                    <span>Associate Directory</span>
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileDrawerOpen(false);
-                      handleRunCutoff();
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#50c878] text-left"
-                  >
-                    <Zap className="w-4 h-4 shrink-0" />
-                    <span>1:1 Binary Cutoff</span>
-                  </button>
-                  <a
-                    href="#transactions"
-                    onClick={() => setMobileDrawerOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#bdcabc] hover:text-white"
-                  >
-                    <Wallet className="w-4 h-4 shrink-0" />
-                    <span>Ledger Transactions</span>
-                  </a>
-                  <Link
-                    href="/dashboard"
-                    onClick={() => setMobileDrawerOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#bdcabc] hover:text-white"
-                  >
-                    <ExternalLink className="w-4 h-4 shrink-0" />
-                    <span>Preview Member Portal</span>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={handleAdminLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-red-400 text-left"
-                  >
-                    <LogOut className="w-4 h-4 shrink-0" />
-                    <span>Logout</span>
-                  </button>
-                </nav>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Main Admin Content */}
-        <main className="flex-1 min-w-0 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-8 overflow-y-auto" id="overview">
-        {/* Welcome & Overview Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-black text-white tracking-tight">System Master Dashboard</h1>
-            <p className="text-xs sm:text-sm text-[#bdcabc]">
-              Real-time enterprise overview of all associates, wallet liabilities, and network ledger.
+            <h1 className="text-2xl sm:text-3xl font-black text-[#1a1c1c] tracking-tight">
+              Welcome, {adminUser?.fullName || "Administrator"}
+            </h1>
+            <p className="text-xs text-[#5f5e5e] max-w-2xl leading-relaxed">
+              Real-time monitoring of associate orders, product catalog inventory, network growth, and financial operations.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="px-3.5 py-2 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-bold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#50c878] animate-pulse" />
-              <span>Real-Time 1:1 Matching: LIVE</span>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleRunCutoff}
-              disabled={runningCutoff}
-              className="px-3.5 py-2 bg-white/5 hover:bg-white/10 text-[#bdcabc] hover:text-white text-xs font-bold rounded-xl border border-white/10 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+          {/* Action Quick Links */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <Link
+              href="/admin/orders/approve"
+              className="px-4 py-2.5 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-all"
             >
-              {runningCutoff ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Syncing...</span>
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-[16px]">sync</span>
-                  <span>Sync / Audit Ledgers</span>
-                </>
-              )}
-            </button>
+              <Clock className="w-4 h-4" />
+              <span>Pending Orders ({summary.pendingOrders})</span>
+            </Link>
 
             <Link
-              href="/login"
-              target="_blank"
-              className="text-xs font-bold text-[#50c878] hover:underline flex items-center gap-1 bg-white/5 px-3 py-2 rounded-xl border border-white/10"
+              href="/admin/products/new"
+              className="px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-[#006d36] font-bold text-xs flex items-center gap-1.5 transition-colors"
             >
-              <span>Preview Member Portal</span>
-              <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+              <Plus className="w-4 h-4" />
+              <span>Add Product</span>
             </Link>
           </div>
         </div>
 
-        {/* Master KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Card 1: Total Members */}
-          <div className="bg-[#0e1d14]/80 border border-[#006d36]/40 rounded-2xl p-5 relative overflow-hidden shadow-lg">
+        {/* ========================================================
+            2. KEY PERFORMANCE METRICS (KPIs)
+           ======================================================== */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Revenue */}
+          <div className="bg-white rounded-3xl p-5 border border-[#e2e2e2] shadow-xs flex flex-col justify-between hover:border-emerald-300 transition-all">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#bdcabc] uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#5f5e5e] uppercase tracking-wider">
+                Total Revenue
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold">
+                ₹
+              </div>
+            </div>
+            <div>
+              <span className="text-2xl font-black font-mono text-[#1a1c1c] block">
+                ₹{summary.totalRevenue.toLocaleString("en-IN")}
+              </span>
+              <span className="text-[11px] text-[#006d36] font-semibold flex items-center gap-1 mt-0.5">
+                <TrendingUp className="w-3 h-3" />
+                <span>From Approved & Completed Orders</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Volume PV */}
+          <div className="bg-white rounded-3xl p-5 border border-[#e2e2e2] shadow-xs flex flex-col justify-between hover:border-emerald-300 transition-all">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-[#5f5e5e] uppercase tracking-wider">
+                Total PV Volume
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold">
+                PV
+              </div>
+            </div>
+            <div>
+              <span className="text-2xl font-black font-mono text-[#006d36] block">
+                +{summary.totalPv.toLocaleString("en-IN")} PV
+              </span>
+              <span className="text-[11px] text-[#5f5e5e] font-medium block mt-0.5">
+                Binary commission volume credited
+              </span>
+            </div>
+          </div>
+
+          {/* Total Network Associates */}
+          <div className="bg-white rounded-3xl p-5 border border-[#e2e2e2] shadow-xs flex flex-col justify-between hover:border-emerald-300 transition-all">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-[#5f5e5e] uppercase tracking-wider">
                 Total Associates
               </span>
-              <div className="w-8 h-8 rounded-lg bg-[#50c878]/10 flex items-center justify-center text-[#50c878]">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
                 <Users className="w-4 h-4" />
               </div>
             </div>
-            <h2 className="text-3xl font-black font-mono text-white mb-1">
-              {stats?.totalMembers || 0}
-            </h2>
-            <div className="flex items-center gap-2 text-xs font-semibold">
-              <span className="text-[#50c878] flex items-center gap-0.5">
-                <CheckCircle className="w-3 h-3" /> {stats?.activeMembers || 0} Active
+            <div>
+              <span className="text-2xl font-black font-mono text-[#1a1c1c] block">
+                {totalMembers}
               </span>
-              {stats && stats.blockedMembers > 0 && (
-                <span className="text-red-400 flex items-center gap-0.5">
-                  <XCircle className="w-3 h-3" /> {stats.blockedMembers} Blocked
-                </span>
-              )}
+              <Link
+                href="/admin/members"
+                className="text-[11px] text-[#006d36] font-bold hover:underline inline-flex items-center gap-1 mt-0.5"
+              >
+                <span>View Member Master</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
             </div>
           </div>
 
-          {/* Card 2: Wallet Liabilities */}
-          <div className="bg-[#0e1d14]/80 border border-[#006d36]/40 rounded-2xl p-5 relative overflow-hidden shadow-lg">
+          {/* Action Required: Pending Orders & KYC */}
+          <div className="bg-white rounded-3xl p-5 border border-[#e2e2e2] shadow-xs flex flex-col justify-between hover:border-amber-300 transition-all">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#bdcabc] uppercase tracking-wider">
-                Net Wallet Liability
+              <span className="text-xs font-bold text-[#5f5e5e] uppercase tracking-wider">
+                Pending Approvals
               </span>
-              <div className="w-8 h-8 rounded-lg bg-[#50c878]/10 flex items-center justify-center text-[#50c878]">
-                <Wallet className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center font-bold">
+                <Clock className="w-4 h-4" />
               </div>
             </div>
-            <h2 className="text-3xl font-black font-mono text-[#50c878] mb-1">
-              ₹{(stats?.totalWalletLiability || 0).toLocaleString("en-IN")}
-            </h2>
-            <span className="text-[11px] text-[#bdcabc]">Outstanding Member Balances</span>
-          </div>
-
-          {/* Card 3: Total Earnings Distributed */}
-          <div className="bg-[#0e1d14]/80 border border-[#006d36]/40 rounded-2xl p-5 relative overflow-hidden shadow-lg">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#bdcabc] uppercase tracking-wider">
-                Total Payouts Distributed
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-[#50c878]/10 flex items-center justify-center text-[#50c878]">
-                <TrendingUp className="w-4 h-4" />
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#5f5e5e]">Orders Queue:</span>
+                <Link
+                  href="/admin/orders/approve"
+                  className="font-mono font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded hover:bg-amber-200"
+                >
+                  {summary.pendingOrders} Pending
+                </Link>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#5f5e5e]">KYC Desk:</span>
+                <Link
+                  href="/admin/kyc"
+                  className="font-mono font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded hover:bg-blue-200"
+                >
+                  {pendingKyc} Pending
+                </Link>
               </div>
             </div>
-            <h2 className="text-3xl font-black font-mono text-white mb-1">
-              ₹{(stats?.totalEarningsDistributed || 0).toLocaleString("en-IN")}
-            </h2>
-            <span className="text-[11px] text-[#bdcabc]">Cumulative MLM Commission</span>
-          </div>
-
-          {/* Card 4: Total Ledger Transactions */}
-          <div className="bg-[#0e1d14]/80 border border-[#006d36]/40 rounded-2xl p-5 relative overflow-hidden shadow-lg">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#bdcabc] uppercase tracking-wider">
-                Audited Transactions
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-[#50c878]/10 flex items-center justify-center text-[#50c878]">
-                <SlidersHorizontal className="w-4 h-4" />
-              </div>
-            </div>
-            <h2 className="text-3xl font-black font-mono text-white mb-1">
-              {stats?.totalTransactionsCount || 0}
-            </h2>
-            <span className="text-[11px] text-[#bdcabc]">Supabase Ledger Entries</span>
           </div>
         </div>
 
-        {/* Member Directory & Control Panel */}
-        <div className="bg-[#0e1d14]/90 border border-[#006d36]/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl font-extrabold text-white">Live Member Directory</h3>
-              <p className="text-xs text-[#bdcabc]">
-                Manage all registered associates, inspect sponsor hierarchies, and control account status.
-              </p>
-            </div>
+        {/* ========================================================
+            3. OPERATIONS CONTROL CENTER (Direct Navigation Grid)
+           ======================================================== */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-black text-[#1a1c1c] tracking-tight">
+            Central Operations Modules
+          </h2>
 
-            {/* Search Box */}
-            <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#bdcabc]/60" />
-              <input
-                type="text"
-                placeholder="Search by AV ID, Name, City..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#050b07] border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white placeholder-white/30 focus:border-[#50c878] outline-none font-medium"
-              />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* 1. Order Manager - Approve Order */}
+            <Link
+              href="/admin/orders/approve"
+              className="bg-white rounded-3xl p-6 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-md transition-all group block"
+            >
+              <div className="flex items-start justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-800 flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
+                  <Clock className="w-6 h-6" />
+                </div>
+                {summary.pendingOrders > 0 && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-mono text-[10px] font-black uppercase">
+                    {summary.pendingOrders} New Orders
+                  </span>
+                )}
+              </div>
+              <h3 className="text-base font-black text-[#1a1c1c] mt-4 mb-1 group-hover:text-[#006d36] transition-colors">
+                2. Approve Order Desk
+              </h3>
+              <p className="text-xs text-[#5f5e5e] line-clamp-2">
+                Verify customer payment slips, check transaction UTRs, and approve orders to credit PV.
+              </p>
+              <div className="mt-4 pt-3 border-t border-[#e2e2e2]/60 flex items-center text-xs font-bold text-[#006d36] gap-1">
+                <span>Open Approval Desk</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* 2. Order Manager - All Orders */}
+            <Link
+              href="/admin/orders"
+              className="bg-white rounded-3xl p-6 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-md transition-all group block"
+            >
+              <div className="flex items-start justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-mono font-bold text-[#5f5e5e]">
+                  {summary.totalOrders} Orders
+                </span>
+              </div>
+              <h3 className="text-base font-black text-[#1a1c1c] mt-4 mb-1 group-hover:text-[#006d36] transition-colors">
+                1. All Orders Audit Registry
+              </h3>
+              <p className="text-xs text-[#5f5e5e] line-clamp-2">
+                Search, sort, edit order statuses, mark orders completed, and inspect itemized tax invoices.
+              </p>
+              <div className="mt-4 pt-3 border-t border-[#e2e2e2]/60 flex items-center text-xs font-bold text-[#006d36] gap-1">
+                <span>View Order Registry</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* 3. Product Manager - Item Manager */}
+            <Link
+              href="/admin/products"
+              className="bg-white rounded-3xl p-6 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-md transition-all group block"
+            >
+              <div className="flex items-start justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
+                  <Package className="w-6 h-6" />
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-gray-100 text-[#5f5e5e] font-mono text-[10px] font-bold">
+                  Catalog
+                </span>
+              </div>
+              <h3 className="text-base font-black text-[#1a1c1c] mt-4 mb-1 group-hover:text-[#006d36] transition-colors">
+                3. Item Manager & Inventory
+              </h3>
+              <p className="text-xs text-[#5f5e5e] line-clamp-2">
+                Manage active store products, stocks, HSN tax configurations, PV points, and retail prices.
+              </p>
+              <div className="mt-4 pt-3 border-t border-[#e2e2e2]/60 flex items-center text-xs font-bold text-[#006d36] gap-1">
+                <span>Manage Catalog Items</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* 4. Product Manager - Category Master */}
+            <Link
+              href="/admin/products/categories"
+              className="bg-white rounded-3xl p-6 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-md transition-all group block"
+            >
+              <div className="flex items-start justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
+                  <FolderPlus className="w-6 h-6" />
+                </div>
+              </div>
+              <h3 className="text-base font-black text-[#1a1c1c] mt-4 mb-1 group-hover:text-[#006d36] transition-colors">
+                1. Category Master
+              </h3>
+              <p className="text-xs text-[#5f5e5e] line-clamp-2">
+                Define product categories, departments, and wellness classification tags.
+              </p>
+              <div className="mt-4 pt-3 border-t border-[#e2e2e2]/60 flex items-center text-xs font-bold text-[#006d36] gap-1">
+                <span>Manage Categories</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* 5. Product Manager - HSN Code Master */}
+            <Link
+              href="/admin/products/hsn"
+              className="bg-white rounded-3xl p-6 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-md transition-all group block"
+            >
+              <div className="flex items-start justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
+                  <Percent className="w-6 h-6" />
+                </div>
+              </div>
+              <h3 className="text-base font-black text-[#1a1c1c] mt-4 mb-1 group-hover:text-[#006d36] transition-colors">
+                2. HSN Code & GST Master
+              </h3>
+              <p className="text-xs text-[#5f5e5e] line-clamp-2">
+                Configure SGST, CGST, and IGST percentages mapped to statutory HSN codes.
+              </p>
+              <div className="mt-4 pt-3 border-t border-[#e2e2e2]/60 flex items-center text-xs font-bold text-[#006d36] gap-1">
+                <span>Manage Tax Rates</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* 6. Member Manager - KYC Master */}
+            <Link
+              href="/admin/kyc"
+              className="bg-white rounded-3xl p-6 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-md transition-all group block"
+            >
+              <div className="flex items-start justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
+                  <FileCheck className="w-6 h-6" />
+                </div>
+                {pendingKyc > 0 && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-900 font-mono text-[10px] font-black uppercase">
+                    {pendingKyc} Pending
+                  </span>
+                )}
+              </div>
+              <h3 className="text-base font-black text-[#1a1c1c] mt-4 mb-1 group-hover:text-[#006d36] transition-colors">
+                2. KYC Master Verification
+              </h3>
+              <p className="text-xs text-[#5f5e5e] line-clamp-2">
+                Review associate PAN cards, Aadhaar IDs, and bank account proofs for payouts.
+              </p>
+              <div className="mt-4 pt-3 border-t border-[#e2e2e2]/60 flex items-center text-xs font-bold text-[#006d36] gap-1">
+                <span>Open KYC Desk</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+          </div>
+        </div>
+
+        {/* ========================================================
+            4. RECENT ORDERS SNIPPET TABLE
+           ======================================================== */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2e2e2] shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#e2e2e2]">
+            <div>
+              <h3 className="text-base font-black text-[#1a1c1c]">Recent Order Submissions</h3>
+              <span className="text-xs text-[#5f5e5e]">Latest orders recorded across the network</span>
             </div>
+            <Link
+              href="/admin/orders"
+              className="text-xs font-bold text-[#006d36] hover:underline flex items-center gap-1"
+            >
+              <span>View All Orders</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
-          {/* Members Table */}
-          <div className="overflow-x-auto rounded-xl border border-white/10">
+          <div className="overflow-x-auto rounded-xl border border-[#e2e2e2]">
             <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-white/5 border-b border-white/10 text-[#bdcabc] uppercase tracking-wider font-bold">
-                  <th className="py-3.5 px-4">Member ID</th>
-                  <th className="py-3.5 px-4">Full Name</th>
-                  <th className="py-3.5 px-4">Mobile</th>
-                  <th className="py-3.5 px-4">Sponsor ID</th>
-                  <th className="py-3.5 px-4">City / State</th>
-                  <th className="py-3.5 px-4">Wallet Balance</th>
-                  <th className="py-3.5 px-4">Role</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+              <thead className="bg-[#f9f9f9] border-b border-[#e2e2e2] text-[#5f5e5e] uppercase tracking-wider font-bold">
+                <tr>
+                  <th className="py-3 px-4">Order ID</th>
+                  <th className="py-3 px-4">Associate</th>
+                  <th className="py-3 px-4">Billed By</th>
+                  <th className="py-3 px-4">Amount</th>
+                  <th className="py-3 px-4">PV</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 font-medium">
-                {members.length === 0 ? (
+              <tbody className="divide-y divide-[#e2e2e2]/60 font-medium">
+                {recentOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="py-8 text-center text-[#bdcabc]/60">
-                      No members match the search query.
+                    <td colSpan={7} className="py-6 text-center text-[#5f5e5e]">
+                      No recent orders found.
                     </td>
                   </tr>
                 ) : (
-                  members.map((member) => (
-                    <tr key={member.id} className="hover:bg-white/5 transition-colors">
-                      <td className="py-3.5 px-4 font-mono font-bold text-[#50c878]">
-                        {member.memberId}
+                  recentOrders.map((ord) => (
+                    <tr key={ord.id} className="hover:bg-emerald-50/20 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-[#1a1c1c]">#{ord.id}</td>
+                      <td className="py-3 px-4">
+                        <span className="font-bold text-[#1a1c1c] block">{ord.fullName}</span>
+                        <span className="font-mono text-[10px] text-[#5f5e5e]">{ord.memberId}</span>
                       </td>
-                      <td className="py-3.5 px-4 font-semibold text-white">{member.fullName}</td>
-                      <td className="py-3.5 px-4 font-mono text-[#bdcabc]">{member.mobile}</td>
-                      <td className="py-3.5 px-4 font-mono text-white/80">
-                        {member.sponsorId || "Root"}
+                      <td className="py-3 px-4 font-mono font-bold text-[#006d36]">
+                        {ord.billedBy || ord.memberId}
                       </td>
-                      <td className="py-3.5 px-4 text-[#bdcabc]">
-                        {member.city}, {member.state}
+                      <td className="py-3 px-4 font-mono font-bold text-[#1a1c1c]">
+                        ₹{ord.amount.toLocaleString("en-IN")}
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-white">
-                        ₹{member.walletBalance.toLocaleString("en-IN")}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                            member.role === "ADMIN"
-                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                              : "bg-white/10 text-[#bdcabc]"
-                          }`}
-                        >
-                          {member.role}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4">
+                      <td className="py-3 px-4 font-mono font-bold text-[#006d36]">+{ord.pv} PV</td>
+                      <td className="py-3 px-4">
                         <span
                           className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            member.status === "ACTIVE"
-                              ? "bg-emerald-500/20 text-[#50c878] border border-emerald-500/30"
-                              : "bg-red-500/20 text-red-400 border border-red-500/30"
+                            ord.status === "COMPLETED"
+                              ? "bg-emerald-100 text-[#006d36]"
+                              : ord.status === "APPROVED"
+                              ? "bg-blue-100 text-blue-800"
+                              : ord.status === "REJECTED"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-amber-100 text-amber-800"
                           }`}
                         >
-                          {member.status}
+                          {ord.status}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-right">
-                        {member.role === "ADMIN" ? (
-                          <span className="text-[10px] text-amber-400 font-mono">Protected</span>
-                        ) : (
-                          <button
-                            onClick={() => handleToggleStatus(member)}
-                            disabled={statusUpdatingId === member.id}
-                            className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                              member.status === "ACTIVE"
-                                ? "bg-red-950 hover:bg-red-900 text-red-300 border border-red-800"
-                                : "bg-emerald-950 hover:bg-emerald-900 text-[#50c878] border border-emerald-800"
-                            }`}
-                          >
-                            {statusUpdatingId === member.id ? (
-                              <Loader2 className="w-3 h-3 animate-spin mx-auto" />
-                            ) : member.status === "ACTIVE" ? (
-                              "Block"
-                            ) : (
-                              "Activate"
-                            )}
-                          </button>
-                        )}
+                      <td className="py-3 px-4 text-right font-mono text-[#5f5e5e]">
+                        {new Date(ord.createdAt).toLocaleDateString("en-IN", {
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </td>
                     </tr>
                   ))
@@ -640,73 +507,7 @@ export default function AdminDashboardPage() {
             </table>
           </div>
         </div>
-
-        {/* Global Financial Audit Ledger Table */}
-        <div className="bg-[#0e1d14]/90 border border-[#006d36]/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-extrabold text-white">Network Audit Ledger</h3>
-              <p className="text-xs text-[#bdcabc]">
-                Live feed of all commission credits, matching bonuses, and withdrawals in the system.
-              </p>
-            </div>
-            <span className="text-xs font-mono text-[#50c878] bg-[#006d36]/20 px-3 py-1 rounded-full border border-[#006d36]/40">
-              Double-Entry Ledger
-            </span>
-          </div>
-
-          <div className="overflow-x-auto rounded-xl border border-white/10">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-white/5 border-b border-white/10 text-[#bdcabc] uppercase tracking-wider font-bold">
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Member</th>
-                  <th className="py-3 px-4">Type</th>
-                  <th className="py-3 px-4">Description</th>
-                  <th className="py-3 px-4">Amount</th>
-                  <th className="py-3 px-4 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 font-medium">
-                {!stats?.recentTransactions || stats.recentTransactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-6 text-center text-[#bdcabc]/60">
-                      No system transactions recorded.
-                    </td>
-                  </tr>
-                ) : (
-                  stats.recentTransactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-white/5 transition-colors">
-                      <td className="py-3 px-4 font-mono text-[#bdcabc]">{tx.date}</td>
-                      <td className="py-3 px-4">
-                        <span className="font-mono font-bold text-[#50c878] block">
-                          {tx.member_id}
-                        </span>
-                        <span className="text-[10px] text-[#bdcabc]">{tx.full_name}</span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 text-white font-mono">
-                          {tx.type}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-white/90">{tx.description}</td>
-                      <td className="py-3 px-4 font-mono font-bold text-[#50c878]">
-                        ₹{parseFloat(tx.amount.toString()).toLocaleString("en-IN")}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-[#50c878] border border-emerald-500/30">
-                          {tx.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </main>
       </div>
-    </div>
+    </AdminLayout>
   );
 }

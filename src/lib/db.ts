@@ -1,26 +1,39 @@
 import { Pool } from "pg";
-import { User, Transaction } from "@/types";
+import { User, Transaction, Order } from "@/types";
 
-const connectionString =
-  process.env.DATABASE_URL ||
-  "postgresql://postgres.jtwpsnezyppfpqcpbnkj:C%2BZS7%4023hUidBfH@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres";
+const isProduction = process.env.NODE_ENV === "production";
+
+function getConnectionString(): string {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    if (isProduction) {
+      throw new Error("CRITICAL CONFIGURATION ERROR: DATABASE_URL environment variable is missing.");
+    }
+    return "postgresql://postgres:postgres@localhost:5432/avira_dev";
+  }
+  return url;
+}
 
 declare global {
   // eslint-disable-next-line no-var
   var __supabase_pool__: Pool | undefined;
 }
 
-export const pool =
+export const pool: Pool =
   global.__supabase_pool__ ||
   (global.__supabase_pool__ = new Pool({
-    connectionString,
+    connectionString: getConnectionString(),
     ssl: { rejectUnauthorized: false },
-    max: 10,
+    max: 15,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
   }));
 
-function mapRowToUser(row: any): User {
+pool.on("error", (err) => {
+  console.error("Unexpected error on idle PostgreSQL client in pool:", err);
+});
+
+export function mapRowToUser(row: any): User {
   return {
     id: row.id,
     memberId: row.member_id,
@@ -32,9 +45,11 @@ function mapRowToUser(row: any): User {
     pincode: row.pincode,
     city: row.city,
     state: row.state,
+    address: row.address || "",
     role: row.role as "MEMBER" | "ADMIN",
     status: row.status as "ACTIVE" | "PENDING" | "BLOCKED" | "INACTIVE",
     walletBalance: Number(row.wallet_balance || 0),
+    rpWallet: Number(row.rp_wallet || 0),
     totalEarnings: Number(row.total_earnings || 0),
     directReferralsCount: Number(row.direct_referrals_count || 0),
     totalTeamCount: Number(row.total_team_count || 0),
@@ -51,16 +66,55 @@ function mapRowToUser(row: any): User {
     binaryPosition: row.binary_position || null,
     leftChildId: row.left_child_id || null,
     rightChildId: row.right_child_id || null,
+    avatarUrl: row.avatar_url || "",
     dailyCapping: Number(row.daily_capping || 1000),
+
+    // KYC and Banking
+    email: row.email || "",
+    gstNumber: row.gst_number || "",
+    panNumber: row.pan_number || "",
+    aadhaarNumber: row.aadhaar_number || "",
+    aadhaarName: row.aadhaar_name || "",
+    aadhaarFrontUrl: row.aadhaar_front_url || "",
+    aadhaarBackUrl: row.aadhaar_back_url || "",
+    panCardUrl: row.pan_card_url || "",
+    bankProofUrl: row.bank_proof_url || "",
+    bankName: row.bank_name || "",
+    bankAccountNumber: row.bank_account_number || "",
+    ifscCode: row.ifsc_code || "",
+    upiId: row.upi_id || "",
+    nomineeName: row.nominee_name || "",
+    nomineeRelation: row.nominee_relation || "",
+    kycDocumentUrl: row.kyc_document_url || "",
+    kycStatus: row.kyc_status || "NOT_SUBMITTED",
+    aadhaarStatus: row.aadhaar_status || "NOT_SUBMITTED",
+    panStatus: row.pan_status || "NOT_SUBMITTED",
+    bankStatus: row.bank_status || "NOT_SUBMITTED",
+    aadhaarRejectionReason: row.aadhaar_rejection_reason || "",
+    panRejectionReason: row.pan_rejection_reason || "",
+    bankRejectionReason: row.bank_rejection_reason || "",
+    kycSubmittedAt: row.kyc_submitted_at ? new Date(row.kyc_submitted_at).toISOString() : undefined,
+    kycVerifiedAt: row.kyc_verified_at ? new Date(row.kyc_verified_at).toISOString() : undefined,
+    kycRejectionReason: row.kyc_rejection_reason || "",
   };
 }
 
-function mapRowToTransaction(row: any): Transaction {
+export function mapRowToTransaction(row: any): Transaction {
+  const gross = Number(row.amount || 0);
+  const tds = row.tds_amount !== null && row.tds_amount !== undefined ? Number(row.tds_amount) : Math.round(gross * 0.02);
+  const admin = row.admin_charge !== null && row.admin_charge !== undefined ? Number(row.admin_charge) : Math.round(gross * 0.08);
+  const rp = row.rp_wallet_amount !== null && row.rp_wallet_amount !== undefined ? Number(row.rp_wallet_amount) : Math.round(gross * 0.05);
+  const net = row.net_amount !== null && row.net_amount !== undefined ? Number(row.net_amount) : Math.round(gross - tds - admin - rp);
+
   return {
     id: row.id,
     userId: row.user_id,
     type: row.type,
-    amount: Number(row.amount || 0),
+    amount: gross,
+    tdsAmount: tds,
+    adminCharge: admin,
+    rpWalletAmount: rp,
+    netAmount: net,
     description: row.description,
     status: row.status,
     date: row.date,
@@ -106,11 +160,14 @@ export async function findUserByIdentifier(identifier: string): Promise<User | n
   }
 }
 
-export async function getAllMemberIds(): Promise<string[]> {
+export async function checkMemberIdExists(memberId: string): Promise<boolean> {
   const client = await pool.connect();
   try {
-    const res = await client.query("SELECT member_id FROM users");
-    return res.rows.map((r) => r.member_id);
+    const res = await client.query(
+      "SELECT 1 FROM users WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
+      [memberId]
+    );
+    return res.rows.length > 0;
   } finally {
     client.release();
   }
@@ -214,6 +271,41 @@ export async function getTransactionsForUser(userId: string): Promise<Transactio
       [userId]
     );
     return res.rows.map(mapRowToTransaction);
+  } finally {
+    client.release();
+  }
+}
+
+export function mapRowToOrder(row: any): Order {
+  let parsedItems = [];
+  if (row.items) {
+    try {
+      parsedItems = typeof row.items === "string" ? JSON.parse(row.items) : row.items;
+    } catch {
+      parsedItems = [];
+    }
+  }
+  return {
+    id: row.id,
+    userId: row.user_id,
+    purchaseType: row.purchase_type,
+    packageName: row.package_name,
+    amount: Number(row.amount || 0),
+    pv: Number(row.pv || 0),
+    items: parsedItems,
+    status: row.status || "COMPLETED",
+    createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
+  };
+}
+
+export async function getOrdersForUser(userId: string): Promise<Order[]> {
+  const client = await pool.connect();
+  try {
+    const res = await client.query(
+      "SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50",
+      [userId]
+    );
+    return res.rows.map(mapRowToOrder);
   } finally {
     client.release();
   }

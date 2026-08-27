@@ -2,36 +2,81 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import {
+  TrendingUp,
+  Users,
+  Wallet,
+  ShieldCheck,
+  Calendar,
+  Check,
+  Copy,
+  Sparkles,
+  ArrowRight,
+  Clock,
+  Layers,
+  ArrowUpRight,
+  Percent,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
+} from "lucide-react";
 import { User, Transaction } from "@/types";
-import { Loader2, Check, Copy } from "lucide-react";
-import MemberCard3D from "@/components/3d/MemberCard3D";
 import MemberLayout from "@/components/dashboard/MemberLayout";
 
 export default function DashboardPage() {
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Team counts from /api/member/team
+  const [leftTeamCount, setLeftTeamCount] = useState(0);
+  const [rightTeamCount, setRightTeamCount] = useState(0);
+  const [totalTeamCount, setTotalTeamCount] = useState(0);
+
+  // Binary earnings summary from /api/member/earnings/binary
+  const [netBinaryIncome, setNetBinaryIncome] = useState(0);
+  const [rpWalletAmount, setRpWalletAmount] = useState(0);
+
   // Referral URL state
   const [mounted, setMounted] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  // Withdrawal modal state
-  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState("5000");
-  const [withdrawSuccess, setWithdrawSuccess] = useState(false);
+  const [copiedLeft, setCopiedLeft] = useState(false);
+  const [copiedRight, setCopiedRight] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    async function loadDashboard() {
+
+    async function loadDashboardData() {
       try {
-        const res = await fetch("/api/auth/me");
-        const data = await res.json();
-        if (data.success && data.user) {
-          setUser(data.user);
-          setTransactions(data.transactions || []);
+        const [meRes, teamRes, earnRes] = await Promise.allSettled([
+          fetch("/api/auth/me"),
+          fetch("/api/member/team"),
+          fetch("/api/member/earnings/binary"),
+        ]);
+
+        if (meRes.status === "fulfilled") {
+          const meData = await meRes.value.json();
+          if (meData.success && meData.user) {
+            setUser(meData.user);
+            setTransactions(meData.transactions || []);
+            setTotalTeamCount(meData.user.totalTeamCount || 0);
+          }
+        }
+
+        if (teamRes.status === "fulfilled") {
+          const teamData = await teamRes.value.json();
+          if (teamData.success) {
+            setLeftTeamCount(teamData.leftCount || 0);
+            setRightTeamCount(teamData.rightCount || 0);
+            setTotalTeamCount(teamData.totalTeam || 0);
+          }
+        }
+
+        if (earnRes.status === "fulfilled") {
+          const earnData = await earnRes.value.json();
+          if (earnData.success && earnData.summary) {
+            setNetBinaryIncome(earnData.summary.totalNet || 0);
+            setRpWalletAmount(earnData.summary.rpWalletBalance || 0);
+          }
         }
       } catch (err) {
         console.error("Dashboard fetch error:", err);
@@ -39,558 +84,412 @@ export default function DashboardPage() {
         setLoading(false);
       }
     }
-    loadDashboard();
+
+    loadDashboardData();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-    } catch {
-      // Ignore
-    }
-    router.push("/login");
+  const baseUrl = mounted && typeof window !== "undefined" ? window.location.origin : "https://aviracare.com";
+  const leftReferralUrl = user ? `${baseUrl}/register?ref=${user.memberId}&pos=LEFT` : "";
+  const rightReferralUrl = user ? `${baseUrl}/register?ref=${user.memberId}&pos=RIGHT` : "";
+
+  const handleCopyLeft = () => {
+    if (!leftReferralUrl) return;
+    navigator.clipboard.writeText(leftReferralUrl);
+    setCopiedLeft(true);
+    setTimeout(() => setCopiedLeft(false), 2000);
   };
 
-  const referralUrl = mounted && typeof window !== "undefined" && user
-    ? `${window.location.origin}/register?ref=${user.memberId}`
-    : `http://localhost:3000/register?ref=${user?.memberId || "AV23900"}`;
-
-  const handleCopyReferral = () => {
-    navigator.clipboard.writeText(referralUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyRight = () => {
+    if (!rightReferralUrl) return;
+    navigator.clipboard.writeText(rightReferralUrl);
+    setCopiedRight(true);
+    setTimeout(() => setCopiedRight(false), 2000);
   };
 
-  const handleWithdrawSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setWithdrawSuccess(true);
-    setTimeout(() => {
-      setWithdrawSuccess(false);
-      setWithdrawModalOpen(false);
-    }, 2000);
-  };
+  const isUserActive = user ? user.personalPv >= 100 : false;
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f9f9f9] text-[#1a1c1c]">
-        <Loader2 className="w-10 h-10 animate-spin text-[#006d36] mb-3" />
-        <span className="text-sm font-bold text-[#006d36]">
-          Loading Emerald Elite Dashboard...
-        </span>
-      </div>
-    );
-  }
+  // Unmatched / Pending Carry PV to be matched
+  const pendingMatchPv = user
+    ? Math.max(user.carryLeftPv || 0, user.carryRightPv || 0)
+    : 0;
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#f9f9f9] text-center">
-        <h2 className="text-2xl font-bold text-[#1a1c1c] mb-2">Member Session Expired</h2>
-        <p className="text-sm text-[#5f5e5e] mb-4">Please log in to view your dashboard.</p>
-        <Link
-          href="/login"
-          className="bg-[#006d36] text-white font-bold px-6 py-2.5 rounded-xl text-sm"
-        >
-          Go to Login
-        </Link>
-      </div>
-    );
-  }
+  const formattedJoiningDate = user?.joinedDate
+    ? new Date(user.joinedDate).toLocaleDateString("en-IN", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "Recent";
 
   return (
     <MemberLayout user={user}>
-      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-8">
-        {/* Welcome Section with Responsive Associate Pills */}
-        <section className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2e2e2] shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2.5">
+      <div className="space-y-6 animate-fadeIn max-w-7xl mx-auto pb-12">
+        {/* ========================================================
+            ITEM 1: WELCOME BANNER
+           ======================================================== */}
+        <section className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+          <div className="space-y-2 z-10">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-xs font-bold px-3 py-1 bg-emerald-50 text-[#006d36] rounded-full border border-emerald-200">
-                ID: {user.memberId}
+              <span className="font-mono text-xs font-black px-3 py-1 bg-emerald-50 text-[#006d36] rounded-full border border-emerald-200">
+                ID: {user?.memberId || "AV00001"}
               </span>
               <span
-                className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
-                  user.personalPv >= 100
+                className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                  isUserActive
                     ? "bg-emerald-100 text-[#006d36] border-emerald-300"
                     : "bg-red-100 text-red-700 border-red-300"
                 }`}
               >
-                {user.personalPv >= 100 ? "Active Account" : "Red (Needs 100 PV)"}
+                {isUserActive ? "Active Account" : "Red (<100 PV)"}
               </span>
               <span className="text-xs text-[#5f5e5e] font-medium hidden sm:inline">
-                Sponsor: <strong className="text-[#1a1c1c] font-mono">{user.sponsorId || "Root"}</strong>
+                Sponsor: <strong className="text-[#1a1c1c] font-mono">{user?.sponsorId || "Root"}</strong>
               </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#1a1c1c] tracking-tight">
-              Welcome back, {user.fullName}!
+              Welcome back, {user?.fullName || "Associate"}!
             </h1>
             <p className="text-xs sm:text-sm text-[#5f5e5e] max-w-2xl leading-relaxed">
-              Real-time associate performance dashboard. 1:1 Instant binary matching with live Supabase PostgreSQL ledger sync.
+              Real-time performance summary. 1:1 Instant binary matching with live RP wallet & network tree analytics.
             </p>
           </div>
 
-          {/* Quick 1-Click Copy Sponsor Link */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 self-start lg:self-auto w-full sm:w-auto">
-            <button
-              onClick={handleCopyReferral}
-              className="neomorphic-btn-primary px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 shadow-md"
+          <div className="flex items-center gap-3 z-10 self-start md:self-auto">
+            <Link
+              href="/dashboard/store"
+              className="px-5 py-3 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-[#006d36]/20 transition-all cursor-pointer"
             >
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4 text-emerald-200" />
-                  <span>Link Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  <span>Copy Sponsor Link</span>
-                </>
-              )}
-            </button>
+              <span>Shopping Store</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {/* Soft background watermark */}
+          <div className="absolute right-0 bottom-0 opacity-5 pointer-events-none translate-x-6 translate-y-6">
+            <span className="material-symbols-outlined text-9xl text-[#006d36]">eco</span>
           </div>
         </section>
 
-          {/* Metrics Grid (4 Cards from Stitch) */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {/* Card 1: Total Earnings */}
-            <div className="glass-overlay rounded-2xl p-6 relative overflow-hidden group hover:shadow-lg transition-all">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <span className="material-symbols-outlined text-6xl text-[#006d36]">payments</span>
-              </div>
-              <p className="text-xs text-[#3e4a3f] uppercase tracking-wider font-bold mb-2">
-                Total Earnings
-              </p>
-              <h2 className="text-3xl font-extrabold text-[#1a1c1c] font-mono mb-2">
-                ₹{user.totalEarnings.toLocaleString("en-IN")}
-              </h2>
-              <div className="flex items-center text-[#006d36] text-xs font-bold">
-                <span className="material-symbols-outlined text-sm mr-1">trending_up</span>
-                <span>+15% from network bonuses</span>
-              </div>
-            </div>
-
-            {/* Card 2: Direct Referrals */}
-            <div className="glass-overlay rounded-2xl p-6 relative overflow-hidden group hover:shadow-lg transition-all">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <span className="material-symbols-outlined text-6xl text-[#006d36]">
-                  person_add
-                </span>
-              </div>
-              <p className="text-xs text-[#3e4a3f] uppercase tracking-wider font-bold mb-2">
-                Direct Referrals
-              </p>
-              <h2 className="text-3xl font-extrabold text-[#1a1c1c] font-mono mb-2">
-                {user.directReferralsCount}
-              </h2>
-              <div className="flex items-center text-[#006d36] text-xs font-bold">
-                <span className="material-symbols-outlined text-sm mr-1">verified</span>
-                <span>Active Direct Line</span>
-              </div>
-            </div>
-
-            {/* Card 3: Team Volume / Downline */}
-            <div className="glass-overlay rounded-2xl p-6 relative overflow-hidden group hover:shadow-lg transition-all">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <span className="material-symbols-outlined text-6xl text-[#006d36]">
-                  account_tree
-                </span>
-              </div>
-              <p className="text-xs text-[#3e4a3f] uppercase tracking-wider font-bold mb-2">
-                Total Downline Team
-              </p>
-              <h2 className="text-3xl font-extrabold text-[#1a1c1c] font-mono mb-2">
-                {user.totalTeamCount} Nodes
-              </h2>
-              <div className="w-full bg-[#e2e2e2] rounded-full h-2 mt-2 mb-1">
-                <div
-                  className="bg-gradient-to-r from-[#006d36] to-[#50c878] h-2 rounded-full"
-                  style={{ width: "75%" }}
-                />
-              </div>
-              <p className="text-[10px] text-[#5f5e5e] text-right font-medium">75% to Next Rank</p>
-            </div>
-
-            {/* Card 4: Wallet Balance with Withdrawal */}
-            <div className="glass-overlay rounded-2xl p-6 relative overflow-hidden group hover:shadow-lg transition-all">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <span className="material-symbols-outlined text-6xl text-[#006d36]">
-                  account_balance
-                </span>
-              </div>
-              <p className="text-xs text-[#3e4a3f] uppercase tracking-wider font-bold mb-2">
-                Wallet Balance
-              </p>
-              <h2 className="text-3xl font-extrabold text-[#1a1c1c] font-mono mb-4">
-                ₹{user.walletBalance.toLocaleString("en-IN")}
-              </h2>
-              <button
-                onClick={() => setWithdrawModalOpen(true)}
-                className="w-full bg-[#006d36] text-white py-2 rounded-xl text-xs font-bold shadow-[0_4px_14px_0_rgba(0,109,54,0.3)] hover:shadow-[0_6px_20px_rgba(0,109,54,0.4)] hover:bg-[#005025] transition-all duration-200 cursor-pointer"
-              >
-                Withdraw Funds
-              </button>
-            </div>
-          </section>
-
-          {/* Binary MLM Performance & Volume Engine */}
-          <section className="mb-8 bg-white rounded-3xl p-6 md:p-8 border border-emerald-200 shadow-sm relative overflow-hidden">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#006d36]">account_tree</span>
-                  <h3 className="text-xl font-extrabold text-[#1a1c1c]">
-                    1:1 Binary Matching & Leg Performance
-                  </h3>
-                </div>
-                <p className="text-xs text-[#5f5e5e] mt-1">
-                  1 PV = ₹1 • Capping determined by Self Volume ({user.personalPv} PV = ₹{user.dailyCapping.toLocaleString()} / day limit)
-                </p>
-              </div>
-
+        {/* ========================================================
+            ITEM 2: LEFT & RIGHT REFERRAL LINK BOXES
+           ======================================================== */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Left Referral Link */}
+          <div className="bg-gradient-to-br from-blue-50/80 to-white rounded-3xl p-5 sm:p-6 border border-blue-200 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Link
-                  href="/dashboard/tree"
-                  className="px-4 py-2 bg-[#006d36] hover:bg-[#005025] text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-[16px]">account_tree</span>
-                  <span>View Binary Tree</span>
-                </Link>
-                <Link
-                  href="/dashboard/store"
-                  className="px-4 py-2 border border-[#006d36] text-[#006d36] hover:bg-emerald-50 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-[16px]">shopping_bag</span>
-                  <span>Add PV / Packages</span>
-                </Link>
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />
+                <span className="text-xs font-black uppercase tracking-wider text-blue-900">
+                  Left Leg Referral Link
+                </span>
               </div>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
+                Placement: LEFT
+              </span>
             </div>
 
-            {user.personalPv < 100 && (
-              <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                <div className="flex items-center gap-2.5">
-                  <span className="material-symbols-outlined text-red-600 text-[22px] flex-shrink-0">
-                    warning
-                  </span>
-                  <div>
-                    <span className="font-extrabold block text-sm">
-                      Account Status: RED (Inactive • ₹0 Daily Capping)
-                    </span>
-                    <span>
-                      Your ID has {user.personalPv} PV (&lt; 100 PV). Activate a package to turn Green and unlock daily 1:1 matching income!
-                    </span>
-                  </div>
-                </div>
-                <Link
-                  href="/dashboard/store"
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs whitespace-nowrap shadow-sm text-center"
-                >
-                  Activate ID Now
-                </Link>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {/* Left PV */}
-              <div className="p-4 rounded-2xl bg-[#f0f3ff] border border-blue-200">
-                <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block mb-1">
-                  Left Leg Volume
-                </span>
-                <span className="text-2xl font-mono font-black text-blue-900">
-                  {user.leftPv.toLocaleString()} PV
-                </span>
-                <span className="text-[10px] text-blue-600 block mt-1 font-semibold">
-                  {user.leftPv >= user.rightPv ? "Power Leg (Carry Forward)" : "Volume Active"}
-                </span>
-              </div>
-
-              {/* Right PV */}
-              <div className="p-4 rounded-2xl bg-[#f5f0ff] border border-purple-200">
-                <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider block mb-1">
-                  Right Leg Volume
-                </span>
-                <span className="text-2xl font-mono font-black text-purple-900">
-                  {user.rightPv.toLocaleString()} PV
-                </span>
-                <span className="text-[10px] text-purple-600 block mt-1 font-semibold">
-                  {user.rightPv >= user.leftPv ? "Power Leg (Carry Forward)" : "Volume Active"}
-                </span>
-              </div>
-
-              {/* Next Expected 1:1 Matching */}
-              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
-                <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block mb-1">
-                  Next 1:1 Matching
-                </span>
-                <span className="text-2xl font-mono font-black text-[#006d36]">
-                  {Math.min(user.leftPv, user.rightPv).toLocaleString()} PV
-                </span>
-                <span className="text-[10px] text-emerald-700 block mt-1 font-semibold">
-                  Est. Payout: ₹{Math.min(Math.min(user.leftPv, user.rightPv), user.dailyCapping).toLocaleString()}
-                </span>
-              </div>
-
-              {/* Self PV & Daily Capping */}
-              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
-                <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block mb-1">
-                  Self Volume & Capping
-                </span>
-                <span className="text-2xl font-mono font-black text-amber-900">
-                  {user.personalPv} PV
-                </span>
-                <span className="text-[10px] text-amber-700 block mt-1 font-bold">
-                  Daily Cap: ₹{user.dailyCapping.toLocaleString()} / day
-                </span>
-              </div>
-            </div>
-          </section>
-
-          {/* Interactive 3D Member Card Showcase */}
-          <section className="mb-8">
-            <div className="glass-overlay rounded-2xl p-6 border border-[#e2e2e2]/60 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-6">
-              <div className="space-y-2 max-w-md">
-                <span className="text-xs uppercase font-bold tracking-widest text-[#006d36] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                  Digital Holographic Member Pass
-                </span>
-                <h3 className="text-2xl font-extrabold text-[#1a1c1c]">
-                  Your Official Associate Card
-                </h3>
-                <p className="text-xs sm:text-sm text-[#5f5e5e] leading-relaxed">
-                  Move your mouse over the 3D card to experience the holographic tilt. This
-                  verified card contains your permanent Member ID, sponsor, and RFID verification.
-                </p>
-              </div>
-              <div className="w-full max-w-[380px]">
-                <MemberCard3D
-                  memberId={user.memberId}
-                  fullName={user.fullName}
-                  sponsorId={user.sponsorId}
-                  joinedDate={user.joinedDate}
-                  status={user.status}
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* Main Content Area (Stitch Layout: Left Payouts & Promo, Right Network Activity) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column: Payouts & Promo */}
-            <div className="lg:col-span-2 space-y-8">
-              {/* Recent Payouts Table */}
-              <div className="neo-base rounded-2xl p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-extrabold text-[#1a1c1c]">Recent Payouts & Ledger</h3>
-                  <span className="text-[#006d36] font-bold text-xs">Supabase Verified</span>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="border-b border-[#e2e2e2] text-[#3e4a3f] uppercase tracking-wider font-bold">
-                        <th className="pb-3">Date</th>
-                        <th className="pb-3">Description</th>
-                        <th className="pb-3">Amount</th>
-                        <th className="pb-3 text-right">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#e2e2e2]/60">
-                      {transactions.length === 0 ? (
-                        <tr>
-                          <td colSpan={4} className="py-6 text-center text-[#5f5e5e]">
-                            No transactions recorded yet.
-                          </td>
-                        </tr>
-                      ) : (
-                        transactions.map((tx) => (
-                          <tr key={tx.id} className="hover:bg-white/40 transition-colors">
-                            <td className="py-3.5 text-[#5f5e5e] font-mono">{tx.date}</td>
-                            <td className="py-3.5 font-bold text-[#1a1c1c]">{tx.description}</td>
-                            <td className="py-3.5 font-mono font-extrabold text-[#006d36]">
-                              ₹{tx.amount.toLocaleString("en-IN")}
-                            </td>
-                            <td className="py-3.5 text-right">
-                              <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#50c878]/20 text-[#006d36] text-[10px] font-bold border border-[#50c878]/30">
-                                {tx.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Promotional Referral Banner from Stitch */}
-              <div id="referral" className="relative rounded-2xl overflow-hidden shadow-xl">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#006d36] to-[#005025] opacity-95 z-0" />
-                <div className="relative z-10 p-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="text-white mb-2 sm:mb-0">
-                    <h3 className="text-2xl font-extrabold tracking-tight mb-1">
-                      Grow Your Empire
-                    </h3>
-                    <p className="text-xs text-white/90">
-                      Share your unique referral link to build your binary network.
-                    </p>
-                  </div>
-                  <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
-                    <input
-                      className="neo-input rounded-xl px-4 py-2.5 text-[#1a1c1c] w-full sm:w-72 text-xs font-mono font-bold select-all"
-                      readOnly
-                      type="text"
-                      value={referralUrl}
-                    />
-                    <button
-                      onClick={handleCopyReferral}
-                      className="bg-white text-[#006d36] hover:bg-emerald-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center cursor-pointer flex-shrink-0"
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 mr-1" />
-                          <span>Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="material-symbols-outlined text-[16px] mr-1">
-                            content_copy
-                          </span>
-                          <span>Copy Link</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column: Network Activity (Stitch Layout) */}
-            <div className="space-y-8">
-              <div id="network" className="glass-overlay rounded-2xl p-6 h-full flex flex-col">
-                <h3 className="text-xl font-extrabold text-[#1a1c1c] mb-6">Network Activity</h3>
-                <div className="flex-1 space-y-6">
-                  {/* Activity Item 1 */}
-                  <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-[#50c878]/20 flex items-center justify-center flex-shrink-0 border border-[#50c878]/30">
-                      <span className="material-symbols-outlined text-[#006d36] text-[20px]">
-                        person_add
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-[#1a1c1c]">New Associate Enrolled</p>
-                      <p className="text-[11px] text-[#3e4a3f] mt-0.5">
-                        New associate joined under your Sponsor ID
-                      </p>
-                      <p className="text-[10px] text-[#5f5e5e] mt-1 font-mono">Today, 09:30 AM</p>
-                    </div>
-                  </div>
-
-                  {/* Activity Item 2 */}
-                  <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-[#66dd8b]/20 flex items-center justify-center flex-shrink-0 border border-[#66dd8b]/30">
-                      <span className="material-symbols-outlined text-[#006d36] text-[20px]">
-                        military_tech
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-[#1a1c1c]">Rank Advancement Target</p>
-                      <p className="text-[11px] text-[#3e4a3f] mt-0.5">
-                        Qualified for Ruby Director Tier Bonus
-                      </p>
-                      <p className="text-[10px] text-[#5f5e5e] mt-1 font-mono">Cycle Active</p>
-                    </div>
-                  </div>
-
-                  {/* Activity Item 3 */}
-                  <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-[#e2e2e2] flex items-center justify-center flex-shrink-0 border border-[#bdcabc]/30">
-                      <span className="material-symbols-outlined text-[#5f5e5e] text-[20px]">
-                        shopping_bag
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-[#1a1c1c]">Product Volume Generated</p>
-                      <p className="text-[11px] text-[#3e4a3f] mt-0.5">
-                        500 PV generated in Left Power Leg
-                      </p>
-                      <p className="text-[10px] text-[#5f5e5e] mt-1 font-mono">Yesterday</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-[#e2e2e2]/60">
-                  <div className="text-xs text-[#5f5e5e]">
-                    <span>Postal Base: </span>
-                    <strong className="text-[#1a1c1c]">
-                      {user.city}, {user.state} ({user.pincode})
-                    </strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-      {/* WITHDRAWAL MODAL */}
-      {withdrawModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white max-w-md w-full rounded-2xl p-6 sm:p-8 border border-[#50c878] shadow-2xl relative">
-            <h3 className="text-2xl font-extrabold text-[#1a1c1c] mb-1">Withdraw Funds</h3>
-            <p className="text-xs text-[#5f5e5e] mb-5">
-              Available Wallet: <strong className="font-mono text-[#006d36]">₹{user.walletBalance.toLocaleString("en-IN")}</strong>
+            <p className="text-[11px] text-[#5f5e5e]">
+              Share this link to automatically place new registrants into your Left Leg downline.
             </p>
 
-            {withdrawSuccess ? (
-              <div className="p-6 text-center space-y-2 bg-emerald-50 rounded-xl border border-emerald-200">
-                <span className="material-symbols-outlined text-4xl text-[#006d36]">check_circle</span>
-                <h4 className="text-base font-bold text-[#1a1c1c]">Withdrawal Queued!</h4>
-                <p className="text-xs text-[#5f5e5e]">
-                  ₹{withdrawAmount} will be transferred to your registered bank account.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleWithdrawSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="withdrawAmount" className="text-xs font-bold uppercase text-[#1a1c1c] block mb-1">
-                    Withdrawal Amount (₹)
-                  </label>
-                  <input
-                    id="withdrawAmount"
-                    type="number"
-                    min="500"
-                    max={user.walletBalance}
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[#e2e2e2] font-mono font-bold text-lg text-[#1a1c1c] focus:ring-2 focus:ring-[#006d36] outline-none"
-                    required
-                  />
-                  <span className="text-[10px] text-[#5f5e5e] mt-1 block">Minimum withdrawal: ₹500</span>
-                </div>
-
-                <div className="p-3 bg-[#f9f9f9] rounded-xl border border-[#e2e2e2] flex items-center gap-3">
-                  <span className="material-symbols-outlined text-[#006d36]">account_balance</span>
-                  <div className="text-xs">
-                    <span className="font-bold text-[#1a1c1c] block">Bank Account on File</span>
-                    <span className="text-[#5f5e5e] font-mono">HDFC Bank •••• 4892</span>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setWithdrawModalOpen(false)}
-                    className="flex-1 py-2.5 border border-[#e2e2e2] text-[#5f5e5e] font-bold rounded-xl text-xs hover:bg-[#f9f9f9]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 py-2.5 bg-[#006d36] hover:bg-[#005025] text-white font-bold rounded-xl text-xs shadow-md"
-                  >
-                    Confirm Payout
-                  </button>
-                </div>
-              </form>
-            )}
+            <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-blue-200">
+              <input
+                type="text"
+                readOnly
+                value={leftReferralUrl}
+                className="w-full bg-transparent px-3 py-1.5 text-xs font-mono text-[#1a1c1c] outline-none truncate"
+              />
+              <button
+                type="button"
+                onClick={handleCopyLeft}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer transition-all active:scale-95"
+              >
+                {copiedLeft ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedLeft ? "Copied" : "Copy"}</span>
+              </button>
+            </div>
           </div>
-        </div>
-      )}
 
+          {/* Right Referral Link */}
+          <div className="bg-gradient-to-br from-purple-50/80 to-white rounded-3xl p-5 sm:p-6 border border-purple-200 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-600 animate-pulse" />
+                <span className="text-xs font-black uppercase tracking-wider text-purple-900">
+                  Right Leg Referral Link
+                </span>
+              </div>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-800">
+                Placement: RIGHT
+              </span>
+            </div>
+
+            <p className="text-[11px] text-[#5f5e5e]">
+              Share this link to automatically place new registrants into your Right Leg downline.
+            </p>
+
+            <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-purple-200">
+              <input
+                type="text"
+                readOnly
+                value={rightReferralUrl}
+                className="w-full bg-transparent px-3 py-1.5 text-xs font-mono text-[#1a1c1c] outline-none truncate"
+              />
+              <button
+                type="button"
+                onClick={handleCopyRight}
+                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer transition-all active:scale-95"
+              >
+                {copiedRight ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedRight ? "Copied" : "Copy"}</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================
+            ITEMS 3, 4, 5: FINANCIAL METRICS (Diverse Styling)
+           ======================================================== */}
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {/* ITEM 3: Total Earning (Emerald Gold Gradient Card) */}
+          <div className="bg-white rounded-3xl p-6 border border-emerald-200 shadow-xs relative overflow-hidden group hover:border-[#006d36] transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#5f5e5e]">
+                3. Total Earning
+              </span>
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black font-mono text-[#1a1c1c] tracking-tight">
+              ₹{(user?.totalEarnings || 0).toLocaleString("en-IN")}
+            </h2>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[#006d36] mt-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Lifetime Cumulative Income</span>
+            </div>
+          </div>
+
+          {/* ITEM 4: Binary Income (Net after 3% TDS + 8% Admin + 2% RP) */}
+          <div className="bg-white rounded-3xl p-6 border border-teal-200 bg-gradient-to-br from-teal-50/40 to-white shadow-xs relative overflow-hidden group hover:border-teal-500 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-black uppercase tracking-wider text-teal-800">
+                4. Binary Income (Net)
+              </span>
+              <div className="w-9 h-9 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-bold">
+                <Layers className="w-4 h-4" />
+              </div>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black font-mono text-teal-900 tracking-tight">
+              ₹{netBinaryIncome.toLocaleString("en-IN")}
+            </h2>
+            <div className="flex items-center gap-1 text-[11px] text-teal-700 font-medium mt-2">
+              <span>85% Net Payout (TDS 2%, Admin 8%, RP 5%)</span>
+            </div>
+          </div>
+
+          {/* ITEM 5: RP Wallet (Repurchase Wallet) */}
+          <div className="bg-white rounded-3xl p-6 border border-purple-200 bg-gradient-to-br from-purple-50/40 to-white shadow-xs relative overflow-hidden group hover:border-purple-500 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-black uppercase tracking-wider text-purple-800">
+                5. RP Wallet (Repurchase)
+              </span>
+              <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
+                <Wallet className="w-4 h-4" />
+              </div>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black font-mono text-purple-900 tracking-tight">
+              ₹{(user?.rpWallet || rpWalletAmount).toLocaleString("en-IN")}
+            </h2>
+            <div className="flex items-center gap-1 text-[11px] text-purple-700 font-medium mt-2">
+              <span>5% Auto-accumulated for Shopping</span>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================
+            ITEMS 6, 7: TEAM STRENGTH (Total Team, Left Team, Right Team)
+           ======================================================== */}
+        <section className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2e2e2] shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-[#e2e2e2]">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#006d36]" />
+              <h3 className="text-base font-black text-[#1a1c1c]">
+                Team Community Network
+              </h3>
+            </div>
+            <Link
+              href="/dashboard/community/team"
+              className="text-xs font-bold text-[#006d36] hover:underline flex items-center gap-1"
+            >
+              <span>View All Team</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
+            {/* ITEM 6: Total Team */}
+            <div className="p-5 rounded-2xl bg-[#f9f9f9] border border-[#e2e2e2] flex flex-col justify-between">
+              <span className="text-[10px] uppercase font-bold text-[#5f5e5e] block">
+                6. Total Team
+              </span>
+              <span className="text-3xl font-black text-[#1a1c1c] block my-2">
+                {totalTeamCount} Nodes
+              </span>
+              <span className="text-[10px] text-[#5f5e5e]">Overall Downline Associates</span>
+            </div>
+
+            {/* ITEM 7A: Total Left Team */}
+            <div className="p-5 rounded-2xl bg-blue-50/70 border border-blue-200 flex flex-col justify-between">
+              <span className="text-[10px] uppercase font-bold text-blue-800 block">
+                7. Left Team Count
+              </span>
+              <span className="text-3xl font-black text-blue-900 block my-2">
+                {leftTeamCount} Associates
+              </span>
+              <span className="text-[10px] text-blue-700">Active Left Leg Subtree</span>
+            </div>
+
+            {/* ITEM 7B: Total Right Team */}
+            <div className="p-5 rounded-2xl bg-purple-50/70 border border-purple-200 flex flex-col justify-between">
+              <span className="text-[10px] uppercase font-bold text-purple-800 block">
+                7. Right Team Count
+              </span>
+              <span className="text-3xl font-black text-purple-900 block my-2">
+                {rightTeamCount} Associates
+              </span>
+              <span className="text-[10px] text-purple-700">Active Right Leg Subtree</span>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================
+            ITEMS 8, 9: BINARY PV VOLUME & PENDING MATCH PV
+           ======================================================== */}
+        <section className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-[#e2e2e2]">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-[#006d36]" />
+              <h3 className="text-base font-black text-[#1a1c1c]">
+                1:1 Binary PV Matching Engine
+              </h3>
+            </div>
+            <Link
+              href="/dashboard/tree"
+              className="text-xs font-bold text-[#006d36] hover:underline flex items-center gap-1"
+            >
+              <span>Explore Binary Tree</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
+            {/* ITEM 8A: Total Left PV */}
+            <div className="p-5 rounded-2xl bg-blue-50/60 border border-blue-200 space-y-1">
+              <span className="text-[10px] uppercase font-bold text-blue-800 block">
+                8. Total Left PV
+              </span>
+              <span className="text-3xl font-black text-blue-900 block">
+                {(user?.leftPv || 0).toLocaleString()} PV
+              </span>
+              <span className="text-[10px] text-blue-700 block">
+                Carry: {(user?.carryLeftPv || 0).toLocaleString()} PV
+              </span>
+            </div>
+
+            {/* ITEM 8B: Total Right PV */}
+            <div className="p-5 rounded-2xl bg-purple-50/60 border border-purple-200 space-y-1">
+              <span className="text-[10px] uppercase font-bold text-purple-800 block">
+                8. Total Right PV
+              </span>
+              <span className="text-3xl font-black text-purple-900 block">
+                {(user?.rightPv || 0).toLocaleString()} PV
+              </span>
+              <span className="text-[10px] text-purple-700 block">
+                Carry: {(user?.carryRightPv || 0).toLocaleString()} PV
+              </span>
+            </div>
+
+            {/* ITEM 9: Match Thva Pending Padela PV (Carry Unmatched PV) */}
+            <div className="p-5 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-1">
+              <span className="text-[10px] uppercase font-bold text-amber-800 block">
+                9. Pending Match PV
+              </span>
+              <span className="text-3xl font-black text-amber-900 block">
+                {pendingMatchPv.toLocaleString()} PV
+              </span>
+              <span className="text-[10px] text-amber-700 block">
+                Carry Forward for 1:1 Instant Match
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================
+            ITEM 10: BOTTOM CREDENTIALS (Joining Date, Capping, KYC Status)
+           ======================================================== */}
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Joining Date Card */}
+          <div className="bg-white rounded-3xl p-5 border border-[#e2e2e2] shadow-xs flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold shrink-0">
+              <Calendar className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-[#5f5e5e] block">
+                Joining Date
+              </span>
+              <span className="font-mono text-sm font-black text-[#1a1c1c] block mt-0.5">
+                {formattedJoiningDate}
+              </span>
+            </div>
+          </div>
+
+          {/* Daily Capping Card */}
+          <div className="bg-white rounded-3xl p-5 border border-[#e2e2e2] shadow-xs flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold shrink-0">
+              <Percent className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-[#5f5e5e] block">
+                Daily Binary Capping
+              </span>
+              <span className="font-mono text-sm font-black text-[#1a1c1c] block mt-0.5">
+                ₹{(user?.dailyCapping || 1000).toLocaleString("en-IN")} / Day
+              </span>
+            </div>
+          </div>
+
+          {/* KYC Status Card */}
+          <Link
+            href="/dashboard/kyc"
+            className="bg-white rounded-3xl p-5 border border-[#e2e2e2] shadow-xs flex items-center justify-between gap-4 hover:border-emerald-300 transition-colors group cursor-pointer"
+          >
+            <div className="flex items-center gap-4">
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold shrink-0 ${
+                  user?.kycStatus === "VERIFIED"
+                    ? "bg-emerald-50 text-[#006d36]"
+                    : user?.kycStatus === "REJECTED"
+                    ? "bg-red-50 text-red-700"
+                    : "bg-amber-50 text-amber-800"
+                }`}
+              >
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-[#5f5e5e] block">
+                  KYC Verification
+                </span>
+                <span className="font-mono text-sm font-black text-[#1a1c1c] block mt-0.5 uppercase">
+                  {user?.kycStatus || "NOT SUBMITTED"}
+                </span>
+              </div>
+            </div>
+
+            <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#006d36] group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        </section>
       </div>
     </MemberLayout>
   );

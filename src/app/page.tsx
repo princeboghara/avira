@@ -1,26 +1,51 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import {
+  Diamond,
+  ArrowRight,
+  ChevronRight,
+  Sparkles,
+  ShieldCheck,
+  Zap,
+  TrendingUp,
+  Award,
+  Users,
+  CheckCircle2,
+  Lock,
+  Globe,
+  Leaf,
+  FlaskConical,
+} from "lucide-react";
+
+export const metadata = {
+  title: "Avira Life Care Global — Enterprise Associate & MLM Portal",
+  description:
+    "Experience the pinnacle of high-end wellness and entrepreneurial success. 1:1 binary compensation and precision-engineered lifestyle wellness products.",
+};
 
 export default function HomePage() {
   return (
     <div className="bg-[#f9f9f9] text-[#1a1c1c] font-sans antialiased selection:bg-[#50c878] selection:text-[#005025] min-h-screen flex flex-col">
-      {/* TopNavBar */}
-      <nav className="bg-[#f9f9f9]/80 backdrop-blur-xl border-b border-[#e2e2e2]/40 shadow-sm top-0 sticky z-50 transition-all">
+      {/* Top Header Navigation */}
+      <nav className="bg-[#f9f9f9]/80 backdrop-blur-xl border-b border-[#e2e2e2]/60 shadow-xs top-0 sticky z-50 transition-all">
         <div className="flex justify-between items-center w-full px-6 max-w-7xl mx-auto h-20">
-          {/* Brand */}
-          <Link href="/" className="flex items-center gap-3 active:scale-95 transition-transform">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#006d36] to-[#50c878] flex items-center justify-center text-white shadow-md">
-              <span className="material-symbols-outlined text-[24px]">diamond</span>
+          {/* Brand Logo */}
+          <Link href="/" className="flex items-center gap-3 active:scale-95 transition-transform group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#006d36] to-[#50c878] flex items-center justify-center text-white shadow-md group-hover:rotate-6 transition-transform">
+              <Diamond className="w-5 h-5 text-white" />
             </div>
-            <span className="font-extrabold text-xl tracking-tighter text-[#006d36]">
-              AVIRA LIFE CARE GLOBAL
-            </span>
+            <div>
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-[#006d36] block leading-tight">
+                AVIRA LIFE CARE
+              </span>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-[#5f5e5e] block">
+                Global Associate Portal
+              </span>
+            </div>
           </Link>
 
-          {/* Navigation Links */}
+          {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center gap-8 h-full">
             <Link
               href="/"
@@ -48,20 +73,20 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Actions */}
+          {/* Actions CTAs */}
           <div className="flex items-center gap-4">
             <Link
               href="/login"
-              className="hidden md:block text-[#5f5e5e] font-semibold hover:text-[#006d36] transition-colors active:scale-95"
+              className="hidden md:block text-[#5f5e5e] font-semibold hover:text-[#006d36] transition-colors active:scale-95 text-sm"
             >
               Login
             </Link>
             <Link
               href="/register"
-              className="neomorphic-btn-primary px-6 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 active:scale-95"
+              className="neomorphic-btn-primary px-6 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 active:scale-95 shadow-md"
             >
               <span>Join Now</span>
-              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
@@ -73,12 +98,10 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-6 w-full relative z-10 grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
             {/* Left Content */}
             <div className="md:col-span-6 flex flex-col gap-6 items-start">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-card">
-                <span className="material-symbols-outlined text-[#006d36] text-[18px]">
-                  verified
-                </span>
-                <span className="text-xs text-[#3e4a3f] uppercase tracking-widest font-bold">
-                  Premium Wellness Network
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-card border border-emerald-200/60 shadow-xs">
+                <ShieldCheck className="w-4 h-4 text-[#006d36]" />
+                <span className="text-xs text-[#006d36] uppercase tracking-widest font-bold">
+                  Verified Wellness Network
                 </span>
               </div>
 
@@ -90,16 +113,16 @@ export default function HomePage() {
               <p className="text-lg text-[#3e4a3f] max-w-lg leading-relaxed text-balance">
                 Experience the pinnacle of high-end wellness and entrepreneurial success.
                 Precision-engineered products designed to optimize your lifestyle and drive
-                unparalleled network growth.
+                unparalleled network growth with instant 1:1 binary compensation.
               </p>
 
               <div className="flex flex-wrap gap-4 mt-2">
                 <Link
                   href="/register"
-                  className="neomorphic-btn-primary px-8 py-4 rounded-full font-bold text-xs uppercase tracking-widest flex items-center gap-2"
+                  className="neomorphic-btn-primary px-8 py-4 rounded-full font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg hover:shadow-xl transition-all"
                 >
                   <span>Get Started</span>
-                  <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
                 <a
                   href="#products"
@@ -132,27 +155,28 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Image: Uploaded Luxury Products Banner */}
+            {/* Right Image: Luxury Products Banner Optimized to WebP */}
             <div className="md:col-span-6 relative mt-6 md:mt-0">
               <div className="absolute inset-0 bg-[#50c878]/15 blur-[90px] rounded-full translate-y-8 pointer-events-none" />
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/80 group hover:shadow-3xl transition-all duration-700">
                 <Image
-                  src="/images/hero-products.png"
-                  alt="Emerald Elite Luxury Products"
+                  src="/images/hero-products.webp"
+                  alt="Avira Life Care Global Luxury Products"
                   width={900}
                   height={500}
                   priority
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
                 />
-                <div className="absolute bottom-4 left-4 right-4 p-4 rounded-xl bg-white/85 backdrop-blur-md border border-white/60 shadow-lg flex items-center justify-between">
+                <div className="absolute bottom-4 left-4 right-4 p-4 rounded-xl bg-white/90 backdrop-blur-md border border-white/60 shadow-lg flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <span className="material-symbols-outlined text-[#006d36]">eco</span>
+                    <Leaf className="w-5 h-5 text-[#006d36]" />
                     <div>
                       <span className="text-xs font-bold text-[#1a1c1c] block">
-                        Signature Organic Range
+                        Signature Botanical Range
                       </span>
                       <span className="text-[10px] text-[#5f5e5e]">
-                        Certified Pure Botanical Formula
+                        Certified Pure Organic Wellness Formula
                       </span>
                     </div>
                   </div>
@@ -161,7 +185,7 @@ export default function HomePage() {
                     className="text-xs font-bold text-[#006d36] hover:underline flex items-center gap-1"
                   >
                     <span>Become Associate</span>
-                    <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+                    <ChevronRight className="w-4 h-4" />
                   </Link>
                 </div>
               </div>
@@ -169,7 +193,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Our Products Section (Glassmorphism) */}
+        {/* Our Products Section */}
         <section id="products" className="py-20 bg-[#f9f9f9] relative">
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="text-center mb-16 flex flex-col items-center">
@@ -187,10 +211,11 @@ export default function HomePage() {
               {/* Product Card 1 */}
               <div className="glass-card rounded-2xl p-6 flex flex-col items-center group cursor-pointer transition-all hover:-translate-y-2 hover:shadow-xl duration-300">
                 <div className="w-full h-64 bg-[#eeeeee] rounded-xl mb-6 relative overflow-hidden flex items-center justify-center shadow-inner">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     className="w-3/4 h-3/4 object-contain transition-transform group-hover:scale-105 duration-500"
                     alt="Core Supplement"
+                    width={320}
+                    height={260}
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlOsMH1-t5hFxaAZMQ2wfp6Vi35EKtHq4uMJCoxEgD_CPgf8brKzSGx0R8YXyx8gemPcS_7hqo-Ke3XgPc1YT8jRmWJNqIVCchzb0bPImhUrdZXlpWX_4WcbTxa8F5dGcPCFsfwUCi7DTbwIt-KYIEQetGTNNY-FRCcuzFem3eFe-FZE8k3lM9CwF2GuFU66ev2KJzSb0NBScMNMp7R2DNELL0R8xj7dl7sgkaoHipXKytf1spx1XcUQ"
                   />
                 </div>
@@ -211,10 +236,11 @@ export default function HomePage() {
               {/* Product Card 2 */}
               <div className="glass-card rounded-2xl p-6 flex flex-col items-center group cursor-pointer transition-all hover:-translate-y-2 hover:shadow-xl duration-300">
                 <div className="w-full h-64 bg-[#eeeeee] rounded-xl mb-6 relative overflow-hidden flex items-center justify-center shadow-inner">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     className="w-3/4 h-3/4 object-contain transition-transform group-hover:scale-105 duration-500"
                     alt="Botanical Serum"
+                    width={320}
+                    height={260}
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVL71o-ntv0XiIT1UwKraxg1lZYOJDrTgCe8U_qObCbE90UZ7MHpF6SkLt4Ga5evvzHYMWx8tjHx6KUZ0ZeBkIIfY9NSwGuZluQkZc9lgKIke7fIlklH5TF2N0NN8_SuGHUIxpqvzqpueBOhoF6rLstwDYFBYXhIEJrD-YJXJGj2TdZK74r0ns_o90AimG0qYUd5QCmh9zXgi8nq0mCOO7p0RHZiL0Rsd1svAQJb7OAmVHK0ImOQCiFQ"
                   />
                 </div>
@@ -235,10 +261,11 @@ export default function HomePage() {
               {/* Product Card 3 */}
               <div className="glass-card rounded-2xl p-6 flex flex-col items-center group cursor-pointer transition-all hover:-translate-y-2 hover:shadow-xl duration-300">
                 <div className="w-full h-64 bg-[#eeeeee] rounded-xl mb-6 relative overflow-hidden flex items-center justify-center shadow-inner">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     className="w-3/4 h-3/4 object-contain transition-transform group-hover:scale-105 duration-500"
                     alt="Aura Diffuser"
+                    width={320}
+                    height={260}
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYXrrXWPcivvqZZXEmKGhdOfXRgWDZeOLl9dyBQJaAYedxb1qm0B6-yHHUZUlNCA_PYTppiqGySpn6KPt3nQyokqXGGp7yUmSC1mDRCAsxhYxiAl63LI1W2SM6t3F-KBsxHvYRza8-Lc9i6jsof-RvM_kic1eFM4b0gID6yfgVYlKtdF7TX8YQ0sCl6OrhCwMpel4VufAeWNBRA59FKxm3qnIeDEwYsWscLO-Twujn14tRrfRq46Xguw"
                   />
                 </div>
@@ -259,77 +286,77 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Why Choose Us / The Emerald Advantage */}
+        {/* The Advantage Section */}
         <section id="advantage" className="py-20 bg-white relative">
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
               <div>
                 <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1a1c1c] mb-6">
-                  The Emerald Advantage
+                  The Avira Advantage
                 </h2>
                 <p className="text-base sm:text-lg text-[#3e4a3f] mb-10 leading-relaxed">
-                  We merge cutting-edge nutritional science with a lucrative entrepreneurial
+                  We merge cutting-edge nutritional science with a lucrative direct-selling
                   ecosystem, providing you the ultimate platform to scale your health and wealth
                   simultaneously.
                 </p>
 
                 <div className="space-y-8">
                   <div className="flex gap-4 items-start">
-                    <div className="w-12 h-12 rounded-full bg-[#eeeeee] flex items-center justify-center shadow-inner shrink-0">
-                      <span className="material-symbols-outlined text-[#006d36]">science</span>
+                    <div className="w-12 h-12 rounded-full bg-[#eeeeee] flex items-center justify-center shadow-inner shrink-0 text-[#006d36]">
+                      <FlaskConical className="w-6 h-6" />
                     </div>
                     <div>
                       <h4 className="text-xl font-bold text-[#1a1c1c] mb-1">Clinical Precision</h4>
                       <p className="text-sm text-[#5f5e5e]">
                         Every formula is meticulously engineered using premium, bio-available
-                        ingredients.
+                        botanical ingredients.
                       </p>
                     </div>
                   </div>
 
                   <div className="flex gap-4 items-start">
-                    <div className="w-12 h-12 rounded-full bg-[#eeeeee] flex items-center justify-center shadow-inner shrink-0">
-                      <span className="material-symbols-outlined text-[#006d36]">trending_up</span>
+                    <div className="w-12 h-12 rounded-full bg-[#eeeeee] flex items-center justify-center shadow-inner shrink-0 text-[#006d36]">
+                      <TrendingUp className="w-6 h-6" />
                     </div>
                     <div>
                       <h4 className="text-xl font-bold text-[#1a1c1c] mb-1">
-                        Uncapped Binary Potential
+                        1:1 Binary Matching Engine
                       </h4>
                       <p className="text-sm text-[#5f5e5e]">
-                        Our 12% daily binary cutoff plan is designed for maximum leverage and
-                        exponential downline growth.
+                        Instant matching algorithm credits ₹1 per matched PV up to your daily
+                        capping with automatic power-leg carry forward.
                       </p>
                     </div>
                   </div>
 
                   <div className="flex gap-4 items-start">
-                    <div className="w-12 h-12 rounded-full bg-[#eeeeee] flex items-center justify-center shadow-inner shrink-0">
-                      <span className="material-symbols-outlined text-[#006d36]">diversity_3</span>
+                    <div className="w-12 h-12 rounded-full bg-[#eeeeee] flex items-center justify-center shadow-inner shrink-0 text-[#006d36]">
+                      <Users className="w-6 h-6" />
                     </div>
                     <div>
                       <h4 className="text-xl font-bold text-[#1a1c1c] mb-1">Global Leader Network</h4>
                       <p className="text-sm text-[#5f5e5e]">
-                        Join an exclusive, high-caliber community of driven network entrepreneurs
-                        worldwide.
+                        Join an exclusive community of driven network entrepreneurs and certified
+                        associates across India.
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Advantage Feature Box */}
+              {/* Advantage Feature Card */}
               <div className="relative h-full min-h-[420px] rounded-3xl overflow-hidden glass-card p-8 flex flex-col justify-center text-center shadow-xl border border-[#e2e2e2]">
                 <div className="absolute inset-0 bg-gradient-to-br from-[#006d36]/10 to-transparent pointer-events-none" />
                 <div className="relative z-10 space-y-6">
-                  <span className="material-symbols-outlined text-[64px] text-[#006d36] drop-shadow-md">
-                    diamond
-                  </span>
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#006d36] to-[#50c878] mx-auto flex items-center justify-center text-white shadow-lg">
+                    <Diamond className="w-8 h-8" />
+                  </div>
                   <h3 className="text-3xl font-extrabold text-[#1a1c1c] tracking-tight leading-tight">
-                    Tangible Digital Wealth
+                    Transparent Financial Ledger
                   </h3>
                   <p className="text-sm text-[#5f5e5e] max-w-sm mx-auto leading-relaxed">
-                    Experience the intersection of luxury lifestyle and profound personal
-                    optimization with automated Supabase payouts.
+                    Experience real-time transaction processing, automated wallet disbursements,
+                    and 100% verified double-entry accounting.
                   </p>
                   <div className="pt-2">
                     <Link
@@ -337,7 +364,7 @@ export default function HomePage() {
                       className="neomorphic-btn-primary px-8 py-3 rounded-full font-bold text-xs uppercase tracking-widest inline-flex items-center gap-2"
                     >
                       <span>Join Network Now</span>
-                      <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                      <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
                 </div>
@@ -352,14 +379,16 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand Column */}
           <div className="col-span-1 md:col-span-2 space-y-3">
-            <span className="font-extrabold text-xl text-[#006d36]">EMERALD ELITE</span>
+            <span className="font-extrabold text-xl text-[#006d36] tracking-tight">
+              AVIRA LIFE CARE GLOBAL
+            </span>
             <p className="text-sm text-[#3e4a3f]/80 max-w-sm leading-relaxed">
-              © 2026 Emerald Elite Global. All rights reserved. Precision Engineering for the
-              Modern Network Entrepreneur.
+              © 2026 Avira Life Care Global Pvt Ltd. All rights reserved. Precision engineering for the
+              modern network wellness entrepreneur.
             </p>
           </div>
 
-          {/* Links */}
+          {/* Platform Navigation */}
           <div className="flex flex-col gap-2.5 text-sm">
             <span className="font-bold text-xs uppercase tracking-wider text-[#1a1c1c] mb-1">
               Platform
@@ -378,22 +407,23 @@ export default function HomePage() {
             </Link>
           </div>
 
+          {/* Compliance & Legal */}
           <div className="flex flex-col gap-2.5 text-sm">
             <span className="font-bold text-xs uppercase tracking-wider text-[#1a1c1c] mb-1">
               Compliance & Legal
             </span>
-            <a href="#" className="text-[#3e4a3f] hover:text-[#006d36] transition-colors">
-              Terms of Service
-            </a>
-            <a href="#" className="text-[#3e4a3f] hover:text-[#006d36] transition-colors">
-              Privacy Policy
-            </a>
-            <a href="#" className="text-[#3e4a3f] hover:text-[#006d36] transition-colors">
-              Income Disclosure
-            </a>
-            <a href="#" className="text-[#3e4a3f] hover:text-[#006d36] transition-colors">
-              Member Support
-            </a>
+            <Link href="/dashboard/support" className="text-[#3e4a3f] hover:text-[#006d36] transition-colors">
+              Help Desk
+            </Link>
+            <span className="text-[#3e4a3f]/60 text-xs">
+              256-Bit SSL Encrypted
+            </span>
+            <span className="text-[#3e4a3f]/60 text-xs">
+              Direct Selling Guidelines 2021 Compliant
+            </span>
+            <span className="text-[#3e4a3f]/60 text-xs">
+              ISO 9001:2015 Certified Production
+            </span>
           </div>
         </div>
       </footer>

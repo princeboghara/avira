@@ -1,7 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
+import { requireAdminSession } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await requireAdminSession(req);
+  if (auth.errorResponse) return auth.errorResponse;
+
   const client = await pool.connect();
   try {
     // 1. Total Members & Status Counts

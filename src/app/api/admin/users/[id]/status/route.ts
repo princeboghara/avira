@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
+import { requireAdminSession } from "@/lib/auth";
 
 interface RouteProps {
   params: Promise<{ id: string }>;
 }
 
 export async function POST(req: NextRequest, { params }: RouteProps) {
+  const auth = await requireAdminSession(req);
+  if (auth.errorResponse) return auth.errorResponse;
+
   const { id } = await params;
   const body = await req.json();
   const { status } = body;

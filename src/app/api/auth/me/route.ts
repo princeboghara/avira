@@ -1,47 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAccessToken } from "@/lib/jwt";
+import { getSession } from "@/lib/auth";
 import { findUserByMemberId, getTransactionsForUser } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
-    // 1. Check Bearer Authorization header or cookie
-    let token = "";
-    const authHeader = request.headers.get("authorization");
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      token = authHeader.substring(7);
-    } else {
-      const cookieToken = request.cookies.get("avira_access_token");
-      if (cookieToken) {
-        token = cookieToken.value;
-      }
+    const session = await getSession(request);
+
+    if (!session || !session.memberId) {
+      return NextResponse.json(
+        { success: false, message: "No active session found. Please log in." },
+        { status: 401 }
+      );
     }
 
-    // Support dev demo query for instant visualization if no token
-    const url = new URL(request.url);
-    const demoMemberId = url.searchParams.get("demoId");
-
-    let memberIdToFetch = "";
-
-    if (token) {
-      const payload = verifyAccessToken(token);
-      if (payload) {
-        memberIdToFetch = payload.memberId;
-      }
-    }
-
-    if (!memberIdToFetch && demoMemberId) {
-      memberIdToFetch = demoMemberId;
-    }
-
-    // Default fallback to demo member AV23900 if unauthenticated for quick preview
-    if (!memberIdToFetch) {
-      memberIdToFetch = "AV23900";
-    }
-
-    const user = await findUserByMemberId(memberIdToFetch);
+    const user = await findUserByMemberId(session.memberId);
     if (!user) {
       return NextResponse.json(
-        { success: false, message: "Member session expired or not found" },
+        { success: false, message: "Member session expired or account not found" },
         { status: 401 }
       );
     }
