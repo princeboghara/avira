@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { Leaf, ArrowLeft, ShieldCheck, Zap, BadgeCheck } from "lucide-react";
 import LoginForm from "@/components/forms/LoginForm";
 
 export const metadata = {
@@ -19,14 +20,17 @@ export default function LoginPage() {
       {/* Top Header */}
       <header className="p-4 sm:p-6 flex items-center justify-between max-w-5xl mx-auto w-full">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#006d36] to-[#50c878] flex items-center justify-center text-white shadow-sm">
-            <span className="material-symbols-outlined text-[20px]">eco</span>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/avira-logo.png"
+            alt="Avira Lifecare Global Private Limited"
+            className="h-10 sm:h-12 w-auto object-contain"
+          />
           <div>
-            <span className="font-black text-base sm:text-lg tracking-tight text-[#006d36] block leading-tight">
-              AVIRA LIFE CARE
+            <span className="font-black text-sm sm:text-base tracking-tight text-[#006d36] block leading-tight">
+              AVIRA LIFECARE
             </span>
-            <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#5f5e5e] block">
+            <span className="text-[8px] sm:text-[9px] font-extrabold uppercase tracking-widest text-[#5f5e5e] block">
               Global Associate Portal
             </span>
           </div>
@@ -35,7 +39,7 @@ export default function LoginPage() {
           href="/"
           className="text-xs font-bold text-[#5f5e5e] hover:text-[#006d36] flex items-center gap-1 bg-white px-3 py-1.5 rounded-xl border border-[#e2e2e2] shadow-xs transition-colors"
         >
-          <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+          <ArrowLeft className="w-4 h-4" />
           <span>Back to Home</span>
         </Link>
       </header>
@@ -48,15 +52,15 @@ export default function LoginPage() {
           {/* Centered Trust Badges underneath the card */}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-xs text-[#5f5e5e]">
             <div className="flex items-center gap-1.5 bg-white px-3.5 py-1.5 rounded-full border border-[#e2e2e2] shadow-xs">
-              <span className="material-symbols-outlined text-[16px] text-[#006d36]">verified</span>
+              <ShieldCheck className="w-4 h-4 text-[#006d36]" />
               <span className="font-semibold text-[11px]">100% Encrypted Login</span>
             </div>
             <div className="flex items-center gap-1.5 bg-white px-3.5 py-1.5 rounded-full border border-[#e2e2e2] shadow-xs">
-              <span className="material-symbols-outlined text-[16px] text-[#006d36]">bolt</span>
+              <Zap className="w-4 h-4 text-[#006d36]" />
               <span className="font-semibold text-[11px]">1:1 Instant Matching</span>
             </div>
             <div className="flex items-center gap-1.5 bg-white px-3.5 py-1.5 rounded-full border border-[#e2e2e2] shadow-xs">
-              <span className="material-symbols-outlined text-[16px] text-[#006d36]">badge</span>
+              <BadgeCheck className="w-4 h-4 text-[#006d36]" />
               <span className="font-semibold text-[11px]">5-Digit Member ID</span>
             </div>
           </div>

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const orders = await getOrdersForUser(user.id);
+    const orders = await getOrdersForUser(user.id, user.memberId);
 
     return NextResponse.json({
       success: true,

@@ -37,11 +37,21 @@ export default function RootLayout({
       className={`${montserrat.variable} ${inter.variable} h-full antialiased`}
     >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (typeof window !== 'undefined' && !window.__avira_banner_shown) {
+                window.__avira_banner_shown = true;
+                console.log(
+                  '%c🌿 AVIRA LIFE CARE GLOBAL %c| Enterprise Associate & Commerce Platform\\n%c[Status: Production Ready | Security: 256-Bit SSL | Engine: Binary 1:1 Matching]\\n%c⚠️ Security Notice: This browser console is an advanced developer interface. Do NOT paste any unknown scripts or tokens here.',
+                  'color: #006d36; font-size: 16px; font-weight: 900; font-family: system-ui, sans-serif;',
+                  'color: #5f5e5e; font-size: 12px; font-weight: 600;',
+                  'color: #50c878; font-size: 11px; font-family: monospace; font-weight: bold;',
+                  'color: #b91c1c; font-size: 11px; font-weight: bold; background-color: #fef2f2; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 4px;'
+                );
+              }
+            `,
+          }}
         />
       </head>
       <body

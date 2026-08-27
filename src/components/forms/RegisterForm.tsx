@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import confetti from "canvas-confetti";
 import {
@@ -15,22 +15,28 @@ import {
   X,
   Phone,
   User as UserIcon,
-  ShieldCheck,
+  Leaf,
+  BadgeCheck,
+  Network,
+  MapPin,
+  ArrowRight,
 } from "lucide-react";
 
 export default function RegisterForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
-  const urlRef = searchParams.get("ref");
+  const urlSponsor = searchParams.get("sponsor") || searchParams.get("ref");
+  const urlParent = searchParams.get("parent");
   const urlPos = searchParams.get("pos");
 
+  const isSponsorLocked = Boolean(urlSponsor);
+  const isPositionLocked = Boolean(urlPos);
+
   // 1. Sponsor Details (Top Field)
-  const [sponsorId, setSponsorId] = useState(urlRef ? urlRef.toUpperCase() : "AV00001");
+  const [sponsorId, setSponsorId] = useState(urlSponsor ? urlSponsor.toUpperCase() : "AV00001");
   const [sponsorName, setSponsorName] = useState("Avira Life Care Global");
   const [isVerifyingSponsor, setIsVerifyingSponsor] = useState(false);
   const [sponsorVerified, setSponsorVerified] = useState(true);
-  const [isSponsorLocked, setIsSponsorLocked] = useState(Boolean(urlRef));
 
   // 2. Associate Details
   const [firstName, setFirstName] = useState("");
@@ -41,7 +47,6 @@ export default function RegisterForm() {
   const [binaryPosition, setBinaryPosition] = useState<"LEFT" | "RIGHT">(
     urlPos && urlPos.toUpperCase() === "RIGHT" ? "RIGHT" : "LEFT"
   );
-  const [isPositionLocked, setIsPositionLocked] = useState(Boolean(urlPos));
 
   // 4. Pincode & Conditional City/State
   const [pincode, setPincode] = useState("");
@@ -52,6 +57,7 @@ export default function RegisterForm() {
 
   // 5. Password & Terms
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(true);
 
@@ -70,9 +76,11 @@ export default function RegisterForm() {
   useEffect(() => {
     const cleanId = sponsorId.trim().toUpperCase();
     if (!cleanId || cleanId.length < 4) {
-      setSponsorVerified(false);
-      setSponsorName("");
-      return;
+      const resetTimer = setTimeout(() => {
+        setSponsorVerified(false);
+        setSponsorName("");
+      }, 0);
+      return () => clearTimeout(resetTimer);
     }
 
     const timer = setTimeout(async () => {
@@ -103,33 +111,39 @@ export default function RegisterForm() {
   useEffect(() => {
     const cleanPincode = pincode.trim().replace(/\D/g, "");
     if (cleanPincode.length === 6) {
-      setIsFetchingPincode(true);
-      fetch(`/api/pincode/${cleanPincode}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.city && data.state) {
-            setCity(data.city);
-            setStateName(data.state);
-            setPincodeAutofilled(true);
-          } else {
+      const fetchTimer = setTimeout(() => {
+        setIsFetchingPincode(true);
+        fetch(`/api/pincode/${cleanPincode}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.city && data.state) {
+              setCity(data.city);
+              setStateName(data.state);
+              setPincodeAutofilled(true);
+            } else {
+              setCity("");
+              setStateName("");
+              setPincodeAutofilled(false);
+            }
+          })
+          .catch(() => {
             setCity("");
             setStateName("");
             setPincodeAutofilled(false);
-          }
-        })
-        .catch(() => {
-          setCity("");
-          setStateName("");
-          setPincodeAutofilled(false);
-        })
-        .finally(() => {
-          setIsFetchingPincode(false);
-        });
+          })
+          .finally(() => {
+            setIsFetchingPincode(false);
+          });
+      }, 0);
+      return () => clearTimeout(fetchTimer);
     } else {
       // If pincode is erased or less than 6 digits: IMMEDIATELY REMOVE CITY & STATE
-      setCity("");
-      setStateName("");
-      setPincodeAutofilled(false);
+      const clearTimer = setTimeout(() => {
+        setCity("");
+        setStateName("");
+        setPincodeAutofilled(false);
+      }, 0);
+      return () => clearTimeout(clearTimer);
     }
   }, [pincode]);
 
@@ -191,6 +205,7 @@ export default function RegisterForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sponsorId: sponsorId.trim().toUpperCase(),
+          parentId: urlParent ? urlParent.trim().toUpperCase() : undefined,
           fullName,
           mobile: mobile.trim(),
           password,
@@ -228,15 +243,18 @@ export default function RegisterForm() {
     <>
       <div className="w-full max-w-xl mx-auto bg-white rounded-3xl p-6 sm:p-8 lg:p-10 border border-[#e2e2e2] neo-shadow relative">
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#006d36] to-[#50c878] text-white flex items-center justify-center mx-auto mb-3 shadow-md">
-            <span className="material-symbols-outlined text-[24px]">eco</span>
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-[#1a1c1c] tracking-tight">
+        <div className="text-center mb-6 flex flex-col items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/avira-logo.png"
+            alt="Avira Lifecare Global Private Limited"
+            className="h-16 w-auto object-contain mb-3"
+          />
+          <h2 className="text-xl sm:text-2xl font-black text-[#1a1c1c] tracking-tight">
             Create Associate Account
           </h2>
-          <p className="text-xs sm:text-sm text-[#5f5e5e] mt-1">
-            Join Avira Life Care Global with instant 5-digit member registration.
+          <p className="text-xs text-[#5f5e5e] mt-1">
+            Avira Lifecare Global Private Limited
           </p>
         </div>
 
@@ -248,11 +266,11 @@ export default function RegisterForm() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 1. SAUTHI UPER: SPONSOR ID (WITH TRUE SIGN & NO "VERIFIED SPONSOR" TEXT) */}
+          {/* Sponsor ID Verification */}
           <div className="p-3.5 rounded-2xl bg-[#f9f9f9] border border-[#e2e2e2] space-y-1.5 shadow-xs">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-[#1a1c1c] uppercase tracking-wider flex items-center gap-1">
-                <span className="material-symbols-outlined text-[16px] text-[#006d36]">badge</span>
+                <BadgeCheck className="w-4 h-4 text-[#006d36]" />
                 <span>Sponsor ID *</span>
               </label>
               {isSponsorLocked ? (
@@ -294,7 +312,7 @@ export default function RegisterForm() {
             {/* Direct Sponsor Name (NO "VERIFIED SPONSOR" TEXT) */}
             {sponsorVerified && sponsorName && (
               <div className="text-xs text-[#006d36] font-bold flex items-center gap-1.5 pt-1 px-1">
-                <span className="material-symbols-outlined text-[16px] text-[#006d36]">person</span>
+                <UserIcon className="w-4 h-4 text-[#006d36]" />
                 <span>{sponsorName}</span>
               </div>
             )}
@@ -312,19 +330,20 @@ export default function RegisterForm() {
                 placeholder="First Name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full bg-[#f9f9f9] border-none rounded-xl py-3 px-4 text-[#1a1c1c] focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm font-semibold"
+                className="w-full bg-[#f9f9f9] border-none rounded-xl py-3 px-4 text-[#1a1c1c] focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm"
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-[#1a1c1c] mb-1 uppercase tracking-wider">
-                Last Name
+                Last Name *
               </label>
               <input
                 type="text"
+                required
                 placeholder="Last Name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full bg-[#f9f9f9] border-none rounded-xl py-3 px-4 text-[#1a1c1c] focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm font-semibold"
+                className="w-full bg-[#f9f9f9] border-none rounded-xl py-3 px-4 text-[#1a1c1c] focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm"
               />
             </div>
           </div>
@@ -354,7 +373,7 @@ export default function RegisterForm() {
           <div className="p-3.5 rounded-2xl bg-[#f9f9f9] border border-[#e2e2e2] space-y-2 shadow-xs">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-[#1a1c1c] uppercase tracking-wider flex items-center gap-1">
-                <span className="material-symbols-outlined text-[16px] text-[#006d36]">account_tree</span>
+                <Network className="w-4 h-4 text-[#006d36]" />
                 <span>Placement Leg *</span>
               </label>
               {isPositionLocked && (
@@ -396,7 +415,7 @@ export default function RegisterForm() {
           <div className="p-3.5 rounded-2xl bg-[#f9f9f9] border border-[#e2e2e2] space-y-2 shadow-xs">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-[#1a1c1c] uppercase tracking-wider flex items-center gap-1">
-                <span className="material-symbols-outlined text-[16px] text-[#006d36]">map</span>
+                <MapPin className="w-4 h-4 text-[#006d36]" />
                 <span>Pincode *</span>
               </label>
               <span className="text-[10px] text-[#5f5e5e]">6 Digits</span>
@@ -444,7 +463,7 @@ export default function RegisterForm() {
             </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-[#5f5e5e]">
-                <span className="material-symbols-outlined text-[18px]">lock</span>
+                <Lock className="w-4 h-4 text-[#5f5e5e]" />
               </span>
               <input
                 type={showPassword ? "text" : "password"}
@@ -491,7 +510,7 @@ export default function RegisterForm() {
             ) : (
               <>
                 <span>Complete Registration</span>
-                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>

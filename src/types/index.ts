@@ -19,6 +19,7 @@ export interface User {
   totalTeamCount: number;
   todayEarnings: number;
   joinedDate: string;
+  activationDate?: string;
   avatarUrl?: string;
 
   // Binary MLM Fields
@@ -197,6 +198,12 @@ export interface Order {
   memberId?: string;
   date?: string;
   billedBy?: string;
+  buyerName?: string;
+  buyerMobile?: string;
+  buyerAddress?: string;
+  buyerCity?: string;
+  buyerState?: string;
+  buyerPincode?: string;
   customerName?: string;
   customerMobile?: string;
   shippingAddress?: string;

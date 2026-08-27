@@ -9,6 +9,7 @@ import { User } from "@/types";
 
 const registerSchema = z.object({
   sponsorId: z.string().min(3, "Sponsor ID is required"),
+  parentId: z.string().optional(),
   fullName: z.string().min(2, "Full Name must be at least 2 characters"),
   mobile: z.string().regex(/^[6-9]\d{9}$/, "Please enter a valid 10-digit Indian mobile number"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: errorMsg }, { status: 400 });
     }
 
-    const { sponsorId, fullName, mobile, password, pincode, city, state, position } =
+    const { sponsorId, parentId, fullName, mobile, password, pincode, city, state, position } =
       validatedData.data;
 
     // 1. Check if mobile number is already registered to avoid unique constraint crash
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Check if sponsor exists in Supabase PostgreSQL
+    // 2. Check if sponsor exists in database
     const sponsor = await findUserByMemberId(sponsorId);
     if (!sponsor) {
       return NextResponse.json(
@@ -51,7 +52,18 @@ export async function POST(request: NextRequest) {
 
     // 3. Binary placement spot in chosen leg (LEFT or RIGHT)
     const targetLeg = position || "LEFT";
-    const binarySpot = await findAvailableBinarySpot(sponsor.memberId, targetLeg);
+    let binarySpot: { parentId: string; position: "LEFT" | "RIGHT" };
+
+    if (parentId && parentId.trim()) {
+      const parentUser = await findUserByMemberId(parentId.trim());
+      if (parentUser) {
+        binarySpot = await findAvailableBinarySpot(parentUser.memberId, targetLeg);
+      } else {
+        binarySpot = await findAvailableBinarySpot(sponsor.memberId, targetLeg);
+      }
+    } else {
+      binarySpot = await findAvailableBinarySpot(sponsor.memberId, targetLeg);
+    }
 
     // 4. Generate Unique 5-Digit Member ID (AV + 5 digits) via direct collision check
     const newMemberId = await generateUniqueMemberId();
@@ -143,10 +155,10 @@ export async function POST(request: NextRequest) {
     }
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Registration error:", error);
     return NextResponse.json(
-      { success: false, message: "Internal server error during registration." },
+      { success: false, message: error.message || "Failed to complete registration" },
       { status: 500 }
     );
   }

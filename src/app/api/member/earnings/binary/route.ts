@@ -14,10 +14,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+    const range = searchParams.get("range");
+
     const client = await pool.connect();
     try {
-      const res = await client.query(
-        `
+      let query = `
         SELECT 
           id,
           user_id,
@@ -33,10 +37,24 @@ export async function GET(req: NextRequest) {
           created_at
         FROM transactions
         WHERE user_id = $1 AND (type = 'BINARY_MATCHING' OR description ILIKE '%binary%')
-        ORDER BY created_at DESC
-      `,
-        [user.id]
-      );
+      `;
+
+      const params: any[] = [user.id];
+
+      if (range === "today") {
+        query += ` AND created_at >= CURRENT_DATE`;
+      } else if (range === "week") {
+        query += ` AND created_at >= CURRENT_DATE - INTERVAL '7 days'`;
+      } else if (range === "month") {
+        query += ` AND created_at >= CURRENT_DATE - INTERVAL '30 days'`;
+      } else if (startDate && endDate) {
+        params.push(startDate, `${endDate} 23:59:59`);
+        query += ` AND created_at >= $2 AND created_at <= $3`;
+      }
+
+      query += ` ORDER BY created_at DESC;`;
+
+      const res = await client.query(query, params);
 
       let totalGross = 0;
       let totalTds = 0;

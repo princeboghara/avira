@@ -10,10 +10,14 @@ import {
   Trash2,
   Plus,
   Minus,
-  CheckCircle2,
   AlertCircle,
   Loader2,
-  Sparkles,
+  MapPin,
+  Phone,
+  UserCheck,
+  CheckCircle2,
+  FileText,
+  Percent,
 } from "lucide-react";
 import MemberLayout from "@/components/dashboard/MemberLayout";
 import { Product, User } from "@/types";
@@ -40,30 +44,15 @@ export default function MemberCartPage() {
   useEffect(() => {
     async function loadUserAndCart() {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
         const data = await res.json();
         if (data.success && data.user) {
           setUser(data.user);
-
-          // Check if already saved in localStorage checkout info
-          const savedTarget = localStorage.getItem("aviracare_checkout_target");
-          if (savedTarget) {
-            const parsed = JSON.parse(savedTarget);
-            setTargetMemberId(parsed.memberId || data.user.memberId);
-            setTargetMemberName(parsed.fullName || data.user.fullName);
-            setTargetMemberMobile(parsed.mobile || data.user.mobile);
-            setShippingAddress(parsed.address || data.user.address || "");
-            setMemberVerified(true);
-          } else {
-            setTargetMemberId(data.user.memberId);
-            setTargetMemberName(data.user.fullName);
-            setTargetMemberMobile(data.user.mobile);
-            setShippingAddress(
-              data.user.address ||
-                `${data.user.city || ""}, ${data.user.state || ""} - ${data.user.pincode || ""}`
-            );
-            setMemberVerified(true);
-          }
+          setTargetMemberId("");
+          setTargetMemberName("");
+          setTargetMemberMobile("");
+          setShippingAddress("");
+          setMemberVerified(false);
         }
       } catch (err) {
         console.error("Error loading user:", err);
@@ -115,6 +104,7 @@ export default function MemberCartPage() {
     if (!cleanId) {
       setMemberVerified(false);
       setTargetMemberName("");
+      setTargetMemberMobile("");
       setMemberError("Please enter an Associate Member ID");
       return;
     }
@@ -124,21 +114,27 @@ export default function MemberCartPage() {
     try {
       const res = await fetch(`/api/sponsor/${cleanId}`);
       const data = await res.json();
-      if (data.success && data.user) {
-        setTargetMemberName(data.user.fullName);
-        setTargetMemberMobile(data.user.mobile || "");
-        if (data.user.address) {
-          setShippingAddress(data.user.address);
-        } else if (data.user.city || data.user.state) {
-          setShippingAddress(
-            `${data.user.city || ""}, ${data.user.state || ""} - ${data.user.pincode || ""}`
-          );
+      if ((data.success || data.exists) && (data.user || data.fullName)) {
+        const usr = data.user || data;
+        const name = usr.fullName || "";
+        const mobile = usr.mobile || "";
+        const addr =
+          usr.address ||
+          [usr.city, usr.state, usr.pincode ? `PIN: ${usr.pincode}` : ""]
+            .filter(Boolean)
+            .join(", ");
+
+        setTargetMemberName(name);
+        setTargetMemberMobile(mobile);
+        if (addr) {
+          setShippingAddress(addr);
         }
         setMemberVerified(true);
       } else {
         setMemberVerified(false);
         setTargetMemberName("");
-        setMemberError("Associate Member ID not found");
+        setTargetMemberMobile("");
+        setMemberError(data.message || "Associate Member ID not found in Avira network");
       }
     } catch {
       setMemberVerified(false);
@@ -148,11 +144,54 @@ export default function MemberCartPage() {
     }
   };
 
+  const handleMemberIdChange = (val: string) => {
+    const uppercaseVal = val.toUpperCase().trimStart();
+    setTargetMemberId(uppercaseVal);
+    setMemberVerified(false);
+    setTargetMemberName("");
+    setTargetMemberMobile("");
+    setShippingAddress("");
+    setMemberError("");
+  };
+
+  useEffect(() => {
+    const clean = targetMemberId.trim().toUpperCase();
+    if (!clean || clean.length < 4) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      verifyMemberId(clean);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [targetMemberId]);
+
+  // INVOICE SUMMARY CALCULATIONS
+  // 1. Total MRP Amount
+  const totalMrpAmount = cart.reduce((acc, it) => acc + it.product.mrp * it.quantity, 0);
+
+  // 2. Selling / Payable Price
   const totalPayableAmount = cart.reduce(
     (acc, it) => acc + (it.product.discountPrice || it.product.mrp) * it.quantity,
     0
   );
+
+  // 3. Discount
+  const totalDiscount = totalMrpAmount - totalPayableAmount;
+
+  // 4. Total PV (NO '+' prefix)
   const totalPv = cart.reduce((acc, it) => acc + it.product.pv * it.quantity, 0);
+
+  // 5. Shipping (₹0)
+  const shippingCharge = 0;
+
+  // 6. Estimated GST Tax Breakdown based on HSN/GST Rate
+  const totalGstEstimated = cart.reduce((acc, it) => {
+    const price = (it.product.discountPrice || it.product.mrp) * it.quantity;
+    const rate = (it.product as any).gstRate || 18; // standard GST rate
+    const tax = price - price / (1 + rate / 100);
+    return acc + tax;
+  }, 0);
 
   const handleProceedToCheckout = () => {
     if (cart.length === 0) {
@@ -178,8 +217,14 @@ export default function MemberCartPage() {
         fullName: targetMemberName,
         mobile: targetMemberMobile,
         address: shippingAddress.trim(),
+        totalMrpAmount: totalMrpAmount,
+        totalDiscount: totalDiscount,
         totalAmount: totalPayableAmount,
         totalPv: totalPv,
+        shippingCharge: shippingCharge,
+        taxAmount: Math.round(totalGstEstimated),
+        billedBy: user?.memberId || "",
+        billedByName: user?.fullName || "",
       })
     );
 
@@ -196,7 +241,7 @@ export default function MemberCartPage() {
             className="inline-flex items-center gap-2 text-xs font-bold text-[#5f5e5e] hover:text-[#006d36] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Products Showcase</span>
+            <span>Back to Products Store</span>
           </Link>
           <span className="text-xs text-[#5f5e5e] font-mono">
             Shopping Cart Invoice
@@ -205,248 +250,215 @@ export default function MemberCartPage() {
 
         {/* Empty Cart Notice */}
         {cart.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 border border-[#e2e2e2] text-center space-y-4 shadow-xs">
+          <div className="bg-white rounded-3xl p-12 border border-gray-100 text-center space-y-4 shadow-sm">
             <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-[#006d36] flex items-center justify-center mx-auto">
               <ShoppingBag className="w-8 h-8" />
             </div>
             <h2 className="text-xl font-black text-[#1a1c1c]">Your Cart is Currently Empty</h2>
             <p className="text-xs text-[#5f5e5e] max-w-md mx-auto">
-              You haven&apos;t added any products yet. Browse our showcase catalog to select wellness products.
+              You haven&apos;t added any products yet. Browse our store to select botanical formulations.
             </p>
             <Link
               href="/dashboard/store"
               className="inline-block px-6 py-3 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs shadow-md transition-all cursor-pointer"
             >
-              Browse Products Catalog
+              Browse Store Products
             </Link>
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* Itemized Cart Invoice */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[#e2e2e2]">
-                <div>
-                  <h2 className="text-lg font-black text-[#1a1c1c]">
-                    Shopping Cart Invoice ({cart.length} Products)
-                  </h2>
-                  <span className="text-xs text-[#5f5e5e]">
-                    Itemized product invoice, unit prices, PV credits, and quantity controls.
-                  </span>
-                </div>
-                <span className="text-xs font-bold text-[#006d36] bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200">
-                  Total Volume: +{totalPv} PV
-                </span>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left: Cart Items List */}
+            <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <h2 className="text-base font-black text-[#1a1c1c]">
+                  Selected Cart Items ({cart.length})
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => saveCart([])}
+                  className="text-xs text-red-600 hover:text-red-700 font-bold"
+                >
+                  Clear Cart
+                </button>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-[#f9f9f9] text-[#5f5e5e] font-bold uppercase border-b border-[#e2e2e2]">
-                    <tr>
-                      <th className="py-3 px-4">Product Details</th>
-                      <th className="py-3 px-4">Unit Price</th>
-                      <th className="py-3 px-4">PV / Unit</th>
-                      <th className="py-3 px-4">Quantity</th>
-                      <th className="py-3 px-4">Subtotal</th>
-                      <th className="py-3 px-4 text-right">Remove</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#e2e2e2]/60 font-medium">
-                    {cart.map((it) => {
-                      const sellingPrice = it.product.discountPrice || it.product.mrp;
-                      const lineTotal = sellingPrice * it.quantity;
-                      const linePv = it.product.pv * it.quantity;
+              <div className="divide-y divide-gray-100 space-y-3">
+                {cart.map((item) => {
+                  const p = item.product;
+                  const unitPrice = p.discountPrice || p.mrp;
+                  const itemTotal = unitPrice * item.quantity;
+                  const itemPv = p.pv * item.quantity;
 
-                      return (
-                        <tr key={it.product.id} className="hover:bg-emerald-50/30 transition-colors">
-                          <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-3">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={it.product.imageUrl}
-                                alt={it.product.name}
-                                className="w-10 h-10 object-contain rounded-lg border border-[#e2e2e2] bg-[#f9f9f9] p-0.5"
-                              />
-                              <div>
-                                <span className="font-bold text-[#1a1c1c] block text-xs">
-                                  {it.product.name}
-                                </span>
-                                <span className="text-[10px] text-[#5f5e5e]">
-                                  {it.product.category} • {it.product.netQuantity || "1 Unit"}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
+                  return (
+                    <div key={p.id} className="pt-3 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                          {p.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <ShoppingBag className="w-6 h-6 text-gray-400" />
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-xs text-[#1a1c1c] line-clamp-1">{p.name}</h4>
+                          <span className="font-mono text-[10px] text-purple-700 font-bold block">
+                            {itemPv} PV • HSN: {p.hsnCode || "3004"}
+                          </span>
+                          <span className="font-mono text-xs font-black text-[#1a1c1c]">
+                            ₹{unitPrice}
+                          </span>
+                        </div>
+                      </div>
 
-                          <td className="py-3.5 px-4 font-mono font-bold text-[#1a1c1c]">
-                            ₹{sellingPrice.toLocaleString("en-IN")}
-                          </td>
+                      {/* Quantity & Delete */}
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-2 py-1">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQuantity(p.id, -1)}
+                            className="w-5 h-5 rounded-md bg-white hover:bg-gray-100 text-[#1a1c1c] flex items-center justify-center cursor-pointer shadow-2xs"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="font-mono font-bold text-xs text-[#1a1c1c] min-w-[14px] text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQuantity(p.id, 1)}
+                            className="w-5 h-5 rounded-md bg-[#006d36] hover:bg-[#005025] text-white flex items-center justify-center cursor-pointer shadow-2xs"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
 
-                          <td className="py-3.5 px-4 font-mono font-bold text-[#006d36]">
-                            +{it.product.pv} PV
-                          </td>
-
-                          <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleUpdateQuantity(it.product.id, -1)}
-                                className="w-6 h-6 rounded-lg bg-gray-100 text-[#1a1c1c] flex items-center justify-center font-bold hover:bg-gray-200 cursor-pointer"
-                              >
-                                <Minus className="w-3 h-3" />
-                              </button>
-                              <span className="font-mono font-black text-xs min-w-[20px] text-center">
-                                {it.quantity}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleUpdateQuantity(it.product.id, 1)}
-                                className="w-6 h-6 rounded-lg bg-emerald-100 text-[#006d36] flex items-center justify-center font-bold hover:bg-emerald-200 cursor-pointer"
-                              >
-                                <Plus className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </td>
-
-                          <td className="py-3.5 px-4 font-mono">
-                            <span className="font-bold text-sm text-[#1a1c1c] block">
-                              ₹{lineTotal.toLocaleString("en-IN")}
-                            </span>
-                            <span className="text-[10px] text-[#006d36] font-bold">
-                              +{linePv} PV
-                            </span>
-                          </td>
-
-                          <td className="py-3.5 px-4 text-right">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveItem(it.product.id)}
-                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer transition-colors"
-                              title="Remove Item"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Order Totals Banner */}
-              <div className="p-4 rounded-2xl bg-[#f9f9f9] border border-[#e2e2e2] flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-[#5f5e5e] block">
-                      Total PV Credit
-                    </span>
-                    <span className="font-mono text-xl font-black text-[#006d36]">
-                      +{totalPv} PV
-                    </span>
-                  </div>
-                  <div className="h-8 w-px bg-[#e2e2e2]" />
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-[#5f5e5e] block">
-                      Total Units
-                    </span>
-                    <span className="font-mono text-xl font-black text-[#1a1c1c]">
-                      {cart.reduce((acc, it) => acc + it.quantity, 0)} Units
-                    </span>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <span className="text-[10px] uppercase font-bold text-[#5f5e5e] block">
-                    Total Payable Amount
-                  </span>
-                  <span className="font-mono text-2xl sm:text-3xl font-black text-[#006d36]">
-                    ₹{totalPayableAmount.toLocaleString("en-IN")}
-                  </span>
-                </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(p.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Recipient Member ID & Delivery Address */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs space-y-4">
-              <h2 className="text-lg font-black text-[#1a1c1c] pb-2 border-b border-[#e2e2e2]">
-                Recipient Associate & Delivery Address
-              </h2>
+            {/* Right: Invoice Summary & Recipient Form */}
+            <div className="lg:col-span-5 space-y-6">
+              {/* Recipient Member ID Validation */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-4">
+                <h3 className="font-bold text-xs uppercase text-[#1a1c1c] tracking-wider pb-2 border-b border-gray-100 flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-[#006d36]" />
+                  <span>Order Recipient Member ID</span>
+                </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Recipient Member ID */}
                 <div>
-                  <label className="block font-bold text-xs text-[#1a1c1c] uppercase tracking-wider mb-1.5">
-                    Recipient Member ID (PV Credited To) *
+                  <label className="block text-[11px] font-bold text-[#5f5e5e] mb-1">
+                    Enter Associate Member ID:
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="relative">
                     <input
                       type="text"
-                      placeholder="e.g. AV00001"
+                      placeholder="e.g. AV00001..."
                       value={targetMemberId}
-                      onChange={(e) => {
-                        setTargetMemberId(e.target.value.toUpperCase());
-                        setMemberVerified(false);
-                      }}
-                      onBlur={() => verifyMemberId(targetMemberId)}
-                      required
-                      className="flex-1 bg-[#f9f9f9] border border-[#e2e2e2] rounded-xl p-3 font-mono font-bold text-xs text-[#1a1c1c] uppercase outline-none focus:border-[#006d36]"
+                      onChange={(e) => handleMemberIdChange(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 font-mono font-bold text-xs uppercase text-[#1a1c1c] outline-hidden focus:border-[#006d36]"
                     />
-                    <button
-                      type="button"
-                      onClick={() => verifyMemberId(targetMemberId)}
-                      disabled={verifyingMember}
-                      className="px-4 py-3 bg-[#006d36] text-white rounded-xl text-xs font-bold hover:bg-[#005025] cursor-pointer disabled:opacity-60"
-                    >
-                      {verifyingMember ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
-                    </button>
+                    {verifyingMember && (
+                      <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-[#006d36]" />
+                    )}
                   </div>
 
-                  {memberVerified && targetMemberName && (
-                    <div className="mt-2 p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between text-xs">
-                      <span className="font-bold text-[#006d36] flex items-center gap-1.5">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Associate: {targetMemberName}</span>
-                      </span>
-                      {targetMemberMobile && (
-                        <span className="text-[#5f5e5e] font-mono text-[11px]">
-                          📱 {targetMemberMobile}
-                        </span>
-                      )}
+                  {memberVerified && (
+                    <div className="mt-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-[#006d36] font-bold flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <div>
+                        <span>{targetMemberName}</span>
+                        <span className="block font-mono text-[10px] text-gray-500 font-normal">{targetMemberMobile}</span>
+                      </div>
                     </div>
                   )}
 
                   {memberError && (
-                    <span className="text-xs text-red-600 font-bold flex items-center gap-1 mt-1.5">
+                    <div className="mt-2 text-xs text-red-600 font-bold flex items-center gap-1.5">
                       <AlertCircle className="w-3.5 h-3.5" />
                       <span>{memberError}</span>
-                    </span>
+                    </div>
                   )}
                 </div>
 
-                {/* Editable Delivery Address */}
                 <div>
-                  <label className="block font-bold text-xs text-[#1a1c1c] uppercase tracking-wider mb-1.5">
-                    Delivery Shipping Address *
+                  <label className="block text-[11px] font-bold text-[#5f5e5e] mb-1">
+                    Delivery Shipping Address:
                   </label>
                   <textarea
-                    rows={3}
-                    placeholder="Full street address, landmark, city, state, and pincode..."
+                    rows={2}
+                    placeholder="Street Address, City, State, Pincode..."
                     value={shippingAddress}
                     onChange={(e) => setShippingAddress(e.target.value)}
-                    required
-                    className="w-full bg-[#f9f9f9] border border-[#e2e2e2] rounded-xl p-3 text-xs text-[#1a1c1c] font-medium outline-none focus:border-[#006d36]"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs text-[#1a1c1c] outline-hidden focus:border-[#006d36]"
                   />
                 </div>
               </div>
 
-              {/* Proceed to Checkout Button */}
-              <div className="pt-4 border-t border-[#e2e2e2] flex justify-end">
+              {/* ITEMIZED INVOICE BILL BREAKDOWN */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-4">
+                <h3 className="font-bold text-xs uppercase text-[#1a1c1c] tracking-wider pb-2 border-b border-gray-100 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[#006d36]" />
+                  <span>Invoice & Tax Summary</span>
+                </h3>
+
+                <div className="space-y-2.5 text-xs">
+                  {/* 1. Total MRP */}
+                  <div className="flex items-center justify-between text-[#5f5e5e]">
+                    <span>Total Amount (MRP):</span>
+                    <span className="font-mono font-bold text-[#1a1c1c]">₹{totalMrpAmount.toLocaleString("en-IN")}</span>
+                  </div>
+
+                  {/* 2. Discount */}
+                  {totalDiscount > 0 && (
+                    <div className="flex items-center justify-between text-[#006d36]">
+                      <span>Associate Discount:</span>
+                      <span className="font-mono font-bold">- ₹{totalDiscount.toLocaleString("en-IN")}</span>
+                    </div>
+                  )}
+
+                  {/* 3. Total PV (NO '+' prefix) */}
+                  <div className="flex items-center justify-between text-purple-700 font-bold">
+                    <span>Point Volume (PV):</span>
+                    <span className="font-mono">{totalPv} PV</span>
+                  </div>
+
+                  {/* 4. Shipping Charges (₹0) */}
+                  <div className="flex items-center justify-between text-[#5f5e5e]">
+                    <span>Shipping Charges:</span>
+                    <span className="font-mono font-bold text-[#006d36]">₹0 (Free Delivery)</span>
+                  </div>
+
+                  {/* 5. Tax (GST Included by HSN) */}
+                  <div className="flex items-center justify-between text-[#5f5e5e] pt-1 border-t border-gray-100">
+                    <span>Tax (GST by HSN):</span>
+                    <span className="font-mono">Included (~₹{Math.round(totalGstEstimated).toLocaleString("en-IN")})</span>
+                  </div>
+
+                  {/* 6. Final Payable Amount */}
+                  <div className="flex items-center justify-between text-sm font-black text-[#1a1c1c] pt-2 border-t border-gray-200">
+                    <span>Final Payable Amount:</span>
+                    <span className="font-mono text-base text-[#006d36]">₹{totalPayableAmount.toLocaleString("en-IN")}</span>
+                  </div>
+                </div>
+
                 <button
                   type="button"
                   onClick={handleProceedToCheckout}
-                  className="px-8 py-4 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-[#006d36]/20 cursor-pointer transition-all flex items-center gap-2"
+                  disabled={!memberVerified || !shippingAddress.trim()}
+                  className="w-full mt-4 py-3 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                 >
-                  <span>Proceed to Payment Checkout</span>
+                  <span>Proceed to Payment</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>

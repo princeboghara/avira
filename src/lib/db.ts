@@ -15,7 +15,6 @@ function getConnectionString(): string {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __supabase_pool__: Pool | undefined;
 }
 
@@ -33,6 +32,7 @@ pool.on("error", (err) => {
   console.error("Unexpected error on idle PostgreSQL client in pool:", err);
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function mapRowToUser(row: any): User {
   return {
     id: row.id,
@@ -99,6 +99,7 @@ export function mapRowToUser(row: any): User {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function mapRowToTransaction(row: any): Transaction {
   const gross = Number(row.amount || 0);
   const tds = row.tds_amount !== null && row.tds_amount !== undefined ? Number(row.tds_amount) : Math.round(gross * 0.02);
@@ -276,6 +277,7 @@ export async function getTransactionsForUser(userId: string): Promise<Transactio
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function mapRowToOrder(row: any): Order {
   let parsedItems = [];
   if (row.items) {
@@ -288,6 +290,20 @@ export function mapRowToOrder(row: any): Order {
   return {
     id: row.id,
     userId: row.user_id,
+    memberId: row.member_id || "",
+    billedBy: row.billed_by || "",
+    buyerName: row.buyer_name || "",
+    buyerMobile: row.buyer_mobile || "",
+    buyerAddress: row.buyer_address || "",
+    buyerCity: row.buyer_city || "",
+    buyerState: row.buyer_state || "",
+    buyerPincode: row.buyer_pincode || "",
+    customerName: row.customer_name || "",
+    customerMobile: row.customer_mobile || "",
+    shippingAddress: row.shipping_address || "",
+    transactionId: row.transaction_id || "",
+    paymentSlip: row.payment_slip || "",
+    rejectionReason: row.rejection_reason || "",
     purchaseType: row.purchase_type,
     packageName: row.package_name,
     amount: Number(row.amount || 0),
@@ -298,13 +314,34 @@ export function mapRowToOrder(row: any): Order {
   };
 }
 
-export async function getOrdersForUser(userId: string): Promise<Order[]> {
+export async function getOrdersForUser(userId: string, memberId?: string): Promise<Order[]> {
   const client = await pool.connect();
   try {
-    const res = await client.query(
-      "SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50",
-      [userId]
-    );
+    let query = `
+      SELECT 
+        o.*, 
+        u.member_id,
+        b.full_name as buyer_name,
+        b.mobile as buyer_mobile,
+        b.address as buyer_address,
+        b.city as buyer_city,
+        b.state as buyer_state,
+        b.pincode as buyer_pincode
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      LEFT JOIN users b ON UPPER(o.billed_by) = UPPER(b.member_id)
+      WHERE o.user_id = $1
+    `;
+    const params: unknown[] = [userId];
+
+    if (memberId) {
+      query += ` OR UPPER(o.billed_by) = UPPER($2)`;
+      params.push(memberId);
+    }
+
+    query += ` ORDER BY o.created_at DESC LIMIT 100`;
+
+    const res = await client.query(query, params);
     return res.rows.map(mapRowToOrder);
   } finally {
     client.release();

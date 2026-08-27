@@ -28,9 +28,9 @@ export async function POST(
 
     const order = orderRes.rows[0];
 
-    if (order.status === "APPROVED" || order.status === "COMPLETED") {
+    if (order.status !== "PENDING" && order.status !== "PENDING_APPROVAL") {
       return NextResponse.json(
-        { success: false, message: "Order is already approved" },
+        { success: false, message: `Order is already ${order.status}` },
         { status: 400 }
       );
     }
@@ -58,15 +58,15 @@ export async function POST(
       true // skipOrderCreation = true prevents duplicate order record
     );
 
-    // Update order status to APPROVED
+    // Update order status to CONFIRMED
     await client.query(
-      `UPDATE orders SET status = 'APPROVED' WHERE id = $1`,
+      `UPDATE orders SET status = 'CONFIRMED' WHERE id = $1`,
       [id]
     );
 
     return NextResponse.json({
       success: true,
-      message: `Order #${id} approved successfully! +${order.pv} PV credited to member.`,
+      message: `Order #${id} approved successfully! Status set to CONFIRMED and +${order.pv} PV credited to member.`,
     });
   } catch (error) {
     console.error("Order approval error:", error);

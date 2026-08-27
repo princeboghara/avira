@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBinaryTree } from "@/lib/binary";
+import { getSession, getAdminSession } from "@/lib/auth";
 
 interface RouteProps {
   params: Promise<{ id: string }>;
@@ -7,6 +8,18 @@ interface RouteProps {
 
 export async function GET(req: NextRequest, { params }: RouteProps) {
   const { id } = await params;
+
+  const [memberSession, adminSession] = await Promise.all([
+    getSession(req),
+    getAdminSession(req),
+  ]);
+
+  if (!memberSession && !adminSession) {
+    return NextResponse.json(
+      { success: false, message: "Authentication required to view binary tree" },
+      { status: 401 }
+    );
+  }
 
   try {
     const tree = await getBinaryTree(id, 4); // Fetch 4 levels deep

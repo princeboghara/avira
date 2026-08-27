@@ -12,6 +12,7 @@ import {
   Package,
   ArrowRight,
   Loader2,
+  ShoppingCart,
 } from "lucide-react";
 import MemberLayout from "@/components/dashboard/MemberLayout";
 import { Product, User } from "@/types";
@@ -35,7 +36,7 @@ export default function MemberCreateOrderShowcasePage() {
     async function loadData() {
       try {
         const [userData, prodData] = await Promise.all([
-          fetch("/api/auth/me").then((r) => r.json()).catch(() => null),
+          fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).catch(() => null),
           fetch("/api/products", { cache: "no-store" }).then((r) => r.json()).catch(() => null),
         ]);
 
@@ -120,63 +121,68 @@ export default function MemberCreateOrderShowcasePage() {
   const totalCartPv = cart.reduce((sum, it) => sum + it.product.pv * it.quantity, 0);
   const totalItemsCount = cart.reduce((sum, it) => sum + it.quantity, 0);
 
+  if (loading) {
+    return (
+      <MemberLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-[#006d36]">
+          <Loader2 className="w-8 h-8 animate-spin mb-2" />
+          <span className="text-xs font-bold font-mono">Loading Product Catalog...</span>
+        </div>
+      </MemberLayout>
+    );
+  }
+
   return (
     <MemberLayout user={user}>
       <div className="space-y-6 animate-fadeIn max-w-7xl mx-auto pb-12">
-        {/* Toast Notification */}
+        {/* Toast Alert */}
         {addedToast && (
-          <div className="fixed bottom-6 right-6 z-50 bg-[#006d36] text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 font-bold text-xs animate-slideUp">
-            <CheckCircle2 className="w-4 h-4 text-[#50c878]" />
+          <div className="fixed top-20 right-6 z-50 bg-[#006d36] text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-xs font-bold animate-slideIn">
+            <CheckCircle2 className="w-4 h-4 text-emerald-300" />
             <span>{addedToast}</span>
           </div>
         )}
 
-        {/* Top Sticky Showcase Banner with View Cart Button */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-20 z-30 backdrop-blur-md bg-white/95">
+        {/* Top Header with Single View Cart Action */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-[#006d36] font-mono text-[10px] font-black uppercase tracking-wider">
-                Shopping Portal
+                Shopping Store
               </span>
               <span className="text-xs text-[#5f5e5e] font-medium">
-                1. Create New Order
+                Product Showcase
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-[#1a1c1c] tracking-tight">
-              Product Showcase Catalog
+              Order Botanical Formulations & Packages
             </h1>
             <p className="text-xs text-[#5f5e5e] mt-1">
-              Select wellness products, adjust quantities, and click &quot;View Cart&quot; to checkout.
+              Add products to your cart and accumulate Point Volume (PV) for activation and daily binary matching.
             </p>
           </div>
 
-          {/* View Cart & Checkout Button */}
+          {/* SINGLE VIEW CART ACTION BUTTON IN TOP HEADER */}
           <Link
             href="/dashboard/cart"
-            className="px-6 py-3.5 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs flex items-center gap-2.5 shadow-md shadow-[#006d36]/20 transition-all cursor-pointer group self-start sm:self-auto"
+            className="px-5 py-3 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs shadow-md active:scale-95 transition-all flex items-center gap-2 shrink-0 cursor-pointer"
           >
-            <ShoppingBag className="w-4 h-4 text-[#50c878] group-hover:scale-110 transition-transform" />
-            <span>View Cart & Checkout</span>
-            {totalItemsCount > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-white/20 text-white font-mono text-[11px] font-black">
-                {totalItemsCount} • ₹{totalCartAmount.toLocaleString("en-IN")}
-              </span>
-            )}
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            <ShoppingCart className="w-4 h-4" />
+            <span>View Shopping Cart ({totalItemsCount} items • {totalCartPv} PV)</span>
           </Link>
         </div>
 
-        {/* Category Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        {/* Category Pills Filter */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
           {categories.map((cat) => (
             <button
               key={cat}
               type="button"
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
                 selectedCategory === cat
                   ? "bg-[#006d36] text-white shadow-xs"
-                  : "bg-white border border-[#e2e2e2] text-[#5f5e5e] hover:text-[#1a1c1c] hover:border-emerald-300"
+                  : "bg-white border border-gray-200 text-[#5f5e5e] hover:text-[#1a1c1c] hover:bg-emerald-50/50"
               }`}
             >
               {cat === "ALL" ? "All Products" : cat}
@@ -184,31 +190,15 @@ export default function MemberCreateOrderShowcasePage() {
           ))}
         </div>
 
-        {/* Products Showcase Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((n) => (
-              <div
-                key={n}
-                className="bg-white rounded-3xl p-5 border border-[#e2e2e2] animate-pulse space-y-4"
-              >
-                <div className="w-full aspect-square bg-[#f0f0f0] rounded-2xl" />
-                <div className="h-4 bg-[#f0f0f0] rounded w-3/4" />
-                <div className="h-3 bg-[#f0f0f0] rounded w-1/2" />
-                <div className="h-8 bg-[#f0f0f0] rounded-xl w-full" />
-              </div>
-            ))}
-          </div>
-        ) : filteredProducts.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 border border-[#e2e2e2] text-center space-y-3">
-            <Package className="w-12 h-12 text-[#5f5e5e]/40 mx-auto" />
-            <h3 className="text-lg font-bold text-[#1a1c1c]">No Products Available</h3>
-            <p className="text-xs text-[#5f5e5e] max-w-sm mx-auto">
-              There are currently no products available in this category.
-            </p>
+        {/* Product Cards Grid */}
+        {filteredProducts.length === 0 ? (
+          <div className="bg-white rounded-3xl p-12 text-center border border-dashed border-gray-200 space-y-2">
+            <Package className="w-8 h-8 text-gray-400 mx-auto" />
+            <h3 className="font-bold text-sm text-[#1a1c1c]">No Products Available in this Category</h3>
+            <p className="text-xs text-[#5f5e5e]">Please check other categories or contact support.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((p) => {
               const inCartQty = getItemQuantity(p.id);
               const sellingPrice = p.discountPrice || p.mrp;
@@ -216,37 +206,44 @@ export default function MemberCreateOrderShowcasePage() {
               return (
                 <div
                   key={p.id}
-                  className="bg-white rounded-3xl p-5 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-lg transition-all flex flex-col justify-between group"
+                  className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group"
                 >
+                  {/* Product Image & PV Badge */}
                   <div>
-                    {/* Product Image & PV Badge */}
-                    <div className="relative w-full aspect-square bg-[#f9f9f9] rounded-2xl p-4 flex items-center justify-center border border-[#e2e2e2]/60 overflow-hidden mb-4">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={p.imageUrl || "/images/hero-products.webp"}
-                        alt={p.name}
-                        className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-[#006d36] text-white font-mono font-black text-[10px] shadow-xs flex items-center gap-1">
-                        <Sparkles className="w-2.5 h-2.5 text-[#50c878]" />
-                        <span>+{p.pv} PV</span>
-                      </div>
+                    <div className="relative w-full h-44 rounded-2xl bg-gray-50 overflow-hidden mb-4 border border-gray-100 flex items-center justify-center">
+                      {p.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.imageUrl}
+                          alt={p.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <Package className="w-12 h-12 text-gray-300" />
+                      )}
+
+                      {/* PV Badge - NO '+' PREFIX */}
+                      <span className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-xl bg-purple-700/90 backdrop-blur-xs text-white font-mono font-black text-xs shadow-xs">
+                        {p.pv} PV
+                      </span>
+
+                      {/* Category Pill */}
+                      <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-lg bg-white/90 backdrop-blur-xs text-[#006d36] font-bold text-[10px] uppercase">
+                        {p.category}
+                      </span>
                     </div>
 
-                    {/* Product Details */}
-                    <span className="text-[10px] uppercase font-bold text-[#006d36] tracking-wider block">
-                      {p.category}
-                    </span>
-                    <h3 className="font-bold text-base text-[#1a1c1c] leading-tight line-clamp-1 mt-0.5">
+                    {/* Title & Short Description */}
+                    <h3 className="font-black text-sm text-[#1a1c1c] group-hover:text-[#006d36] transition-colors line-clamp-1 mb-1">
                       {p.name}
                     </h3>
-                    <p className="text-[11px] text-[#5f5e5e] line-clamp-2 mt-1 min-h-[32px]">
-                      {p.description || "Natural wellness supplement engineered for cellular purity."}
+                    <p className="text-xs text-[#5f5e5e] line-clamp-2 leading-relaxed mb-4">
+                      {p.description}
                     </p>
                   </div>
 
-                  {/* Pricing and Cart Actions */}
-                  <div className="pt-4 mt-2 border-t border-[#f0f0f0] flex items-center justify-between gap-3">
+                  {/* Pricing & Add Button */}
+                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
                     <div>
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-lg font-black text-[#1a1c1c] font-mono">
@@ -258,7 +255,7 @@ export default function MemberCreateOrderShowcasePage() {
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-[#50c878] font-bold block">
+                      <span className="text-[10px] text-[#006d36] font-bold block">
                         Net: {p.netQuantity || "1 Unit"}
                       </span>
                     </div>
@@ -298,36 +295,6 @@ export default function MemberCreateOrderShowcasePage() {
                 </div>
               );
             })}
-          </div>
-        )}
-
-        {/* Bottom Cart Floating Bar if Cart has items */}
-        {totalItemsCount > 0 && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#1a1c1c] text-white px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-8 border border-white/10 animate-slideUp max-w-xl w-[90%]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#006d36] flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <span className="text-xs text-white/70 block">
-                  {totalItemsCount} item{totalItemsCount > 1 ? "s" : ""} selected
-                </span>
-                <span className="text-sm font-black font-mono text-white">
-                  ₹{totalCartAmount.toLocaleString("en-IN")}{" "}
-                  <span className="text-[#50c878] font-normal text-xs">
-                    (+{totalCartPv} PV)
-                  </span>
-                </span>
-              </div>
-            </div>
-
-            <Link
-              href="/dashboard/cart"
-              className="ml-auto px-5 py-2.5 rounded-xl bg-[#006d36] hover:bg-[#50c878] hover:text-[#005025] text-white font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-md"
-            >
-              <span>Review & Place Order</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
           </div>
         )}
       </div>

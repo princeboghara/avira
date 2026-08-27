@@ -1,35 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findUserByMemberId } from "@/lib/db";
+import { findUserByIdentifier } from "@/lib/db";
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const sponsorId = id?.toUpperCase().trim();
+  const rawId = id?.trim();
 
-  if (!sponsorId) {
+  if (!rawId) {
     return NextResponse.json(
-      { exists: false, message: "Member ID is required" },
+      { success: false, exists: false, message: "Member ID is required" },
       { status: 400 }
     );
   }
 
-  const sponsor = await findUserByMemberId(sponsorId);
+  const user = await findUserByIdentifier(rawId.toUpperCase());
 
-  if (!sponsor) {
+  if (!user) {
     return NextResponse.json({
+      success: false,
       exists: false,
-      memberId: sponsorId,
+      memberId: rawId.toUpperCase(),
       message: "Member ID not found in Avira network",
     });
   }
 
-  // Sanitize: Do NOT leak personal phone number or private physical address to anonymous lookups
+  const fullAddress = [
+    user.address,
+    user.city,
+    user.state ? `${user.state}${user.pincode ? ` - ${user.pincode}` : ""}` : user.pincode,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const userData = {
+    id: user.id,
+    memberId: user.memberId,
+    fullName: user.fullName,
+    mobile: user.mobile,
+    address: user.address || fullAddress,
+    city: user.city,
+    state: user.state,
+    pincode: user.pincode,
+    status: user.status,
+  };
+
   return NextResponse.json({
+    success: true,
     exists: true,
-    memberId: sponsor.memberId,
-    fullName: sponsor.fullName,
-    status: sponsor.status,
+    memberId: user.memberId,
+    fullName: user.fullName,
+    mobile: user.mobile,
+    address: user.address || fullAddress,
+    city: user.city,
+    state: user.state,
+    pincode: user.pincode,
+    status: user.status,
+    user: userData,
   });
 }

@@ -14,21 +14,29 @@ import {
   AlertCircle,
   FileCheck,
   ShoppingBag,
-  Plus,
-  FolderPlus,
-  Percent,
+  RefreshCw,
+  Zap,
+  Award,
+  Layers,
+  Sparkles,
+  BarChart3,
+  Calendar,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { User } from "@/types";
 
-interface DashboardSummary {
-  totalOrders: number;
+interface AdminDashboardStats {
   pendingOrders: number;
-  approvedOrders: number;
-  completedOrders: number;
-  rejectedOrders: number;
+  pendingKyc: number;
+  todayRevenue: number;
+  todayPvRevenue: number;
+  todayNewMembers: number;
+  todayOrders: number;
   totalRevenue: number;
-  totalPv: number;
+  totalPvRevenue: number;
+  totalOrders: number;
+  totalMembers: number;
+  activeMembers: number;
 }
 
 interface RecentOrder {
@@ -47,49 +55,42 @@ export default function AdminOverviewDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [summary, setSummary] = useState<DashboardSummary>({
-    totalOrders: 0,
+  const [stats, setStats] = useState<AdminDashboardStats>({
     pendingOrders: 0,
-    approvedOrders: 0,
-    completedOrders: 0,
-    rejectedOrders: 0,
+    pendingKyc: 0,
+    todayRevenue: 0,
+    todayPvRevenue: 0,
+    todayNewMembers: 0,
+    todayOrders: 0,
     totalRevenue: 0,
-    totalPv: 0,
+    totalPvRevenue: 0,
+    totalOrders: 0,
+    totalMembers: 0,
+    activeMembers: 0,
   });
 
-  const [totalMembers, setTotalMembers] = useState(0);
-  const [pendingKyc, setPendingKyc] = useState(0);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
 
   const loadDashboardData = async () => {
     try {
       setRefreshing(true);
 
-      const [userData, ordersData, memData, kycData] = await Promise.all([
-        fetch("/api/auth/me").then((r) => r.json()).catch(() => null),
+      const [userData, statsData, ordersData] = await Promise.all([
+        fetch("/api/admin/auth/me").then((r) => r.json()).catch(() => null),
+        fetch("/api/admin/stats").then((r) => r.json()).catch(() => null),
         fetch("/api/admin/orders").then((r) => r.json()).catch(() => null),
-        fetch("/api/admin/members").then((r) => r.json()).catch(() => null),
-        fetch("/api/admin/kyc").then((r) => r.json()).catch(() => null),
       ]);
 
-      if (userData?.success && userData.user) {
-        setAdminUser(userData.user);
+      if (userData?.success && (userData.admin || userData.user)) {
+        setAdminUser(userData.admin || userData.user);
       }
 
-      if (ordersData?.success) {
-        if (ordersData.summary) setSummary(ordersData.summary);
-        if (ordersData.orders) setRecentOrders(ordersData.orders.slice(0, 6));
+      if (statsData?.success && statsData.data) {
+        setStats(statsData.data);
       }
 
-      if (memData?.success && memData.members) {
-        setTotalMembers(memData.members.length);
-      }
-
-      if (kycData?.success && kycData.submissions) {
-        const pending = kycData.submissions.filter(
-          (k: any) => k.kycStatus === "PENDING"
-        ).length;
-        setPendingKyc(pending);
+      if (ordersData?.success && ordersData.orders) {
+        setRecentOrders(ordersData.orders.slice(0, 6));
       }
     } catch (err) {
       console.error("Error loading admin dashboard metrics:", err);
@@ -107,10 +108,8 @@ export default function AdminOverviewDashboardPage() {
     return (
       <AdminLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-[#006d36]">
-          <Loader2 className="w-10 h-10 animate-spin mb-3" />
-          <span className="text-sm font-bold">
-            Loading Central Operations Overview...
-          </span>
+          <Loader2 className="w-8 h-8 animate-spin mb-2" />
+          <span className="text-xs font-bold font-mono">Loading Real-time Admin Operations...</span>
         </div>
       </AdminLayout>
     );
@@ -118,322 +117,272 @@ export default function AdminOverviewDashboardPage() {
 
   return (
     <AdminLayout user={adminUser} onRefresh={loadDashboardData} refreshing={refreshing}>
-      <div className="space-y-8 animate-fadeIn">
+      <div className="space-y-8 max-w-7xl mx-auto pb-12">
         {/* ========================================================
-            1. TOP HERO WELCOME BANNER
+            1. WELCOME BANNER & LIVE SYSTEM INDICATOR
            ======================================================== */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#006d36] font-mono text-[10px] font-black uppercase">
-                System Live
-              </span>
-              <span className="text-xs text-[#5f5e5e] font-medium">
-                {new Date().toLocaleDateString("en-IN", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-[#1a1c1c] tracking-tight">
-              Welcome, {adminUser?.fullName || "Administrator"}
-            </h1>
-            <p className="text-xs text-[#5f5e5e] max-w-2xl leading-relaxed">
-              Real-time monitoring of associate orders, product catalog inventory, network growth, and financial operations.
-            </p>
-          </div>
+        <div className="relative rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#006d36] via-[#005a2c] to-[#4f378a] text-white shadow-xl shadow-[#006d36]/15 overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
-          {/* Action Quick Links */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <Link
-              href="/admin/orders/approve"
-              className="px-4 py-2.5 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-all"
-            >
-              <Clock className="w-4 h-4" />
-              <span>Pending Orders ({summary.pendingOrders})</span>
-            </Link>
-
-            <Link
-              href="/admin/products/new"
-              className="px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-[#006d36] font-bold text-xs flex items-center gap-1.5 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Product</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* ========================================================
-            2. KEY PERFORMANCE METRICS (KPIs)
-           ======================================================== */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Revenue */}
-          <div className="bg-white rounded-3xl p-5 border border-[#e2e2e2] shadow-xs flex flex-col justify-between hover:border-emerald-300 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#5f5e5e] uppercase tracking-wider">
-                Total Revenue
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold">
-                ₹
+          <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-emerald-200 text-xs font-bold font-mono">
+                <span className="w-2 h-2 rounded-full bg-[#50c878] animate-pulse" />
+                <span>Enterprise Central Administrator</span>
               </div>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+                Avira Operations Hub
+              </h1>
+              <p className="text-xs sm:text-sm text-emerald-100/90 font-medium max-w-xl">
+                Monitor real-time company orders, KYC approvals, PV allocation, and daily 1:1 binary matching revenue.
+              </p>
             </div>
-            <div>
-              <span className="text-2xl font-black font-mono text-[#1a1c1c] block">
-                ₹{summary.totalRevenue.toLocaleString("en-IN")}
-              </span>
-              <span className="text-[11px] text-[#006d36] font-semibold flex items-center gap-1 mt-0.5">
-                <TrendingUp className="w-3 h-3" />
-                <span>From Approved & Completed Orders</span>
-              </span>
-            </div>
-          </div>
 
-          {/* Volume PV */}
-          <div className="bg-white rounded-3xl p-5 border border-[#e2e2e2] shadow-xs flex flex-col justify-between hover:border-emerald-300 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#5f5e5e] uppercase tracking-wider">
-                Total PV Volume
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold">
-                PV
-              </div>
-            </div>
-            <div>
-              <span className="text-2xl font-black font-mono text-[#006d36] block">
-                +{summary.totalPv.toLocaleString("en-IN")} PV
-              </span>
-              <span className="text-[11px] text-[#5f5e5e] font-medium block mt-0.5">
-                Binary commission volume credited
-              </span>
-            </div>
-          </div>
-
-          {/* Total Network Associates */}
-          <div className="bg-white rounded-3xl p-5 border border-[#e2e2e2] shadow-xs flex flex-col justify-between hover:border-emerald-300 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#5f5e5e] uppercase tracking-wider">
-                Total Associates
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
-                <Users className="w-4 h-4" />
-              </div>
-            </div>
-            <div>
-              <span className="text-2xl font-black font-mono text-[#1a1c1c] block">
-                {totalMembers}
-              </span>
+            {/* Quick Action Navigation */}
+            <div className="flex flex-wrap gap-2.5">
               <Link
-                href="/admin/members"
-                className="text-[11px] text-[#006d36] font-bold hover:underline inline-flex items-center gap-1 mt-0.5"
+                href="/admin/products"
+                className="px-4 py-2.5 rounded-xl bg-white text-[#006d36] font-bold text-xs shadow-md hover:bg-emerald-50 active:scale-95 transition-all flex items-center gap-1.5"
               >
-                <span>View Member Master</span>
-                <ArrowRight className="w-3 h-3" />
+                <ShoppingBag className="w-4 h-4" />
+                <span>Product Master</span>
+              </Link>
+              <Link
+                href="/admin/pv/self"
+                className="px-4 py-2.5 rounded-xl bg-white/15 backdrop-blur-md border border-white/25 text-white font-bold text-xs hover:bg-white/25 active:scale-95 transition-all flex items-center gap-1.5"
+              >
+                <Zap className="w-4 h-4" />
+                <span>PV Manager</span>
+              </Link>
+              <Link
+                href="/admin/reports"
+                className="px-4 py-2.5 rounded-xl bg-purple-500/30 backdrop-blur-md border border-purple-300/30 text-white font-bold text-xs hover:bg-purple-500/40 active:scale-95 transition-all flex items-center gap-1.5"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>Business Reports</span>
               </Link>
             </div>
           </div>
-
-          {/* Action Required: Pending Orders & KYC */}
-          <div className="bg-white rounded-3xl p-5 border border-[#e2e2e2] shadow-xs flex flex-col justify-between hover:border-amber-300 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#5f5e5e] uppercase tracking-wider">
-                Pending Approvals
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center font-bold">
-                <Clock className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[#5f5e5e]">Orders Queue:</span>
-                <Link
-                  href="/admin/orders/approve"
-                  className="font-mono font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded hover:bg-amber-200"
-                >
-                  {summary.pendingOrders} Pending
-                </Link>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[#5f5e5e]">KYC Desk:</span>
-                <Link
-                  href="/admin/kyc"
-                  className="font-mono font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded hover:bg-blue-200"
-                >
-                  {pendingKyc} Pending
-                </Link>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* ========================================================
-            3. OPERATIONS CONTROL CENTER (Direct Navigation Grid)
+            2. PENDING REQUESTS ALERTS + LIVE REFRESH BUTTON
            ======================================================== */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-black text-[#1a1c1c] tracking-tight">
-            Central Operations Modules
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {/* 1. Order Manager - Approve Order */}
+        <div className="rounded-3xl p-6 bg-white border border-gray-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Pending Orders Badge */}
             <Link
               href="/admin/orders/approve"
-              className="bg-white rounded-3xl p-6 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-md transition-all group block"
+              className="flex items-center gap-3 p-3 px-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 hover:bg-amber-100 transition-all group"
             >
-              <div className="flex items-start justify-between">
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-800 flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
-                  <Clock className="w-6 h-6" />
-                </div>
-                {summary.pendingOrders > 0 && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-mono text-[10px] font-black uppercase">
-                    {summary.pendingOrders} New Orders
-                  </span>
-                )}
+              <div className="w-9 h-9 rounded-xl bg-amber-200 text-amber-900 flex items-center justify-center font-black text-sm group-hover:scale-110 transition-transform">
+                <Package className="w-4.5 h-4.5" />
               </div>
-              <h3 className="text-base font-black text-[#1a1c1c] mt-4 mb-1 group-hover:text-[#006d36] transition-colors">
-                2. Approve Order Desk
-              </h3>
-              <p className="text-xs text-[#5f5e5e] line-clamp-2">
-                Verify customer payment slips, check transaction UTRs, and approve orders to credit PV.
-              </p>
-              <div className="mt-4 pt-3 border-t border-[#e2e2e2]/60 flex items-center text-xs font-bold text-[#006d36] gap-1">
-                <span>Open Approval Desk</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 block">Pending Orders</span>
+                <span className="text-lg font-black font-mono text-amber-900">{stats.pendingOrders} Requests</span>
               </div>
+              <ArrowRight className="w-4 h-4 text-amber-600 ml-1 group-hover:translate-x-0.5 transition-transform" />
             </Link>
 
-            {/* 2. Order Manager - All Orders */}
-            <Link
-              href="/admin/orders"
-              className="bg-white rounded-3xl p-6 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-md transition-all group block"
-            >
-              <div className="flex items-start justify-between">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
-                  <CheckCircle2 className="w-6 h-6" />
-                </div>
-                <span className="text-xs font-mono font-bold text-[#5f5e5e]">
-                  {summary.totalOrders} Orders
-                </span>
-              </div>
-              <h3 className="text-base font-black text-[#1a1c1c] mt-4 mb-1 group-hover:text-[#006d36] transition-colors">
-                1. All Orders Audit Registry
-              </h3>
-              <p className="text-xs text-[#5f5e5e] line-clamp-2">
-                Search, sort, edit order statuses, mark orders completed, and inspect itemized tax invoices.
-              </p>
-              <div className="mt-4 pt-3 border-t border-[#e2e2e2]/60 flex items-center text-xs font-bold text-[#006d36] gap-1">
-                <span>View Order Registry</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-
-            {/* 3. Product Manager - Item Manager */}
-            <Link
-              href="/admin/products"
-              className="bg-white rounded-3xl p-6 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-md transition-all group block"
-            >
-              <div className="flex items-start justify-between">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
-                  <Package className="w-6 h-6" />
-                </div>
-                <span className="px-2 py-0.5 rounded-full bg-gray-100 text-[#5f5e5e] font-mono text-[10px] font-bold">
-                  Catalog
-                </span>
-              </div>
-              <h3 className="text-base font-black text-[#1a1c1c] mt-4 mb-1 group-hover:text-[#006d36] transition-colors">
-                3. Item Manager & Inventory
-              </h3>
-              <p className="text-xs text-[#5f5e5e] line-clamp-2">
-                Manage active store products, stocks, HSN tax configurations, PV points, and retail prices.
-              </p>
-              <div className="mt-4 pt-3 border-t border-[#e2e2e2]/60 flex items-center text-xs font-bold text-[#006d36] gap-1">
-                <span>Manage Catalog Items</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-
-            {/* 4. Product Manager - Category Master */}
-            <Link
-              href="/admin/products/categories"
-              className="bg-white rounded-3xl p-6 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-md transition-all group block"
-            >
-              <div className="flex items-start justify-between">
-                <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
-                  <FolderPlus className="w-6 h-6" />
-                </div>
-              </div>
-              <h3 className="text-base font-black text-[#1a1c1c] mt-4 mb-1 group-hover:text-[#006d36] transition-colors">
-                1. Category Master
-              </h3>
-              <p className="text-xs text-[#5f5e5e] line-clamp-2">
-                Define product categories, departments, and wellness classification tags.
-              </p>
-              <div className="mt-4 pt-3 border-t border-[#e2e2e2]/60 flex items-center text-xs font-bold text-[#006d36] gap-1">
-                <span>Manage Categories</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-
-            {/* 5. Product Manager - HSN Code Master */}
-            <Link
-              href="/admin/products/hsn"
-              className="bg-white rounded-3xl p-6 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-md transition-all group block"
-            >
-              <div className="flex items-start justify-between">
-                <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
-                  <Percent className="w-6 h-6" />
-                </div>
-              </div>
-              <h3 className="text-base font-black text-[#1a1c1c] mt-4 mb-1 group-hover:text-[#006d36] transition-colors">
-                2. HSN Code & GST Master
-              </h3>
-              <p className="text-xs text-[#5f5e5e] line-clamp-2">
-                Configure SGST, CGST, and IGST percentages mapped to statutory HSN codes.
-              </p>
-              <div className="mt-4 pt-3 border-t border-[#e2e2e2]/60 flex items-center text-xs font-bold text-[#006d36] gap-1">
-                <span>Manage Tax Rates</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-
-            {/* 6. Member Manager - KYC Master */}
+            {/* Pending KYC Badge */}
             <Link
               href="/admin/kyc"
-              className="bg-white rounded-3xl p-6 border border-[#e2e2e2] hover:border-emerald-300 hover:shadow-md transition-all group block"
+              className="flex items-center gap-3 p-3 px-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 hover:bg-blue-100 transition-all group"
             >
-              <div className="flex items-start justify-between">
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
-                  <FileCheck className="w-6 h-6" />
-                </div>
-                {pendingKyc > 0 && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-900 font-mono text-[10px] font-black uppercase">
-                    {pendingKyc} Pending
-                  </span>
-                )}
+              <div className="w-9 h-9 rounded-xl bg-blue-200 text-blue-900 flex items-center justify-center font-black text-sm group-hover:scale-110 transition-transform">
+                <FileCheck className="w-4.5 h-4.5" />
               </div>
-              <h3 className="text-base font-black text-[#1a1c1c] mt-4 mb-1 group-hover:text-[#006d36] transition-colors">
-                2. KYC Master Verification
-              </h3>
-              <p className="text-xs text-[#5f5e5e] line-clamp-2">
-                Review associate PAN cards, Aadhaar IDs, and bank account proofs for payouts.
-              </p>
-              <div className="mt-4 pt-3 border-t border-[#e2e2e2]/60 flex items-center text-xs font-bold text-[#006d36] gap-1">
-                <span>Open KYC Desk</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 block">Pending KYC</span>
+                <span className="text-lg font-black font-mono text-blue-900">{stats.pendingKyc} Submissions</span>
               </div>
+              <ArrowRight className="w-4 h-4 text-blue-600 ml-1 group-hover:translate-x-0.5 transition-transform" />
             </Link>
+          </div>
+
+          {/* Instant Live Refresh Button */}
+          <button
+            type="button"
+            onClick={loadDashboardData}
+            disabled={refreshing}
+            className="px-5 py-3 rounded-2xl bg-[#006d36] text-white hover:bg-[#005025] font-bold text-xs flex items-center gap-2 shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-60"
+            title="Sync Live System Data"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+            <span>{refreshing ? "Refreshing..." : "Refresh Live Data"}</span>
+          </button>
+        </div>
+
+        {/* ========================================================
+            3. TODAY'S REAL-TIME PERFORMANCE METRICS
+           ======================================================== */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-[#1a1c1c] flex items-center gap-2">
+              <Zap className="w-4.5 h-4.5 text-[#006d36]" />
+              <span>Today&apos;s Real-time Operations</span>
+            </h2>
+            <span className="text-xs font-mono font-bold text-[#006d36] px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200">
+              CURRENT DATE
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {/* Today's Revenue */}
+            <div className="rounded-3xl p-6 bg-gradient-to-br from-emerald-50/70 via-white to-white border border-emerald-200/80 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#006d36]">
+                  Today&apos;s Revenue
+                </span>
+                <TrendingUp className="w-4 h-4 text-[#006d36]" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black font-mono text-[#1a1c1c]">
+                ₹{stats.todayRevenue.toLocaleString("en-IN")}
+              </div>
+              <div className="mt-2 text-[11px] text-[#5f5e5e]">
+                Gross sales volume today
+              </div>
+            </div>
+
+            {/* Today's PV Revenue */}
+            <div className="rounded-3xl p-6 bg-gradient-to-br from-purple-50/70 via-white to-white border border-purple-200/80 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700">
+                  Today&apos;s PV Volume
+                </span>
+                <Award className="w-4 h-4 text-purple-700" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black font-mono text-[#1a1c1c]">
+                {stats.todayPvRevenue.toLocaleString("en-IN")} <span className="text-sm font-sans font-bold text-[#5f5e5e]">PV</span>
+              </div>
+              <div className="mt-2 text-[11px] text-[#5f5e5e]">
+                Matching & repurchase volume
+              </div>
+            </div>
+
+            {/* Today's New Joining Members */}
+            <div className="rounded-3xl p-6 bg-gradient-to-br from-blue-50/70 via-white to-white border border-blue-200/80 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+                  Today&apos;s New Members
+                </span>
+                <Users className="w-4 h-4 text-blue-700" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black font-mono text-[#1a1c1c]">
+                +{stats.todayNewMembers}
+              </div>
+              <div className="mt-2 text-[11px] text-[#5f5e5e]">
+                New registrations today
+              </div>
+            </div>
+
+            {/* Today's Total Orders */}
+            <div className="rounded-3xl p-6 bg-gradient-to-br from-amber-50/70 via-white to-white border border-amber-200/80 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
+                  Today&apos;s Total Orders
+                </span>
+                <Package className="w-4 h-4 text-amber-700" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black font-mono text-[#1a1c1c]">
+                {stats.todayOrders}
+              </div>
+              <div className="mt-2 text-[11px] text-[#5f5e5e]">
+                Product orders created today
+              </div>
+            </div>
           </div>
         </div>
 
         {/* ========================================================
-            4. RECENT ORDERS SNIPPET TABLE
+            4. TOTAL LIFETIME COMPANY METRICS
            ======================================================== */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2e2e2] shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#e2e2e2]">
+        <div className="space-y-3">
+          <h2 className="text-base font-bold text-[#1a1c1c] flex items-center gap-2">
+            <Layers className="w-4.5 h-4.5 text-[#4f378a]" />
+            <span>Total Lifetime Company Performance</span>
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {/* Total Revenue */}
+            <div className="rounded-3xl p-6 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#5f5e5e]">
+                  Total Revenue
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-[#006d36] flex items-center justify-center font-bold">
+                  ₹
+                </div>
+              </div>
+              <div className="text-2xl sm:text-3xl font-black font-mono text-[#006d36]">
+                ₹{stats.totalRevenue.toLocaleString("en-IN")}
+              </div>
+              <div className="mt-2 text-[11px] text-[#5f5e5e]">
+                Cumulative gross order sales
+              </div>
+            </div>
+
+            {/* Total PV Revenue */}
+            <div className="rounded-3xl p-6 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#5f5e5e]">
+                  Total PV Volume
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                  PV
+                </div>
+              </div>
+              <div className="text-2xl sm:text-3xl font-black font-mono text-purple-700">
+                {stats.totalPvRevenue.toLocaleString("en-IN")}
+              </div>
+              <div className="mt-2 text-[11px] text-[#5f5e5e]">
+                Lifetime point volume generated
+              </div>
+            </div>
+
+            {/* Total Orders */}
+            <div className="rounded-3xl p-6 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#5f5e5e]">
+                  Total Orders
+                </span>
+                <Package className="w-4 h-4 text-gray-500" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black font-mono text-[#1a1c1c]">
+                {stats.totalOrders.toLocaleString("en-IN")}
+              </div>
+              <div className="mt-2 text-[11px] text-[#5f5e5e]">
+                All completed & pipeline orders
+              </div>
+            </div>
+
+            {/* Total Members */}
+            <div className="rounded-3xl p-6 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#5f5e5e]">
+                  Total Registered Members
+                </span>
+                <Users className="w-4 h-4 text-gray-500" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black font-mono text-[#1a1c1c]">
+                {stats.totalMembers.toLocaleString("en-IN")}
+              </div>
+              <div className="mt-2 text-[11px] text-[#5f5e5e]">
+                Active: <strong className="text-[#006d36]">{stats.activeMembers}</strong> Associates
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================
+            5. RECENT NETWORK ORDERS STREAM
+           ======================================================== */}
+        <div className="rounded-3xl p-6 sm:p-8 bg-white border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-base font-black text-[#1a1c1c]">Recent Order Submissions</h3>
-              <span className="text-xs text-[#5f5e5e]">Latest orders recorded across the network</span>
+              <h2 className="text-lg font-bold text-[#1a1c1c]">Recent Order Stream</h2>
+              <p className="text-xs text-[#5f5e5e]">Live pipeline orders and package purchases across all associate legs</p>
             </div>
             <Link
               href="/admin/orders"
@@ -444,68 +393,66 @@ export default function AdminOverviewDashboardPage() {
             </Link>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-[#e2e2e2]">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead className="bg-[#f9f9f9] border-b border-[#e2e2e2] text-[#5f5e5e] uppercase tracking-wider font-bold">
-                <tr>
-                  <th className="py-3 px-4">Order ID</th>
-                  <th className="py-3 px-4">Associate</th>
-                  <th className="py-3 px-4">Billed By</th>
-                  <th className="py-3 px-4">Amount</th>
-                  <th className="py-3 px-4">PV</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#e2e2e2]/60 font-medium">
-                {recentOrders.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-6 text-center text-[#5f5e5e]">
-                      No recent orders found.
-                    </td>
+          {recentOrders.length === 0 ? (
+            <div className="py-12 text-center text-sm text-[#5f5e5e] bg-gray-50/60 rounded-2xl border border-dashed border-gray-200">
+              No orders recorded in the pipeline yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200/80 text-[#5f5e5e] uppercase tracking-wider font-extrabold">
+                    <th className="py-3 px-4">Order ID</th>
+                    <th className="py-3 px-4">Associate</th>
+                    <th className="py-3 px-4">PV</th>
+                    <th className="py-3 px-4">Amount</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
-                ) : (
-                  recentOrders.map((ord) => (
-                    <tr key={ord.id} className="hover:bg-emerald-50/20 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-[#1a1c1c]">#{ord.id}</td>
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-[#1a1c1c] block">{ord.fullName}</span>
-                        <span className="font-mono text-[10px] text-[#5f5e5e]">{ord.memberId}</span>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {recentOrders.map((ord) => (
+                    <tr key={ord.id} className="hover:bg-gray-50/70 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-[#1a1c1c]">
+                        {ord.id}
                       </td>
-                      <td className="py-3 px-4 font-mono font-bold text-[#006d36]">
-                        {ord.billedBy || ord.memberId}
+                      <td className="py-3 px-4">
+                        <div className="font-bold text-[#1a1c1c]">{ord.fullName || "Associate"}</div>
+                        <div className="font-mono text-[10px] text-[#006d36]">{ord.memberId}</div>
+                      </td>
+                      <td className="py-3 px-4 font-mono font-bold text-[#4f378a]">
+                        {ord.pv} PV
                       </td>
                       <td className="py-3 px-4 font-mono font-bold text-[#1a1c1c]">
-                        ₹{ord.amount.toLocaleString("en-IN")}
+                        ₹{ord.amount?.toLocaleString("en-IN")}
                       </td>
-                      <td className="py-3 px-4 font-mono font-bold text-[#006d36]">+{ord.pv} PV</td>
                       <td className="py-3 px-4">
                         <span
-                          className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            ord.status === "COMPLETED"
+                          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                            ord.status === "APPROVED" || ord.status === "CONFIRMED" || ord.status === "DISPATCHED"
                               ? "bg-emerald-100 text-[#006d36]"
-                              : ord.status === "APPROVED"
-                              ? "bg-blue-100 text-blue-800"
-                              : ord.status === "REJECTED"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-amber-100 text-amber-800"
+                              : ord.status === "PENDING"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-red-100 text-red-700"
                           }`}
                         >
                           {ord.status}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right font-mono text-[#5f5e5e]">
-                        {new Date(ord.createdAt).toLocaleDateString("en-IN", {
-                          month: "short",
-                          day: "numeric",
-                        })}
+                      <td className="py-3 px-4 text-right">
+                        <Link
+                          href={`/admin/orders`}
+                          className="px-3 py-1 rounded-lg border border-gray-200 hover:bg-emerald-50 hover:text-[#006d36] text-[11px] font-bold transition-all inline-block"
+                        >
+                          Manage
+                        </Link>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </AdminLayout>

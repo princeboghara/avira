@@ -8,11 +8,9 @@ import {
   Plus,
   Edit2,
   Trash2,
-  Search,
-  Sparkles,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { Product } from "@/types";
+import DataTable, { Column } from "@/components/ui/DataTable";
 
 interface ProductItem {
   id: string;
@@ -33,7 +31,6 @@ export default function AdminItemManagerPage() {
   const [items, setItems] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
 
   const loadItems = async () => {
@@ -71,17 +68,9 @@ export default function AdminItemManagerPage() {
   }, [items]);
 
   const displayedItems = useMemo(() => {
-    return items.filter((item) => {
-      const matchCat = selectedCategory === "ALL" || item.category === selectedCategory;
-      const q = searchQuery.toLowerCase().trim();
-      const matchSearch =
-        !q ||
-        item.name.toLowerCase().includes(q) ||
-        (item.hsnCode && item.hsnCode.includes(q)) ||
-        (item.category && item.category.toLowerCase().includes(q));
-      return matchCat && matchSearch;
-    });
-  }, [items, selectedCategory, searchQuery]);
+    if (selectedCategory === "ALL") return items;
+    return items.filter((it) => it.category === selectedCategory);
+  }, [items, selectedCategory]);
 
   const handleDeleteItem = async (item: ProductItem) => {
     if (!confirm(`Are you sure you want to delete product "${item.name}"?`)) return;
@@ -92,195 +81,189 @@ export default function AdminItemManagerPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert("Product deleted successfully");
         await loadItems();
       } else {
         alert(data.message || "Failed to delete product");
       }
     } catch {
-      alert("Error deleting product");
+      alert("Network error deleting product");
     }
   };
 
+  const handleBulkDelete = async (selectedIds: string[]) => {
+    if (!confirm(`Delete ${selectedIds.length} selected products?`)) return;
+    for (const id of selectedIds) {
+      try {
+        await fetch(`/api/admin/products?id=${id}`, { method: "DELETE" });
+      } catch {
+        // ignore
+      }
+    }
+    await loadItems();
+  };
+
+  const columns: Column<ProductItem>[] = [
+    {
+      header: "Product / Formulation",
+      accessorKey: "name",
+      sortable: true,
+      cell: (row) => (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+            {row.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={row.imageUrl} alt={row.name} className="w-full h-full object-cover" />
+            ) : (
+              <Package className="w-5 h-5 text-gray-400" />
+            )}
+          </div>
+          <div>
+            <div className="font-bold text-[#1a1c1c] text-xs">{row.name}</div>
+            <div className="text-[10px] text-[#5f5e5e] font-mono">
+              HSN: {row.hsnCode || "3004"} • {row.category}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Price (MRP)",
+      accessorKey: "amount",
+      sortable: true,
+      align: "right",
+      cell: (row) => (
+        <span className="font-mono font-bold text-xs text-[#1a1c1c]">
+          ₹{row.amount.toLocaleString("en-IN")}
+        </span>
+      ),
+    },
+    {
+      header: "Associate Price",
+      accessorKey: "discountPrice",
+      sortable: true,
+      align: "right",
+      cell: (row) => (
+        <span className="font-mono font-black text-xs text-[#006d36]">
+          ₹{row.discountPrice.toLocaleString("en-IN")}
+        </span>
+      ),
+    },
+    {
+      header: "Point Volume",
+      accessorKey: "pv",
+      sortable: true,
+      align: "center",
+      cell: (row) => (
+        <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
+          {row.pv} PV
+        </span>
+      ),
+    },
+    {
+      header: "Stock",
+      accessorKey: "stock",
+      sortable: true,
+      align: "center",
+      cell: (row) => (
+        <span
+          className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md ${
+            row.stock > 10 ? "bg-gray-100 text-[#1a1c1c]" : "bg-red-100 text-red-700"
+          }`}
+        >
+          {row.stock} units
+        </span>
+      ),
+    },
+    {
+      header: "Actions",
+      align: "right",
+      sortable: false,
+      cell: (row) => (
+        <div className="flex items-center justify-end gap-1.5">
+          <Link
+            href={`/admin/products/${row.id}`}
+            className="p-1.5 rounded-lg border border-gray-200 text-[#006d36] hover:bg-emerald-50 cursor-pointer"
+            title="Edit Product"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </Link>
+          <button
+            type="button"
+            onClick={() => handleDeleteItem(row)}
+            className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 cursor-pointer"
+            title="Delete Product"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <AdminLayout onRefresh={loadItems} refreshing={refreshing}>
-      <div className="space-y-6 animate-fadeIn">
-        {/* Page Header */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-[#006d36] font-mono text-[10px] font-black uppercase tracking-wider">
-                Catalog Registry
-              </span>
-              <span className="text-xs text-[#5f5e5e] font-medium">
-                Product Manager • 3. Item Manager
-              </span>
+      <div className="space-y-8 max-w-7xl mx-auto pb-12">
+        {/* Header */}
+        <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#006d36] via-[#005a2c] to-[#4f378a] text-white shadow-xl shadow-[#006d36]/15 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-emerald-200 text-xs font-bold font-mono">
+              <Package className="w-4 h-4" />
+              <span>Catalog & Botanical Inventory</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-[#1a1c1c] tracking-tight">
-              Live Product Catalog & Inventory
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+              Product Master Manager
             </h1>
-            <p className="text-xs text-[#5f5e5e] mt-1">
-              Manage product items, stock inventory, HSN tax mappings, and pricing.
+            <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl">
+              Configure botanical formulas, MRP, associate discounted prices, PV points allocation, and HSN GST rates.
             </p>
           </div>
 
           <Link
             href="/admin/products/new"
-            className="px-5 py-3 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-[#006d36]/20 transition-all self-start sm:self-auto"
+            className="px-5 py-3 rounded-2xl bg-white text-[#006d36] font-bold text-xs shadow-md hover:bg-emerald-50 active:scale-95 transition-all flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>Add New Product</span>
           </Link>
         </div>
 
-        {/* Catalog Table Container */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2e2e2] shadow-xs space-y-6">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-4 border-b border-[#e2e2e2]">
-            {/* Category Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    selectedCategory === cat
-                      ? "bg-[#006d36] text-white shadow-xs"
-                      : "bg-[#f9f9f9] text-[#5f5e5e] hover:text-[#1a1c1c] border border-[#e2e2e2]"
-                  }`}
-                >
-                  {cat === "ALL" ? "All Categories" : cat}
-                </button>
-              ))}
-            </div>
-
-            {/* Search Input */}
-            <div className="relative min-w-[240px]">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by name, HSN, category..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#f9f9f9] border border-[#e2e2e2] rounded-xl py-2 pl-10 pr-4 text-xs text-[#1a1c1c] outline-none focus:border-[#006d36]"
-              />
-            </div>
-          </div>
-
-          <div className="overflow-x-auto rounded-xl border border-[#e2e2e2]">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead className="bg-[#f9f9f9] border-b border-[#e2e2e2] text-[#5f5e5e] uppercase tracking-wider font-bold">
-                <tr>
-                  <th className="py-3.5 px-4">Sr No</th>
-                  <th className="py-3.5 px-4">Category</th>
-                  <th className="py-3.5 px-4">Product Name & Net Qty</th>
-                  <th className="py-3.5 px-4">HSN & GST</th>
-                  <th className="py-3.5 px-4">Stock</th>
-                  <th className="py-3.5 px-4">PV</th>
-                  <th className="py-3.5 px-4">MRP (₹)</th>
-                  <th className="py-3.5 px-4">Discount Price (₹)</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#e2e2e2]/60 font-medium">
-                {loading ? (
-                  <tr>
-                    <td colSpan={9} className="py-12 text-center text-[#006d36]">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-                      <span>Loading product items...</span>
-                    </td>
-                  </tr>
-                ) : displayedItems.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="py-8 text-center text-[#5f5e5e]">
-                      No products found. Click &quot;Add New Product&quot; to add items.
-                    </td>
-                  </tr>
-                ) : (
-                  displayedItems.map((item, idx) => (
-                    <tr key={item.id} className="hover:bg-emerald-50/30 transition-colors">
-                      <td className="py-3.5 px-4 font-mono font-bold text-[#5f5e5e]">{idx + 1}</td>
-                      <td className="py-3.5 px-4">
-                        <span className="bg-emerald-50 text-[#006d36] px-2 py-0.5 rounded font-bold text-[11px] border border-emerald-200">
-                          {item.category}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-2.5">
-                          {item.imageUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={item.imageUrl}
-                              alt={item.name}
-                              className="w-9 h-9 rounded-lg object-contain border border-[#e2e2e2] bg-[#f9f9f9] p-0.5"
-                            />
-                          ) : (
-                            <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center font-bold text-[#006d36]">
-                              <Package className="w-4 h-4" />
-                            </div>
-                          )}
-                          <div>
-                            <span className="font-bold text-sm text-[#1a1c1c] block">{item.name}</span>
-                            <span className="text-[10px] text-[#5f5e5e] font-medium">{item.netQuantity || "1 Pack"}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono">
-                        <div className="space-y-0.5">
-                          <span className="font-bold text-[#1a1c1c] block">
-                            HSN: {item.hsnCode || "3004"}
-                          </span>
-                          <span className="text-[10px] text-[#006d36] font-bold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 inline-block">
-                            GST: {item.hsnGst || 5.0}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold">
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                            Number(item.stock || 100) > 10
-                              ? "bg-emerald-100 text-[#006d36]"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {Number(item.stock || 100)} Units
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-black text-[#006d36]">
-                        +{item.pv} PV
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-[#5f5e5e] line-through">
-                        ₹{Number(item.amount || (item as any).mrp || 0).toLocaleString("en-IN")}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-black text-sm text-[#1a1c1c]">
-                        ₹{Number(item.discountPrice || item.amount || (item as any).mrp || 0).toLocaleString("en-IN")}
-                      </td>
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Link
-                            href={`/admin/products/new?id=${item.id}`}
-                            className="p-1.5 rounded-lg border border-[#e2e2e2] text-[#006d36] hover:bg-emerald-50"
-                            title="Edit Product"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteItem(item)}
-                            className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 cursor-pointer"
-                            title="Delete Product"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        {/* Category Filter */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                selectedCategory === cat
+                  ? "bg-[#006d36] text-white shadow-xs"
+                  : "bg-white border border-gray-200 text-[#5f5e5e] hover:bg-emerald-50"
+              }`}
+            >
+              {cat === "ALL" ? "All Categories" : cat}
+            </button>
+          ))}
         </div>
+
+        {/* Universal DataTable */}
+        {loading ? (
+          <div className="py-16 text-center text-[#006d36] flex flex-col items-center gap-2">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <span className="text-xs font-bold font-mono">Loading Products Catalog...</span>
+          </div>
+        ) : (
+          <DataTable
+            data={displayedItems}
+            columns={columns}
+            keyExtractor={(item) => item.id}
+            searchPlaceholder="Search products by Name, Category, HSN Code..."
+            searchableKeys={["name", "category", "hsnCode"]}
+            initialPageSize={10}
+            onBulkDelete={handleBulkDelete}
+            title="Products Master Catalog"
+            emptyMessage="No products found in this category."
+          />
+        )}
       </div>
     </AdminLayout>
   );

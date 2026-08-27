@@ -1,3 +1,4 @@
+import { PoolClient } from "pg";
 import { pool } from "@/lib/db";
 import { BinaryTreeNode } from "@/types";
 

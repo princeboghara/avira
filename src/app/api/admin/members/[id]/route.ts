@@ -69,3 +69,6 @@ export async function POST(
     client.release();
   }
 }
+
+export const PATCH = POST;
+

@@ -98,7 +98,7 @@ export default function BinaryGenealogyTree({
                           </div>
 
                           <div className="grid grid-cols-2 gap-4 w-full">
-                            {/* L - L */}
+                            {/* L - L (Extreme Left Spillover Leg -> Sponsor: Root/YOU, Parent: LeftChild A) */}
                             <div className="flex justify-center">
                               {rootNode.leftChild.leftChild ? (
                                 <TreeNodeCard
@@ -112,6 +112,7 @@ export default function BinaryGenealogyTree({
                                 />
                               ) : (
                                 <VacantSlot
+                                  sponsorId={rootNode.memberId}
                                   parentId={rootNode.leftChild.memberId}
                                   position="LEFT"
                                   isSmall
@@ -119,7 +120,7 @@ export default function BinaryGenealogyTree({
                               )}
                             </div>
 
-                            {/* L - R */}
+                            {/* L - R (Inner Right Leg of LeftChild A -> Sponsor: LeftChild A, Parent: LeftChild A) */}
                             <div className="flex justify-center">
                               {rootNode.leftChild.rightChild ? (
                                 <TreeNodeCard
@@ -133,6 +134,7 @@ export default function BinaryGenealogyTree({
                                 />
                               ) : (
                                 <VacantSlot
+                                  sponsorId={rootNode.leftChild.memberId}
                                   parentId={rootNode.leftChild.memberId}
                                   position="RIGHT"
                                   isSmall
@@ -144,7 +146,11 @@ export default function BinaryGenealogyTree({
                       )}
                     </>
                   ) : (
-                    <VacantSlot parentId={rootNode.memberId} position="LEFT" />
+                    <VacantSlot
+                      sponsorId={rootNode.memberId}
+                      parentId={rootNode.memberId}
+                      position="LEFT"
+                    />
                   )}
                 </div>
 
@@ -171,7 +177,7 @@ export default function BinaryGenealogyTree({
                           </div>
 
                           <div className="grid grid-cols-2 gap-4 w-full">
-                            {/* R - L */}
+                            {/* R - L (Inner Left Leg of RightChild B -> Sponsor: RightChild B, Parent: RightChild B) */}
                             <div className="flex justify-center">
                               {rootNode.rightChild.leftChild ? (
                                 <TreeNodeCard
@@ -185,6 +191,7 @@ export default function BinaryGenealogyTree({
                                 />
                               ) : (
                                 <VacantSlot
+                                  sponsorId={rootNode.rightChild.memberId}
                                   parentId={rootNode.rightChild.memberId}
                                   position="LEFT"
                                   isSmall
@@ -192,7 +199,7 @@ export default function BinaryGenealogyTree({
                               )}
                             </div>
 
-                            {/* R - R */}
+                            {/* R - R (Extreme Right Spillover Leg -> Sponsor: Root/YOU, Parent: RightChild B) */}
                             <div className="flex justify-center">
                               {rootNode.rightChild.rightChild ? (
                                 <TreeNodeCard
@@ -206,6 +213,7 @@ export default function BinaryGenealogyTree({
                                 />
                               ) : (
                                 <VacantSlot
+                                  sponsorId={rootNode.memberId}
                                   parentId={rootNode.rightChild.memberId}
                                   position="RIGHT"
                                   isSmall
@@ -217,7 +225,11 @@ export default function BinaryGenealogyTree({
                       )}
                     </>
                   ) : (
-                    <VacantSlot parentId={rootNode.memberId} position="RIGHT" />
+                    <VacantSlot
+                      sponsorId={rootNode.memberId}
+                      parentId={rootNode.memberId}
+                      position="RIGHT"
+                    />
                   )}
                 </div>
               </div>
@@ -250,132 +262,138 @@ function TreeNodeCard({
   onRootClick?: () => void;
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
-  const isRed = node.personalPv < 100;
+
+  const isRed = (node.personalPv || 0) < 100;
+  const cardBorder =
+    leg === "ROOT"
+      ? "border-[#006d36] bg-emerald-50/40 shadow-md ring-2 ring-emerald-500/20"
+      : isRed
+      ? "border-red-400 bg-red-50/30"
+      : leg === "LEFT"
+      ? "border-blue-400 bg-blue-50/30"
+      : "border-purple-400 bg-purple-50/30";
 
   const formattedActivation = node.activationDate
     ? new Date(node.activationDate).toLocaleDateString("en-IN", {
-        year: "numeric",
-        month: "short",
         day: "numeric",
+        month: "short",
+        year: "numeric",
       })
-    : "Recent";
+    : "Not Activated";
 
   return (
-    <div className="relative flex flex-col items-center">
-      {/* Node Card - Clickable */}
+    <div className="relative group/node">
       <div
-        onClick={() => {
-          if (canExpand && onToggleExpand) {
-            onToggleExpand();
-          } else if (onRootClick) {
-            onRootClick();
-          }
-        }}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        className={`relative flex flex-col items-center pt-2.5 pb-4 px-2 rounded-2xl border bg-white shadow-xs hover:shadow-md transition-all cursor-pointer select-none group ${
-          isSmall ? "w-24" : "w-32 sm:w-34"
-        } ${
-          isRed
-            ? "border-red-300 hover:border-red-500"
-            : "border-emerald-300 hover:border-[#006d36]"
+        className={`rounded-2xl border p-2 sm:p-2.5 transition-all flex flex-col items-center relative ${cardBorder} ${
+          isSmall ? "w-28 sm:w-32" : "w-36 sm:w-40"
         }`}
       >
-        {/* Compact User Head Avatar */}
-        <div className="relative mb-1">
+        {/* Top Leg Tag */}
+        <div className="flex items-center justify-between w-full mb-1">
+          <span
+            className={`text-[8px] font-mono font-black uppercase px-1.5 py-0.2 rounded ${
+              leg === "ROOT"
+                ? "bg-[#006d36] text-white"
+                : leg === "LEFT"
+                ? "bg-blue-600 text-white"
+                : "bg-purple-600 text-white"
+            }`}
+          >
+            {leg}
+          </span>
+
+          {/* Quick Info Tooltip Toggle on Mobile / Hover */}
+          <button
+            type="button"
+            onClick={() => setShowTooltip((p) => !p)}
+            className="text-gray-400 hover:text-[#006d36] p-0.5"
+            title="View PV Ledger"
+          >
+            <Info className="w-3 h-3" />
+          </button>
+        </div>
+
+        {/* Avatar / Initials */}
+        <button
+          type="button"
+          onClick={onRootClick}
+          className="relative mb-1 cursor-pointer group-hover/node:scale-105 transition-transform"
+          title={`Focus on ${node.fullName} (${node.memberId})`}
+        >
           {node.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={node.avatarUrl}
               alt={node.fullName}
-              className={`rounded-full object-cover border-2 shadow-xs ${
-                isSmall ? "w-8 h-8" : "w-9 h-9"
-              } ${isRed ? "border-red-400" : "border-[#006d36]"}`}
+              className={`rounded-full object-cover border-2 ${
+                isRed ? "border-red-400" : "border-emerald-500"
+              } ${isSmall ? "w-8 h-8" : "w-10 h-10"}`}
             />
           ) : (
             <div
-              className={`rounded-full flex items-center justify-center font-bold text-white shadow-xs ${
-                isSmall ? "w-8 h-8 text-[10px]" : "w-9 h-9 text-xs"
-              } ${
-                isRed
-                  ? "bg-gradient-to-tr from-red-600 to-rose-400"
-                  : "bg-gradient-to-tr from-[#006d36] to-[#50c878]"
-              }`}
+              className={`rounded-full flex items-center justify-center font-black text-white ${
+                leg === "ROOT"
+                  ? "bg-[#006d36]"
+                  : isRed
+                  ? "bg-red-500"
+                  : leg === "LEFT"
+                  ? "bg-blue-600"
+                  : "bg-purple-600"
+              } ${isSmall ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm"}`}
             >
-              <UserIcon className={isSmall ? "w-4 h-4" : "w-4.5 h-4.5"} />
+              {node.fullName ? node.fullName.charAt(0).toUpperCase() : "A"}
             </div>
           )}
+        </button>
 
-          {/* Status Dot */}
+        {/* Member ID & Name */}
+        <button
+          type="button"
+          onClick={onRootClick}
+          className="text-center w-full overflow-hidden cursor-pointer"
+        >
+          <span className="font-mono font-black text-[10px] sm:text-[11px] text-[#006d36] block truncate">
+            {node.memberId}
+          </span>
+          <span className="font-bold text-[9px] sm:text-[10px] text-[#1a1c1c] block truncate leading-tight">
+            {node.fullName}
+          </span>
+        </button>
+
+        {/* PV Snapshot Badge */}
+        <div className="mt-1 flex items-center gap-1 text-[8px] font-mono font-bold">
           <span
-            className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${
-              isRed ? "bg-red-500" : "bg-[#50c878]"
+            className={`px-1 rounded ${
+              isRed ? "bg-red-100 text-red-700" : "bg-emerald-100 text-[#006d36]"
             }`}
-          />
+          >
+            {node.personalPv} PV
+          </span>
         </div>
 
-        {/* Member ID */}
-        <span
-          className={`font-mono font-black truncate max-w-full text-center text-[11px] leading-tight ${
-            isRed ? "text-red-700" : "text-[#006d36]"
-          }`}
-        >
-          {node.memberId}
-        </span>
-
-        {/* Full Name */}
-        <span className="font-bold text-[10px] text-[#1a1c1c] truncate max-w-full text-center leading-tight mt-0.5">
-          {node.fullName}
-        </span>
-
-        {/* Leg Tag */}
-        <span
-          className={`text-[8px] font-black uppercase px-2 py-0.2 rounded-full mt-1 ${
-            leg === "LEFT"
-              ? "bg-blue-50 text-blue-700"
-              : leg === "RIGHT"
-              ? "bg-purple-50 text-purple-700"
-              : "bg-emerald-50 text-[#006d36]"
-          }`}
-        >
-          {leg}
-        </span>
-
-        {/* Prominent '+' / '-' Toggle Button (Always on top with z-30) */}
-        {canExpand && onToggleExpand && (
+        {/* Prominent Expand '+' / Collapse '-' Button (Never blocks details) */}
+        {canExpand && (
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleExpand();
-            }}
-            className={`absolute -bottom-3.5 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full text-white flex items-center justify-center shadow-md border-2 border-white cursor-pointer transition-transform active:scale-90 z-30 ${
-              isExpanded
-                ? "bg-gray-700 hover:bg-gray-800"
-                : "bg-[#006d36] hover:bg-[#005025]"
+            onClick={onToggleExpand}
+            className={`absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full flex items-center justify-center text-white shadow-md cursor-pointer transition-transform hover:scale-110 active:scale-95 z-10 ${
+              isExpanded ? "bg-gray-700 hover:bg-gray-800" : "bg-[#006d36] hover:bg-[#005025]"
             }`}
-            title={isExpanded ? "Click to Collapse Branch" : "Click to Expand Branch (+)"}
-            aria-label={isExpanded ? "Collapse Branch" : "Expand Branch"}
+            title={isExpanded ? "Collapse Children" : "Expand Children (+)"}
+            aria-label={isExpanded ? "Collapse Children" : "Expand Children"}
           >
             {isExpanded ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
           </button>
         )}
       </div>
 
-      {/* Hover Tooltip Card (Positioned ABOVE to NEVER block the '+' button below) */}
-      {showTooltip && (
-        <div className="absolute bottom-full mb-3 z-50 w-64 bg-white/98 backdrop-blur-md rounded-2xl p-4 border border-emerald-300 shadow-2xl space-y-2.5 text-xs text-[#1a1c1c] animate-fadeIn pointer-events-none">
-          <div className="flex items-center justify-between pb-1.5 border-b border-[#e2e2e2]">
-            <div>
-              <span className="font-black text-sm text-[#1a1c1c] block">
-                {node.fullName}
-              </span>
-              <span className="font-mono text-xs font-bold text-[#006d36]">
-                {node.memberId}
-              </span>
-            </div>
+      {/* Floating Detailed Tooltip (Fixed position above node so it never overlaps or covers the card) */}
+      {(showTooltip || false) && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-white rounded-2xl shadow-2xl border border-emerald-200 text-xs z-50 animate-scaleUp pointer-events-none">
+          <div className="flex items-center justify-between pb-1.5 border-b border-[#e2e2e2] mb-1.5">
+            <span className="font-black font-mono text-[#006d36] text-[11px]">{node.memberId}</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${
+              className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${
                 isRed
                   ? "bg-red-50 text-red-700 border-red-300"
                   : "bg-emerald-50 text-[#006d36] border-emerald-300"
@@ -392,7 +410,7 @@ function TreeNodeCard({
             </div>
             <div className="flex justify-between">
               <span className="text-[#5f5e5e]">Current Self PV:</span>
-              <span className="font-black text-[#006d36]">+{node.personalPv} PV</span>
+              <span className="font-black text-[#006d36]">{node.personalPv} PV</span>
             </div>
             <div className="flex justify-between">
               <span className="text-[#5f5e5e]">Sponsor ID:</span>
@@ -440,23 +458,25 @@ function TreeNodeCard({
 }
 
 function VacantSlot({
+  sponsorId,
   parentId,
   position,
   isSmall = false,
 }: {
+  sponsorId: string;
   parentId: string;
   position: "LEFT" | "RIGHT";
   isSmall?: boolean;
 }) {
   return (
     <Link
-      href={`/register?ref=${parentId}&pos=${position}`}
+      href={`/register?sponsor=${sponsorId}&ref=${sponsorId}&parent=${parentId}&pos=${position}`}
       className={`border-2 border-dashed border-[#bdcabc] rounded-2xl flex flex-col items-center justify-center p-2 text-[#5f5e5e] hover:border-[#006d36] hover:text-[#006d36] hover:bg-emerald-50/50 transition-all ${
         isSmall ? "w-24 h-16 text-[8px]" : "w-32 sm:w-34 h-22 text-[9px]"
       }`}
     >
       <Plus className="w-4 h-4 text-[#006d36] mb-0.5" />
-      <span className="font-bold text-[10px]">+ Empty</span>
+      <span className="font-bold text-[10px]">+ Add Member</span>
       <span className="text-[8px] font-mono text-[#5f5e5e]">{position} Leg</span>
     </Link>
   );

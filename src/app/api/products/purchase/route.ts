@@ -6,8 +6,11 @@ import { uploadToCloudinary } from "@/lib/cloudinary";
 const orderItemSchema = z.object({
   productId: z.string().optional(),
   name: z.string(),
+  hsnCode: z.string().optional(),
   quantity: z.number().int().positive(),
   mrp: z.number().nonnegative(),
+  discountPrice: z.number().nonnegative().optional(),
+  gst: z.number().nonnegative().optional(),
   pv: z.number().nonnegative(),
   subtotalMrp: z.number().nonnegative().optional(),
   subtotalPv: z.number().nonnegative().optional(),

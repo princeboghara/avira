@@ -3,12 +3,9 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Loader2,
-  Clock,
-  CheckCircle,
   FileText,
   Search,
   X,
-  Package,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 
@@ -62,11 +59,10 @@ export default function AdminApproveOrdersPage() {
 
   const loadOrders = async () => {
     try {
-      setRefreshing(true);
       const res = await fetch("/api/admin/orders");
       const data = await res.json();
       if (data.success && data.orders) {
-        const normalized = data.orders.map((o: any) => ({
+        const normalized = data.orders.map((o: AdminOrder) => ({
           ...o,
           amount: Number(o.amount || 0),
           pv: Number(o.pv || 0),
@@ -81,7 +77,13 @@ export default function AdminApproveOrdersPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadOrders();
+  };
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadOrders();
   }, []);
 
@@ -163,17 +165,17 @@ export default function AdminApproveOrdersPage() {
   };
 
   return (
-    <AdminLayout onRefresh={loadOrders} refreshing={refreshing}>
+    <AdminLayout onRefresh={handleRefresh} refreshing={refreshing}>
       <div className="space-y-6 animate-fadeIn">
         {/* Page Header */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 font-mono text-[10px] font-black uppercase tracking-wider">
-                Approval Queue
+                Stage 1
               </span>
               <span className="text-xs text-[#5f5e5e] font-medium">
-                Order Manager • 2. Approve Order
+                Order Manager • 1. Approve Order
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-[#1a1c1c] tracking-tight">
@@ -348,7 +350,7 @@ export default function AdminApproveOrdersPage() {
 
                         {/* 7. PV */}
                         <td className="py-3.5 px-4 font-mono font-black text-[#006d36] whitespace-nowrap">
-                          +{ord.pv} PV
+                          {ord.pv} PV
                         </td>
 
                         {/* 8. PAYMENT SLIP (Clickable Modal Preview) */}

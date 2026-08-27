@@ -1,9 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Zap, AlertCircle, Shield } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Loader2,
+  AlertCircle,
+  Shield,
+  Diamond,
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  HelpCircle,
+  X,
+} from "lucide-react";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -12,52 +24,36 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage("");
-
-    if (!loginIdentifier.trim()) {
-      setErrorMessage("Please enter your Member ID (e.g. AV23900) or Registered Mobile");
-      return;
-    }
-
-    if (!password) {
-      setErrorMessage("Please enter your password");
-      return;
-    }
-
     setIsLoading(true);
+    setErrorMessage("");
 
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          loginIdentifier: loginIdentifier.trim().toUpperCase(),
-          password,
+          memberId: loginIdentifier.trim(),
+          password: password,
         }),
       });
 
       const data = await res.json();
 
-      if (!res.ok || !data.success) {
-        setErrorMessage(data.message || "Invalid credentials. Please try again.");
-        setIsLoading(false);
-        return;
+      if (data.success) {
+        router.push("/dashboard");
+        router.refresh();
+      } else {
+        setErrorMessage(data.message || "Invalid member credentials.");
       }
-
-      router.push("/dashboard");
     } catch {
-      setErrorMessage("Unable to connect to authentication server. Please check your connection.");
+      setErrorMessage("Network error occurred. Please try again.");
+    } finally {
       setIsLoading(false);
     }
-  };
-
-  const fillDemoRoot = () => {
-    setLoginIdentifier("AV00001");
-    setPassword("admin123");
-    setErrorMessage("");
   };
 
   return (
@@ -68,36 +64,18 @@ export default function LoginForm() {
 
         {/* Logo & Header */}
         <div className="text-center mb-6 flex flex-col items-center">
-          <div className="w-16 h-16 mb-4 rounded-2xl bg-gradient-to-tr from-[#006d36] to-[#50c878] flex items-center justify-center text-white neo-shadow shadow-md">
-            <span className="material-symbols-outlined text-[32px]">diamond</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#006d36] tracking-tight mb-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/avira-logo.png"
+            alt="Avira Lifecare Global Private Limited"
+            className="h-16 w-auto object-contain mb-3"
+          />
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#006d36] tracking-tight mb-1">
             Associate Login
           </h1>
-          <p className="text-xs sm:text-sm text-[#5f5e5e]">
-            Access your Avira Life Care Global associate dashboard.
+          <p className="text-xs text-[#5f5e5e]">
+            Avira Lifecare Global Private Limited
           </p>
-        </div>
-
-        {/* Fast 1-Click Demo Testing for Network Members */}
-        <div className="mb-6 p-3 rounded-xl bg-[#eeeeee]/60 border border-[#e2e2e2]">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-[#006d36] mb-2">
-            <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-            <span>Root Associate Account:</span>
-          </div>
-          <button
-            type="button"
-            onClick={fillDemoRoot}
-            className="w-full px-3 py-2 text-xs font-bold bg-white hover:bg-emerald-50 border border-emerald-200 text-[#006d36] rounded-xl transition-all text-left shadow-sm cursor-pointer flex items-center justify-between"
-          >
-            <div>
-              <div className="font-mono font-black text-sm">AV00001</div>
-              <div className="text-[10px] text-[#5f5e5e]">Avira Life Care Global</div>
-            </div>
-            <span className="text-[10px] font-mono bg-emerald-100 text-[#006d36] px-2 py-0.5 rounded-md font-bold">
-              Fill AV00001
-            </span>
-          </button>
         </div>
 
         {errorMessage && (
@@ -117,9 +95,7 @@ export default function LoginForm() {
               Member ID (Only) *
             </label>
             <div className="relative">
-              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#5f5e5e]/50 select-none text-[20px]">
-                badge
-              </span>
+              <User className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-[#5f5e5e]/50 pointer-events-none" />
               <input
                 id="loginIdentifier"
                 name="loginIdentifier"
@@ -142,21 +118,16 @@ export default function LoginForm() {
               >
                 Password
               </label>
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert("Demo Member Password is: member123");
-                }}
-                className="text-xs text-[#006d36] hover:text-[#50c878] transition-colors font-medium"
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(true)}
+                className="text-xs text-[#006d36] hover:text-[#50c878] transition-colors font-medium cursor-pointer"
               >
                 Forgot Password?
-              </a>
+              </button>
             </div>
             <div className="relative">
-              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#5f5e5e]/50 select-none text-[20px]">
-                lock
-              </span>
+              <Lock className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-[#5f5e5e]/50 pointer-events-none" />
               <input
                 id="password"
                 name="password"
@@ -171,11 +142,9 @@ export default function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f5e5e]/50 hover:text-[#006d36] transition-colors focus:outline-none"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f5e5e]/50 hover:text-[#006d36] transition-colors focus:outline-none cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[20px] select-none">
-                  {showPassword ? "visibility_off" : "visibility"}
-                </span>
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
           </div>
@@ -211,7 +180,7 @@ export default function LoginForm() {
                 ) : (
                   <>
                     <span>Login to Dashboard</span>
-                    <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                    <ArrowRight className="w-5 h-5" />
                   </>
                 )}
               </span>
@@ -219,6 +188,51 @@ export default function LoginForm() {
             </button>
           </div>
         </form>
+
+        {/* Forgot Password Modal */}
+        {showForgotModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-emerald-200 space-y-4 animate-scaleUp text-left">
+              <div className="flex items-center justify-between pb-3 border-b border-[#e2e2e2]">
+                <div className="flex items-center gap-2 text-[#006d36]">
+                  <HelpCircle className="w-5 h-5" />
+                  <h3 className="font-black text-base text-[#1a1c1c]">Password Assistance</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(false)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-600 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="text-xs text-[#3e4a3f] space-y-3 leading-relaxed">
+                <p>
+                  To reset your Avira Associate password or recover your account access:
+                </p>
+                <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-[#006d36] font-medium space-y-1">
+                  <div className="font-bold">Contact Avira Central Desk:</div>
+                  <div>📧 <strong>support@aviracare.com</strong></div>
+                  <div>📞 <strong>+91 98765 43210</strong> (Mon - Sat, 10 AM - 6 PM)</div>
+                </div>
+                <p className="text-[11px] text-[#5f5e5e]">
+                  Alternatively, please reach out to your direct active Sponsor for password assistance.
+                </p>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(false)}
+                  className="w-full py-2.5 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs cursor-pointer shadow-xs"
+                >
+                  Understood
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 text-center">
           <p className="text-xs text-[#5f5e5e]">

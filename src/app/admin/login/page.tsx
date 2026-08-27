@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, ShieldCheck, AlertCircle, Lock, KeyRound } from "lucide-react";
+import { Loader2, ShieldCheck, AlertCircle, Lock, KeyRound, User, Eye, EyeOff } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -35,36 +35,36 @@ export default function AdminLoginPage() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setErrorMessage(data.message || "Invalid Master Password.");
+        setErrorMessage(data.message || "Invalid master administrator credentials.");
         setIsLoading(false);
         return;
       }
 
       router.push("/admin/dashboard");
+      router.refresh();
     } catch {
-      setErrorMessage("Cannot reach authentication server. Please check your connection.");
+      setErrorMessage("Network error connecting to operations server.");
+    } finally {
       setIsLoading(false);
     }
   };
 
-  const fillDefaultAdminPass = () => {
-    setPassword("admin123");
-    setErrorMessage("");
-  };
-
   return (
-    <div className="min-h-screen bg-[#f9f9f9] text-[#1a1c1c] flex flex-col justify-between p-6 relative font-sans selection:bg-[#50c878] selection:text-[#005025]">
-      {/* Top Header */}
-      <header className="max-w-6xl mx-auto w-full flex items-center justify-between py-4">
+    <div className="min-h-screen bg-[#f9f9f9] text-[#1a1c1c] flex flex-col justify-between p-4 sm:p-6 selection:bg-[#50c878] selection:text-[#005025]">
+      {/* Top Header Navigation */}
+      <header className="max-w-6xl mx-auto w-full flex items-center justify-between py-2">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#006d36] to-[#50c878] flex items-center justify-center text-white shadow-sm shadow-[#006d36]/20">
-            <ShieldCheck className="w-6 h-6 text-white" />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/avira-logo.png"
+            alt="Avira Lifecare Global Private Limited"
+            className="h-10 sm:h-12 w-auto object-contain"
+          />
           <div>
-            <span className="font-extrabold text-base tracking-tight text-[#006d36] block">
-              AVIRA LIFE CARE GLOBAL
+            <span className="font-black text-sm tracking-tight text-[#006d36] block">
+              AVIRA LIFECARE
             </span>
-            <span className="text-[10px] font-mono tracking-widest text-[#5f5e5e] uppercase font-bold">
+            <span className="text-[9px] font-mono tracking-widest text-[#5f5e5e] uppercase font-bold">
               Master Admin Console
             </span>
           </div>
@@ -74,7 +74,7 @@ export default function AdminLoginPage() {
           href="/login"
           className="text-xs font-bold text-[#5f5e5e] hover:text-[#006d36] transition-colors flex items-center gap-1.5 bg-white px-3.5 py-2 rounded-xl border border-[#e2e2e2] shadow-xs"
         >
-          <span className="material-symbols-outlined text-[16px]">person</span>
+          <User className="w-4 h-4" />
           <span>Switch to Member Portal</span>
         </Link>
       </header>
@@ -85,34 +85,19 @@ export default function AdminLoginPage() {
           {/* Top highlight bar */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#006d36] via-[#50c878] to-[#006d36]" />
 
-          <div className="text-center mb-6">
-            <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#006d36] shadow-xs">
-              <Lock className="w-7 h-7" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-[#1a1c1c] tracking-tight">
+          <div className="text-center mb-6 flex flex-col items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/avira-logo.png"
+              alt="Avira Lifecare Global Private Limited"
+              className="h-16 w-auto object-contain mb-3"
+            />
+            <h1 className="text-xl sm:text-2xl font-black text-[#1a1c1c] tracking-tight">
               Admin Password Login
             </h1>
             <p className="text-xs text-[#5f5e5e] mt-1">
-              Enter your master security password to access the control panel.
+              Avira Lifecare Global Private Limited
             </p>
-          </div>
-
-          {/* Quick 1-Click Demo Password Button */}
-          <div className="mb-5 p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 flex items-center justify-between">
-            <div className="text-xs">
-              <span className="text-[10px] text-[#5f5e5e] uppercase tracking-wider block font-bold">
-                Default Master Password:
-              </span>
-              <span className="font-mono font-black text-[#006d36]">admin123</span>
-            </div>
-            <button
-              type="button"
-              onClick={fillDefaultAdminPass}
-              className="px-3 py-1.5 bg-[#006d36] hover:bg-[#005025] text-white text-xs font-bold rounded-lg transition-colors shadow-xs flex items-center gap-1 cursor-pointer"
-            >
-              <KeyRound className="w-3.5 h-3.5" />
-              <span>Fill Pass</span>
-            </button>
           </div>
 
           {errorMessage && (
@@ -132,13 +117,13 @@ export default function AdminLoginPage() {
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
-                  <span className="material-symbols-outlined text-[18px]">lock</span>
+                  <Lock className="w-4 h-4" />
                 </span>
                 <input
                   id="adminPassword"
                   type={showPassword ? "text" : "password"}
                   required
-                  placeholder="Enter admin123"
+                  placeholder="Enter master password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-[#f9f9f9] border border-[#e2e2e2] rounded-xl py-3 pl-11 pr-11 text-[#1a1c1c] text-sm focus:border-[#006d36] focus:ring-1 focus:ring-[#006d36] outline-none transition-all placeholder-gray-400 font-medium tracking-wide"
@@ -148,9 +133,7 @@ export default function AdminLoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-[#1a1c1c] transition-colors cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[18px]">
-                    {showPassword ? "visibility_off" : "visibility"}
-                  </span>
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -187,7 +170,7 @@ export default function AdminLoginPage() {
 
       {/* Footer */}
       <footer className="max-w-6xl mx-auto w-full text-center text-[11px] text-[#5f5e5e] py-2">
-        Avira Life Care Global • Secured with Supabase PostgreSQL • 256-Bit SSL
+        Avira Life Care Global • Secured Management Console • 256-Bit SSL
       </footer>
     </div>
   );

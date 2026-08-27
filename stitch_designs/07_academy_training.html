@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Academy - MomentumMLM</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&amp;family=Montserrat:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#6750a4",
+                        "inverse-on-surface": "#f5eff7",
+                        "surface-container": "#f2ecf4",
+                        "primary-fixed-dim": "#cfbcff",
+                        "on-secondary": "#ffffff",
+                        "secondary": "#63597c",
+                        "surface-container-low": "#f8f2fa",
+                        "primary-fixed": "#e9ddff",
+                        "on-surface": "#1d1b20",
+                        "on-secondary-fixed": "#1f1635",
+                        "tertiary-container": "#c9a74d",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#fdf7ff",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#4b4263",
+                        "surface-container-high": "#ece6ee",
+                        "inverse-primary": "#cfbcff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-container": "#645a7d",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#594400",
+                        "primary-container": "#6750a4",
+                        "primary": "#4f378a",
+                        "surface": "#fdf7ff",
+                        "on-primary-container": "#e0d2ff",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed-variant": "#4f378a",
+                        "surface-container-highest": "#e6e0e9",
+                        "background": "#fdf7ff",
+                        "inverse-surface": "#322f35",
+                        "tertiary-fixed-dim": "#e7c365",
+                        "on-tertiary-fixed": "#241a00",
+                        "surface-variant": "#e6e0e9",
+                        "on-background": "#1d1b20",
+                        "on-surface-variant": "#494551",
+                        "on-tertiary-container": "#503d00",
+                        "tertiary": "#765b00",
+                        "secondary-container": "#e1d4fd",
+                        "surface-dim": "#ded8e0",
+                        "on-primary-fixed": "#22005d",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#e9ddff",
+                        "secondary-fixed-dim": "#cdc0e9",
+                        "outline-variant": "#cbc4d2",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed": "#ffdf93",
+                        "outline": "#7a7582"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "section-gap": "80px",
+                        "container-max": "1280px",
+                        "stack-md": "16px",
+                        "margin-mobile": "16px",
+                        "stack-sm": "8px",
+                        "stack-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "label-bold": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Montserrat"],
+                        "headline-sm": ["Montserrat"],
+                        "display-lg": ["Montserrat"],
+                        "display-lg-mobile": ["Montserrat"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-bold": ["14px", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-md": ["30px", { "lineHeight": "1.3", "fontWeight": "700" }],
+                        "headline-sm": ["24px", { "lineHeight": "1.3", "fontWeight": "700" }],
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.05);
+        }
+        .momentum-gradient {
+            background: linear-gradient(135deg, #4f378a 0%, #6750a4 100%);
+        }
+        .momentum-text-gradient {
+            background: linear-gradient(135deg, #4f378a 0%, #6750a4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="bg-surface/70 dark:bg-surface-dim/70 backdrop-blur-xl fixed top-0 w-full z-50 border-b border-white/20 shadow-sm shadow-primary/10">
+<div class="max-w-container-max mx-auto px-gutter h-16 flex items-center justify-between">
+<div class="flex items-center gap-8">
+<div class="font-headline-sm text-headline-sm font-bold bg-gradient-to-r from-primary to-surface-tint bg-clip-text text-transparent">MomentumMLM</div>
+<!-- Desktop Nav -->
+<div class="hidden md:flex gap-6">
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-outline hover:text-primary transition-colors hover:bg-primary-container/20 transition-all duration-300 px-3 py-1 rounded-md" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-outline hover:text-primary transition-colors hover:bg-primary-container/20 transition-all duration-300 px-3 py-1 rounded-md" href="#">Network</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-outline hover:text-primary transition-colors hover:bg-primary-container/20 transition-all duration-300 px-3 py-1 rounded-md" href="#">Earnings</a>
+<a class="font-body-md text-body-md text-primary dark:text-primary-fixed border-b-2 border-primary pb-1 font-bold hover:bg-primary-container/20 transition-all duration-300 px-3 py-1 rounded-md" href="#">Academy</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden md:block momentum-gradient text-white font-label-bold text-label-bold px-4 py-2 rounded-full shadow-md shadow-primary/20 hover:opacity-90 transition-opacity">Upgrade Pro</button>
+<div class="flex items-center gap-2 text-primary dark:text-primary-fixed">
+<button class="p-2 hover:bg-primary-container/20 rounded-full transition-colors active:scale-95 transition-transform"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="p-2 hover:bg-primary-container/20 rounded-full transition-colors active:scale-95 transition-transform"><span class="material-symbols-outlined" data-icon="settings">settings</span></button>
+<div class="w-8 h-8 rounded-full bg-surface-variant ml-2 overflow-hidden border-2 border-white">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="A small circular avatar image showing a professional, confident young entrepreneur in a modern office setting, bright lighting, high quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDN17Od3cWizzG8IJW_yXL6bUPbUkxC-HHQObP6mw0UNWPQtK34vfnJ9fScRAzp61yNlVHafGJC8zPXzmM9igeMCwa7piwyqpNMhS4Ig07LjaFFhhhnsefYPwyOuwuG89r1vrlj_DYfLBd2TtZYvuXcnMBs2FTT6baQ9YEXw9gtoEVZkoIQeACz-d8KTL7TM5eeauO3EO0-lDGj-QyKZ0PBq_1QPmawHJdT3my0dLT-k25GU2F7MOGweg"/>
+</div>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Layout -->
+<div class="flex min-h-screen pt-16">
+<!-- SideNavBar (Desktop) -->
+<aside class="hidden md:flex flex-col p-4 gap-stack-md bg-surface-container-low/60 dark:bg-surface-container-highest/10 backdrop-blur-md h-screen w-64 docked left-0 border-r border-white/10 shadow-lg shadow-primary/5 sticky top-16">
+<div class="mb-6 px-4">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-10 h-10 rounded-lg momentum-gradient flex items-center justify-center text-white font-bold">
+                        M
+                    </div>
+<div>
+<h2 class="font-label-bold text-label-bold text-on-surface">Momentum Pro</h2>
+<p class="text-xs text-on-surface-variant">Elite Partner</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-2 font-label-bold text-label-bold">
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl hover:translate-x-1 transition-transform duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">dashboard</span> Overview
+                </a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl hover:translate-x-1 transition-transform duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">group</span> My Team
+                </a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl hover:translate-x-1 transition-transform duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">payments</span> Commissions
+                </a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl hover:translate-x-1 transition-transform duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">auto_awesome</span> Marketing Tools
+                </a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl hover:translate-x-1 transition-transform duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">emoji_events</span> Leaderboard
+                </a>
+<a class="flex items-center gap-3 p-3 bg-primary text-on-primary rounded-xl shadow-md shadow-primary/20 hover:translate-x-1 transition-transform duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">school</span> Academy
+                </a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl hover:translate-x-1 transition-transform duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">help</span> Support
+                </a>
+</nav>
+<div class="mt-auto pt-4 border-t border-outline-variant">
+<button class="w-full mb-4 py-2 px-4 rounded-full border-2 border-primary text-primary font-label-bold hover:bg-primary/5 transition-colors">Invite Member</button>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl hover:translate-x-1 transition-transform duration-200 cursor-pointer active:opacity-80 font-label-bold text-label-bold" href="#">
+<span class="material-symbols-outlined">logout</span> Logout
+                </a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 max-w-container-max mx-auto px-gutter py-stack-lg w-full overflow-y-auto">
+<!-- Page Header -->
+<header class="mb-stack-lg">
+<h1 class="font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface mb-2">Academy</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Master the skills you need to build your empire. Learn from top earners and industry experts.</p>
+</header>
+<!-- Featured Onboarding Video -->
+<section class="mb-section-gap">
+<div class="relative w-full h-64 md:h-[400px] rounded-[24px] overflow-hidden group glass-card">
+<div class="absolute inset-0 bg-cover bg-center w-full h-full transition-transform duration-700 group-hover:scale-105" data-alt="A cinematic, high-quality wide shot of a modern, brightly lit stage where a confident speaker is presenting to an engaged audience. The stage has a large screen showing an upward growth chart. Professional corporate style, dynamic lighting." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA28d4v0PLeX14f8cxxKQ_ioY5w_emcuPpMkE0WJdZyHcQh2XCSxmHWL6EenDdCoIACKLAIdCfGi1mc9kVzqK_DwpT6YwAPtJgVz2ARiuGD6uGS7OS_m0rF5Nr18kote01idn5r-Dh5K0VvfUZMUW9YPNnBKdg72ljcXJf5y_McYNaIt85WWYdfox4HOvI-pe2nJeGBdxtvxSbHKhFtao8Bu1qG4XmTCmxnw9NwxNGICvD4uPokKkQe7A')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-transparent to-transparent"></div>
+<div class="absolute inset-0 flex items-center justify-center">
+<button class="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center hover:scale-110 transition-transform duration-300 shadow-lg group-hover:bg-primary/90">
+<span class="material-symbols-outlined text-white text-5xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+<div class="absolute bottom-0 left-0 p-6 md:p-8 w-full">
+<span class="inline-block px-3 py-1 rounded-full bg-tertiary-container/80 backdrop-blur-sm text-on-tertiary-container font-label-bold text-xs mb-3 uppercase tracking-wider">Featured Onboarding</span>
+<h2 class="font-headline-md text-headline-sm md:text-headline-md text-white mb-2 shadow-sm">The Momentum Blueprint: First 30 Days</h2>
+<p class="font-body-md text-white/90 max-w-xl hidden md:block">Kickstart your journey with this comprehensive guide to setting up your network and securing your first commissions.</p>
+</div>
+</div>
+</section>
+<!-- Course Categories Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-section-gap">
+<!-- Sales Mastery Column -->
+<div class="flex flex-col gap-stack-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2 mb-2 border-b border-outline-variant pb-2">
+<span class="material-symbols-outlined text-primary p-2 bg-primary-container/20 rounded-lg">trending_up</span>
+                        Sales Mastery
+                    </h3>
+<div class="glass-card rounded-[24px] p-5 hover:-translate-y-1 transition-transform duration-300 cursor-pointer relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary border border-white/50">
+<span class="material-symbols-outlined">campaign</span>
+</div>
+<span class="px-2 py-1 bg-surface-variant text-on-surface-variant text-[10px] font-label-bold rounded-md">Intermediate</span>
+</div>
+<h4 class="font-label-bold text-lg text-on-surface mb-2 relative z-10">Closing the Deal</h4>
+<p class="font-body-md text-sm text-on-surface-variant mb-4 relative z-10">Techniques to overcome objections and secure commitments.</p>
+<div class="w-full bg-surface-container-high rounded-full h-2 mb-2">
+<div class="momentum-gradient h-2 rounded-full" style="width: 75%"></div>
+</div>
+<div class="flex justify-between text-xs text-on-surface-variant font-label-bold">
+<span>75% Complete</span>
+<span>3/4 Modules</span>
+</div>
+</div>
+<div class="glass-card rounded-[24px] p-5 hover:-translate-y-1 transition-transform duration-300 cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary border border-white/50">
+<span class="material-symbols-outlined">forum</span>
+</div>
+<span class="px-2 py-1 bg-tertiary-container/20 text-on-tertiary-container text-[10px] font-label-bold rounded-md">New</span>
+</div>
+<h4 class="font-label-bold text-lg text-on-surface mb-2">Effective Prospecting</h4>
+<p class="font-body-md text-sm text-on-surface-variant mb-4">Identify and approach high-quality leads effortlessly.</p>
+<div class="w-full bg-surface-container-high rounded-full h-2 mb-2">
+<div class="momentum-gradient h-2 rounded-full" style="width: 0%"></div>
+</div>
+<div class="flex justify-between text-xs text-on-surface-variant font-label-bold">
+<span>0% Complete</span>
+<span>0/5 Modules</span>
+</div>
+</div>
+</div>
+<!-- Leadership Principles Column -->
+<div class="flex flex-col gap-stack-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2 mb-2 border-b border-outline-variant pb-2">
+<span class="material-symbols-outlined text-tertiary p-2 bg-tertiary-container/20 rounded-lg">diversity_3</span>
+                        Leadership Principles
+                    </h3>
+<div class="glass-card rounded-[24px] p-5 hover:-translate-y-1 transition-transform duration-300 cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-tertiary border border-white/50">
+<span class="material-symbols-outlined">psychology</span>
+</div>
+<span class="px-2 py-1 bg-surface-variant text-on-surface-variant text-[10px] font-label-bold rounded-md">Advanced</span>
+</div>
+<h4 class="font-label-bold text-lg text-on-surface mb-2">Building High-Performance Teams</h4>
+<p class="font-body-md text-sm text-on-surface-variant mb-4">Strategies for motivating and retaining top talent.</p>
+<div class="w-full bg-surface-container-high rounded-full h-2 mb-2">
+<div class="bg-tertiary h-2 rounded-full" style="width: 100%"></div>
+</div>
+<div class="flex justify-between text-xs text-tertiary font-label-bold">
+<span>100% Complete</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">verified</span> Certificate Earned</span>
+</div>
+</div>
+<div class="glass-card rounded-[24px] p-5 hover:-translate-y-1 transition-transform duration-300 cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-tertiary border border-white/50">
+<span class="material-symbols-outlined">communication</span>
+</div>
+<span class="px-2 py-1 bg-surface-variant text-on-surface-variant text-[10px] font-label-bold rounded-md">Beginner</span>
+</div>
+<h4 class="font-label-bold text-lg text-on-surface mb-2">The Art of Mentorship</h4>
+<p class="font-body-md text-sm text-on-surface-variant mb-4">How to guide new partners to success.</p>
+<div class="w-full bg-surface-container-high rounded-full h-2 mb-2">
+<div class="momentum-gradient h-2 rounded-full" style="width: 40%"></div>
+</div>
+<div class="flex justify-between text-xs text-on-surface-variant font-label-bold">
+<span>40% Complete</span>
+<span>2/5 Modules</span>
+</div>
+</div>
+</div>
+<!-- Digital Marketing Column -->
+<div class="flex flex-col gap-stack-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2 mb-2 border-b border-outline-variant pb-2">
+<span class="material-symbols-outlined text-secondary p-2 bg-secondary-container/20 rounded-lg">language</span>
+                        Digital Marketing
+                    </h3>
+<div class="glass-card rounded-[24px] p-5 hover:-translate-y-1 transition-transform duration-300 cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-secondary border border-white/50">
+<span class="material-symbols-outlined">share</span>
+</div>
+<span class="px-2 py-1 bg-surface-variant text-on-surface-variant text-[10px] font-label-bold rounded-md">Beginner</span>
+</div>
+<h4 class="font-label-bold text-lg text-on-surface mb-2">Social Media Blueprint</h4>
+<p class="font-body-md text-sm text-on-surface-variant mb-4">Leverage platforms to grow your personal brand.</p>
+<div class="w-full bg-surface-container-high rounded-full h-2 mb-2">
+<div class="momentum-gradient h-2 rounded-full" style="width: 15%"></div>
+</div>
+<div class="flex justify-between text-xs text-on-surface-variant font-label-bold">
+<span>15% Complete</span>
+<span>1/6 Modules</span>
+</div>
+</div>
+<div class="glass-card rounded-[24px] p-5 hover:-translate-y-1 transition-transform duration-300 cursor-pointer opacity-70">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-outline border border-white/50">
+<span class="material-symbols-outlined">lock</span>
+</div>
+<span class="px-2 py-1 bg-surface-variant text-on-surface-variant text-[10px] font-label-bold rounded-md">Pro Tier</span>
+</div>
+<h4 class="font-label-bold text-lg text-on-surface mb-2">Advanced Funnel Creation</h4>
+<p class="font-body-md text-sm text-on-surface-variant mb-4">Automate your lead generation process.</p>
+<button class="w-full py-2 text-sm text-primary border border-primary rounded-full font-label-bold hover:bg-primary/5">Upgrade to Access</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Footer -->
+<footer class="bg-surface-container-highest dark:bg-inverse-surface w-full py-stack-lg border-t border-outline-variant flat no shadows mt-auto relative z-10">
+<div class="max-w-container-max mx-auto px-gutter grid grid-cols-1 md:grid-cols-2 items-center gap-stack-lg">
+<div class="flex items-center gap-4">
+<span class="font-headline-sm text-headline-sm text-on-surface">MomentumMLM</span>
+<p class="font-body-md text-body-md text-on-surface-variant">© 2024 MomentumMLM Global. All rights reserved.</p>
+</div>
+<div class="flex flex-wrap gap-4 md:justify-end font-body-md text-body-md">
+<a class="text-on-surface-variant hover:text-primary hover:underline decoration-primary transition-all duration-200" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-primary hover:underline decoration-primary transition-all duration-200" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-primary hover:underline decoration-primary transition-all duration-200" href="#">Compliance</a>
+<a class="text-on-surface-variant hover:text-primary hover:underline decoration-primary transition-all duration-200" href="#">Contact Us</a>
+</div>
+</div>
+</footer>
+</body></html>

@@ -5,8 +5,9 @@ import { findUserByMemberId } from "@/lib/db";
 import { signAccessToken, signRefreshToken } from "@/lib/jwt";
 
 const loginSchema = z.object({
-  loginIdentifier: z.string().min(3, "Please enter Member ID (e.g. AV23900) or Mobile Number"),
-  password: z.string().min(4, "Password must be at least 4 characters"),
+  loginIdentifier: z.string().optional(),
+  memberId: z.string().optional(),
+  password: z.string().min(1, "Password must be entered"),
 });
 
 export async function POST(request: NextRequest) {
@@ -19,10 +20,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: errorMsg }, { status: 400 });
     }
 
-    const { loginIdentifier, password } = validatedData.data;
+    const { loginIdentifier, memberId, password } = validatedData.data;
+    const rawId = (loginIdentifier || memberId || "").trim();
+
+    if (!rawId) {
+      return NextResponse.json(
+        { success: false, message: "Please enter Member ID (e.g. AV00001) or Mobile Number" },
+        { status: 400 }
+      );
+    }
 
     // Lookup user strictly by Member ID only in Supabase PostgreSQL
-    const cleanMemberId = loginIdentifier.trim().toUpperCase();
+    const cleanMemberId = rawId.toUpperCase();
     const user = await findUserByMemberId(cleanMemberId);
 
     if (!user) {

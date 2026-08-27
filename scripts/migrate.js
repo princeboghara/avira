@@ -1,8 +1,10 @@
 const { Pool } = require("pg");
 
-const connectionString =
-  process.env.DATABASE_URL ||
-  "postgresql://postgres.jtwpsnezyppfpqcpbnkj:C%2BZS7%4023hUidBfH@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres";
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error("ERROR: DATABASE_URL environment variable is required.");
+  process.exit(1);
+}
 
 const pool = new Pool({
   connectionString,
@@ -12,7 +14,7 @@ const pool = new Pool({
 async function migrate() {
   const client = await pool.connect();
   try {
-    console.log("Connecting to Supabase PostgreSQL at aws-0-ap-northeast-2.pooler.supabase.com:5432...");
+    console.log("Connecting to PostgreSQL database...");
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
