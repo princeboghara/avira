@@ -146,7 +146,7 @@ export default function SelfPvManagerPage() {
             <div className="relative flex-1">
               <input
                 type="text"
-                placeholder="Enter Associate Member ID (e.g. AV00001)..."
+                placeholder="Enter Associate Member ID (e.g. AV0001)..."
                 value={memberIdInput}
                 onChange={(e) => setMemberIdInput(e.target.value.toUpperCase())}
                 className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-4 font-mono font-bold text-sm text-[#1a1c1c] uppercase outline-hidden focus:border-[#006d36] focus:bg-white transition-all"

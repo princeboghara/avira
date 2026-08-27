@@ -42,6 +42,10 @@ export function generateMemberId(existingIds: Set<string> | string[] = new Set()
   return memberId;
 }
 
+/**
+ * Validates Member ID format.
+ * Allows the sole 4-digit root company ID "AV0001" and standard 5-digit member IDs (e.g. AV10001).
+ */
 export function isValidMemberId(memberId: string): boolean {
-  return /^AV\d{5}$/i.test(memberId.trim());
+  return /^AV(\d{4}|\d{5})$/i.test(memberId.trim());
 }

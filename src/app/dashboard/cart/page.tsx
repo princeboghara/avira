@@ -363,7 +363,7 @@ export default function MemberCartPage() {
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder="e.g. AV00001..."
+                      placeholder="e.g. AV0001..."
                       value={targetMemberId}
                       onChange={(e) => handleMemberIdChange(e.target.value)}
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 font-mono font-bold text-xs uppercase text-[#1a1c1c] outline-hidden focus:border-[#006d36]"

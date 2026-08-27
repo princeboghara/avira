@@ -33,8 +33,8 @@ export default function RegisterForm() {
   const isPositionLocked = Boolean(urlPos);
 
   // 1. Sponsor Details (Top Field)
-  const [sponsorId, setSponsorId] = useState(urlSponsor ? urlSponsor.toUpperCase() : "AV00001");
-  const [sponsorName, setSponsorName] = useState("Avira Life Care Global");
+  const [sponsorId, setSponsorId] = useState(urlSponsor ? urlSponsor.toUpperCase() : "AV0001");
+  const [sponsorName, setSponsorName] = useState("Avira Lifecare Global Private Limited");
   const [isVerifyingSponsor, setIsVerifyingSponsor] = useState(false);
   const [sponsorVerified, setSponsorVerified] = useState(true);
 
@@ -281,10 +281,10 @@ export default function RegisterForm() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => setSponsorId("AV00001")}
+                  onClick={() => setSponsorId("AV0001")}
                   className="text-[10px] font-bold text-[#006d36] hover:underline cursor-pointer"
                 >
-                  Use Root (AV00001)
+                  Use Root (AV0001)
                 </button>
               )}
             </div>
@@ -293,7 +293,7 @@ export default function RegisterForm() {
                 type="text"
                 required
                 readOnly={isSponsorLocked}
-                placeholder="e.g. AV00001"
+                placeholder="e.g. AV0001"
                 value={sponsorId}
                 onChange={(e) => !isSponsorLocked && setSponsorId(e.target.value.toUpperCase())}
                 className={`w-full border-none rounded-xl py-3 px-4 focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm font-mono font-bold tracking-wider ${

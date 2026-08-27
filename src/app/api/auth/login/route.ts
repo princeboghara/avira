@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     if (!rawId) {
       return NextResponse.json(
-        { success: false, message: "Please enter Member ID (e.g. AV00001) or Mobile Number" },
+        { success: false, message: "Please enter Member ID (e.g. AV0001)" },
         { status: 400 }
       );
     }
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: `No account found with Member ID "${cleanMemberId}". Please enter your valid 5-digit Member ID (e.g. AV00001).` },
+        { success: false, message: `No account found with Member ID "${cleanMemberId}". Please enter your valid Member ID (e.g. AV0001).` },
         { status: 401 }
       );
     }

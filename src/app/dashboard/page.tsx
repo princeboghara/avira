@@ -19,10 +19,12 @@ import {
   AlertCircle,
   Network,
   ShoppingBag,
-  GraduationCap,
-  KeyRound,
-  FileCheck,
   Zap,
+  FileText,
+  FileCheck,
+  CreditCard,
+  ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 import { User, Transaction } from "@/types";
 import MemberLayout from "@/components/dashboard/MemberLayout";
@@ -41,6 +43,10 @@ export default function DashboardPage() {
   const [netBinaryIncome, setNetBinaryIncome] = useState(0);
   const [rpWalletAmount, setRpWalletAmount] = useState(0);
 
+  // Payout Statement summaries
+  const [totalPaidIncome, setTotalPaidIncome] = useState(0);
+  const [pendingPayoutIncome, setPendingPayoutIncome] = useState(0);
+
   // Referral URL state
   const [mounted, setMounted] = useState(false);
   const [copiedLeft, setCopiedLeft] = useState(false);
@@ -51,10 +57,11 @@ export default function DashboardPage() {
 
     async function loadDashboardData() {
       try {
-        const [meRes, teamRes, earnRes] = await Promise.allSettled([
-          fetch("/api/auth/me"),
-          fetch("/api/member/team"),
-          fetch("/api/member/earnings/binary"),
+        const [meRes, teamRes, earnRes, stateRes] = await Promise.allSettled([
+          fetch("/api/auth/me", { cache: "no-store" }),
+          fetch("/api/member/team", { cache: "no-store" }),
+          fetch("/api/member/earnings/binary", { cache: "no-store" }),
+          fetch("/api/member/statement", { cache: "no-store" }),
         ]);
 
         if (meRes.status === "fulfilled") {
@@ -80,6 +87,14 @@ export default function DashboardPage() {
           if (earnData.success && earnData.summary) {
             setNetBinaryIncome(earnData.summary.totalNet || 0);
             setRpWalletAmount(earnData.summary.rpWalletBalance || 0);
+          }
+        }
+
+        if (stateRes.status === "fulfilled") {
+          const stateData = await stateRes.value.json();
+          if (stateData.success && stateData.summary) {
+            setTotalPaidIncome(stateData.summary.totalPaid || 0);
+            setPendingPayoutIncome(stateData.summary.totalPending || 0);
           }
         }
       } catch (err) {
@@ -115,48 +130,70 @@ export default function DashboardPage() {
   const isUserActive = personalPv >= 100;
 
   let rankName = "Non-Active (<100 PV)";
-  let rankBadgeColor = "bg-red-100 text-red-700 border-red-300";
+  let rankBadgeColor = "bg-rose-50 text-rose-700 border-rose-200";
   let rankIcon = AlertCircle;
 
   if (personalPv >= 1000) {
     rankName = "Diamond Rank";
-    rankBadgeColor = "bg-cyan-100 text-cyan-800 border-cyan-300";
+    rankBadgeColor = "bg-cyan-50 text-cyan-800 border-cyan-300";
     rankIcon = Sparkles;
   } else if (personalPv >= 500) {
     rankName = "Platinum Rank";
-    rankBadgeColor = "bg-purple-100 text-purple-800 border-purple-300";
+    rankBadgeColor = "bg-purple-50 text-purple-800 border-purple-300";
     rankIcon = Award;
   } else if (personalPv >= 250) {
     rankName = "Gold Rank";
-    rankBadgeColor = "bg-amber-100 text-amber-800 border-amber-300";
+    rankBadgeColor = "bg-amber-50 text-amber-900 border-amber-300";
     rankIcon = Award;
   } else if (personalPv >= 100) {
     rankName = "Silver Rank";
-    rankBadgeColor = "bg-emerald-100 text-[#006d36] border-emerald-300";
+    rankBadgeColor = "bg-emerald-50 text-emerald-800 border-emerald-300";
     rankIcon = CheckCircle2;
   }
 
   const RankIcon = rankIcon;
 
   // PV Calculations
-  const leftPendingPv = user?.leftPv || 0;
-  const rightPendingPv = user?.rightPv || 0;
-  const carryLeftPv = user?.carryLeftPv ?? leftPendingPv;
-  const carryRightPv = user?.carryRightPv ?? rightPendingPv;
+  const leftPendingPv = user?.carryLeftPv ?? (user?.leftPv || 0);
+  const rightPendingPv = user?.carryRightPv ?? (user?.rightPv || 0);
+  const carryLeftPv = user?.carryLeftPv ?? 0;
+  const carryRightPv = user?.carryRightPv ?? 0;
 
-  // Cumulative Total PV (Calculated estimate based on lifetime matching + pending)
-  const totalLeftCumulativePv = (user?.totalEarnings ? user.totalEarnings : 0) + carryLeftPv;
-  const totalRightCumulativePv = (user?.totalEarnings ? user.totalEarnings : 0) + carryRightPv;
+  // Cumulative Total PV
+  const totalLeftCumulativePv = user?.leftPv || 0;
+  const totalRightCumulativePv = user?.rightPv || 0;
+
+  if (loading) {
+    return (
+      <MemberLayout user={user}>
+        <div className="space-y-8 max-w-7xl mx-auto pb-16 animate-pulse">
+          <div className="rounded-3xl p-8 bg-slate-900/10 h-52 flex items-center justify-between" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div className="h-36 rounded-3xl bg-white border border-slate-200" />
+            <div className="h-36 rounded-3xl bg-white border border-slate-200" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="h-32 rounded-3xl bg-white border border-slate-200" />
+            <div className="h-32 rounded-3xl bg-white border border-slate-200" />
+            <div className="h-32 rounded-3xl bg-white border border-slate-200" />
+            <div className="h-32 rounded-3xl bg-white border border-slate-200" />
+          </div>
+        </div>
+      </MemberLayout>
+    );
+  }
 
   return (
     <MemberLayout user={user}>
-      <div className="space-y-8 max-w-7xl mx-auto pb-12">
+      <div className="space-y-8 max-w-7xl mx-auto pb-20 animate-fadeIn">
         {/* ========================================================
-            1. WELCOME BANNER (Member ID, Name, Status, Rank)
+            1. EXECUTIVE WELCOME BANNER (Luxury Dark Obsidian & Emerald)
            ======================================================== */}
-        <div className="relative rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#006d36] via-[#005a2c] to-[#4f378a] text-white shadow-xl shadow-[#006d36]/15 overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-          
+        <div className="relative rounded-3xl p-7 sm:p-9 bg-gradient-to-br from-[#022814] via-[#04331b] to-[#01170b] text-white shadow-xl shadow-[#022814]/15 border border-emerald-900/30 overflow-hidden">
+          {/* Subtle Ambient Radial Glows */}
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-[#50c878]/10 rounded-full blur-3xl pointer-events-none" />
+
           <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             {/* Identity & Rank Details */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
@@ -165,96 +202,120 @@ export default function DashboardPage() {
                 <img
                   src={user.avatarUrl}
                   alt={user.fullName}
-                  className="w-18 h-18 rounded-2xl object-cover border-2 border-white shadow-lg"
+                  className="w-20 h-20 rounded-2xl object-cover border-2 border-white/30 shadow-lg shrink-0"
                 />
               ) : (
-                <div className="w-18 h-18 rounded-2xl bg-white/20 backdrop-blur-md text-white font-black text-2xl flex items-center justify-center shadow-lg border border-white/30">
+                <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-md text-white font-black text-2xl flex items-center justify-center shadow-lg border border-white/20 shrink-0">
                   {user?.fullName?.charAt(0) || "A"}
                 </div>
               )}
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-mono text-xs font-black px-2.5 py-0.5 rounded-lg bg-black/25 text-emerald-200 border border-white/20">
-                    ID: {user?.memberId || "..."}
+                  {/* Member ID Chip */}
+                  <span className="font-mono text-xs font-bold px-3 py-1 rounded-xl bg-black/40 text-emerald-300 border border-white/15 backdrop-blur-md">
+                    ID: {user?.memberId}
                   </span>
-                  
+
                   {/* Active / Non-Active Status Pill */}
                   <span
-                    className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-black uppercase border ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border backdrop-blur-md ${
                       isUserActive
-                        ? "bg-emerald-400 text-emerald-950 border-emerald-300"
-                        : "bg-red-500 text-white border-red-400"
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                        : "bg-rose-500/20 text-rose-300 border-rose-500/40"
                     }`}
                   >
-                    <span className={`w-2 h-2 rounded-full ${isUserActive ? "bg-emerald-950 animate-pulse" : "bg-white"}`} />
-                    {isUserActive ? "Active Member" : "Non-Active (Red)"}
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        isUserActive ? "bg-emerald-400 animate-pulse" : "bg-rose-400"
+                      }`}
+                    />
+                    <span>{isUserActive ? "Active Member" : "Non-Active (<100 PV)"}</span>
                   </span>
 
                   {/* Rank Badge */}
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-black uppercase border ${rankBadgeColor}`}>
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider border backdrop-blur-md ${
+                      personalPv >= 1000
+                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/40"
+                        : personalPv >= 500
+                        ? "bg-purple-500/20 text-purple-300 border-purple-400/40"
+                        : personalPv >= 250
+                        ? "bg-amber-500/20 text-amber-300 border-amber-400/40"
+                        : personalPv >= 100
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/40"
+                        : "bg-slate-500/20 text-slate-300 border-slate-400/40"
+                    }`}
+                  >
                     <RankIcon className="w-3.5 h-3.5" />
                     <span>{rankName} ({personalPv} PV)</span>
                   </span>
                 </div>
 
                 <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                  {user?.fullName || "Avira Associate"}
+                  {user?.fullName}
                 </h1>
-                
-                <p className="text-xs sm:text-sm text-emerald-100/90 font-medium">
-                  1:1 Binary Matching Engine • Daily Payout Settlement & Repurchase System
+
+                <p className="text-xs sm:text-sm text-emerald-200/80 font-medium">
+                  1:1 Binary PV Pair Matching Engine • Daily Settlement & Auto Repurchase Portal
                 </p>
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="flex flex-wrap gap-2.5">
+            {/* Quick Action Navigation */}
+            <div className="flex flex-wrap gap-2.5 w-full sm:w-auto">
               <Link
                 href="/dashboard/store"
-                className="px-4 py-2.5 rounded-xl bg-white text-[#006d36] font-bold text-xs shadow-md hover:bg-emerald-50 active:scale-95 transition-all flex items-center gap-1.5"
+                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white text-[#006d36] font-bold text-xs shadow-md hover:bg-emerald-50 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span>Create Order</span>
+                <span>Shop Products</span>
               </Link>
               <Link
                 href="/dashboard/tree"
-                className="px-4 py-2.5 rounded-xl bg-white/15 backdrop-blur-md border border-white/25 text-white font-bold text-xs hover:bg-white/25 active:scale-95 transition-all flex items-center gap-1.5"
+                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-xs hover:bg-white/20 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Network className="w-4 h-4" />
-                <span>Binary Tree</span>
+                <span>Network Tree</span>
+              </Link>
+              <Link
+                href="/dashboard/statement"
+                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-xs hover:bg-white/20 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Statement</span>
               </Link>
             </div>
           </div>
         </div>
 
         {/* ========================================================
-            2. LEFT & RIGHT REFERRAL LINKS
+            2. DUAL-WING REFERRAL CENTER (Left & Right Leg Placement)
            ======================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Referral Link */}
-          <div className="rounded-3xl p-6 bg-gradient-to-br from-emerald-50/80 via-white to-white border border-emerald-200/80 shadow-sm relative overflow-hidden">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#006d36] text-white flex items-center justify-center font-black text-xs shadow-xs">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Left Referral Card */}
+          <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-[#006d36] flex items-center justify-center font-black text-xs shadow-2xs">
                   LEFT
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[#1a1c1c]">Left Leg Placement Link</h3>
-                  <span className="text-[11px] text-[#5f5e5e]">New associates will join your Left Team</span>
+                  <h3 className="text-sm font-bold text-slate-900">Left Team Placement Link</h3>
+                  <span className="text-[11px] text-slate-500">Auto places new associate in your Left Leg</span>
                 </div>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#006d36] text-[10px] font-bold font-mono">
-                POSITION: LEFT
+              <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-[#006d36] text-[10px] font-mono font-bold border border-emerald-200">
+                POWER LEG
               </span>
             </div>
 
-            <div className="flex items-center gap-2 mt-4 p-2 bg-white rounded-2xl border border-gray-200">
+            <div className="flex items-center gap-2 mt-2 p-2 bg-slate-50 rounded-2xl border border-slate-200">
               <input
                 type="text"
                 readOnly
                 value={leftReferralUrl}
-                className="flex-1 bg-transparent text-xs font-mono text-[#5f5e5e] px-2 outline-hidden truncate"
+                className="flex-1 bg-transparent text-xs font-mono text-slate-600 px-2 outline-hidden truncate"
               />
               <button
                 type="button"
@@ -263,7 +324,7 @@ export default function DashboardPage() {
               >
                 {copiedLeft ? (
                   <>
-                    <Check className="w-3.5 h-3.5" />
+                    <Check className="w-3.5 h-3.5 text-emerald-300" />
                     <span>Copied!</span>
                   </>
                 ) : (
@@ -276,38 +337,38 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Right Referral Link */}
-          <div className="rounded-3xl p-6 bg-gradient-to-br from-purple-50/80 via-white to-white border border-purple-200/80 shadow-sm relative overflow-hidden">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-purple-700 text-white flex items-center justify-center font-black text-xs shadow-xs">
+          {/* Right Referral Card */}
+          <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-xs shadow-2xs">
                   RIGHT
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[#1a1c1c]">Right Leg Placement Link</h3>
-                  <span className="text-[11px] text-[#5f5e5e]">New associates will join your Right Team</span>
+                  <h3 className="text-sm font-bold text-slate-900">Right Team Placement Link</h3>
+                  <span className="text-[11px] text-slate-500">Auto places new associate in your Right Leg</span>
                 </div>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold font-mono">
-                POSITION: RIGHT
+              <span className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-mono font-bold border border-indigo-200">
+                MATCHING LEG
               </span>
             </div>
 
-            <div className="flex items-center gap-2 mt-4 p-2 bg-white rounded-2xl border border-gray-200">
+            <div className="flex items-center gap-2 mt-2 p-2 bg-slate-50 rounded-2xl border border-slate-200">
               <input
                 type="text"
                 readOnly
                 value={rightReferralUrl}
-                className="flex-1 bg-transparent text-xs font-mono text-[#5f5e5e] px-2 outline-hidden truncate"
+                className="flex-1 bg-transparent text-xs font-mono text-slate-600 px-2 outline-hidden truncate"
               />
               <button
                 type="button"
                 onClick={handleCopyRight}
-                className="px-4 py-2 rounded-xl bg-purple-700 text-white text-xs font-bold hover:bg-purple-800 transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer shadow-xs"
+                className="px-4 py-2 rounded-xl bg-indigo-700 text-white text-xs font-bold hover:bg-indigo-800 transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer shadow-xs"
               >
                 {copiedRight ? (
                   <>
-                    <Check className="w-3.5 h-3.5" />
+                    <Check className="w-3.5 h-3.5 text-indigo-300" />
                     <span>Copied!</span>
                   </>
                 ) : (
@@ -322,22 +383,24 @@ export default function DashboardPage() {
         </div>
 
         {/* ========================================================
-            3. MAIN FINANCIAL SUMMARY BOX: TOTAL INCOME & SUB-INCOMES
+            3. FINANCIAL INTELLIGENCE HUB (Total Earnings & Metrics)
            ======================================================== */}
         <div className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* Main Highlighted Box: Total Income */}
-            <div className="lg:col-span-5 rounded-3xl p-8 bg-gradient-to-br from-[#006d36] to-[#004723] text-white shadow-lg shadow-[#006d36]/20 flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+            {/* Main Total Income Hero Card */}
+            <div className="lg:col-span-5 rounded-3xl p-7 sm:p-8 bg-gradient-to-br from-[#006d36] to-[#004d25] text-white shadow-xl shadow-[#006d36]/15 flex flex-col justify-between relative overflow-hidden border border-emerald-600/30">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner">
+                  <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-xs">
                     <Wallet className="w-6 h-6" />
                   </div>
-                  <span className="px-3 py-1 rounded-full bg-white/20 text-white text-xs font-black uppercase tracking-wider">
+                  <span className="px-3 py-1 rounded-full bg-white/20 text-white text-xs font-black uppercase tracking-wider backdrop-blur-md">
                     Lifetime Earnings
                   </span>
                 </div>
+
                 <span className="text-xs font-bold uppercase tracking-widest text-emerald-200 block mb-1">
                   Main Total Income
                 </span>
@@ -348,14 +411,20 @@ export default function DashboardPage() {
 
               <div className="pt-6 mt-6 border-t border-white/20 flex items-center justify-between text-xs text-emerald-100">
                 <span>Withdrawable Wallet: <strong>₹{user?.walletBalance?.toLocaleString("en-IN") || 0}</strong></span>
-                <ShieldCheck className="w-4 h-4 text-emerald-300" />
+                <Link
+                  href="/dashboard/statement"
+                  className="hover:underline flex items-center gap-1 font-bold text-white"
+                >
+                  <span>Statement</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
 
-            {/* Sub-income Cards Grid (Today Income, Binary Income, Repurchase Balance) */}
+            {/* Sub-income Cards Grid (Today, Binary, RP Wallet) */}
             <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Today's Income */}
-              <div className="rounded-3xl p-6 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+              <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold">
@@ -365,43 +434,43 @@ export default function DashboardPage() {
                       Today
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#5f5e5e] block mb-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
                     Today&apos;s Income
                   </span>
-                  <div className="text-2xl font-black font-mono text-[#1a1c1c]">
+                  <div className="text-2xl font-black font-mono text-slate-900">
                     ₹{user?.todayEarnings?.toLocaleString("en-IN") || 0}
                   </div>
                 </div>
-                <div className="text-[10px] text-[#5f5e5e] pt-3 mt-3 border-t border-gray-100">
-                  Cut-off matching credit
+                <div className="text-[10px] text-slate-400 pt-3 mt-3 border-t border-slate-100">
+                  Daily 1:1 pair match credit
                 </div>
               </div>
 
-              {/* Binary Income */}
-              <div className="rounded-3xl p-6 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+              {/* Binary Matching Income */}
+              <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
                       <TrendingUp className="w-5 h-5" />
                     </div>
                     <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                      1:1 Net
+                      1:1 Pairs
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#5f5e5e] block mb-1">
-                    Binary Income
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                    Binary Net Income
                   </span>
-                  <div className="text-2xl font-black font-mono text-[#1a1c1c]">
+                  <div className="text-2xl font-black font-mono text-slate-900">
                     ₹{netBinaryIncome.toLocaleString("en-IN")}
                   </div>
                 </div>
-                <div className="text-[10px] text-[#5f5e5e] pt-3 mt-3 border-t border-gray-100">
-                  Post TDS & Admin Fees
+                <div className="text-[10px] text-slate-400 pt-3 mt-3 border-t border-slate-100">
+                  Net matching commissions
                 </div>
               </div>
 
               {/* Repurchase Balance (RP Wallet) */}
-              <div className="rounded-3xl p-6 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+              <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
@@ -411,134 +480,204 @@ export default function DashboardPage() {
                       5% RP
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#5f5e5e] block mb-1">
-                    Repurchase Balance
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                    Repurchase Wallet
                   </span>
-                  <div className="text-2xl font-black font-mono text-[#1a1c1c]">
+                  <div className="text-2xl font-black font-mono text-slate-900">
                     ₹{(user?.rpWallet || rpWalletAmount).toLocaleString("en-IN")}
                   </div>
                 </div>
-                <div className="text-[10px] text-[#5f5e5e] pt-3 mt-3 border-t border-gray-100">
-                  Available for store purchase
+                <div className="text-[10px] text-slate-400 pt-3 mt-3 border-t border-slate-100">
+                  Usable on shopping portal
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Weekly Payout Summary Boxes (Total Paid & Pending Income) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Total Paid Income */}
+            <Link
+              href="/dashboard/statement"
+              className="p-6 rounded-3xl bg-gradient-to-br from-emerald-50/70 via-white to-white border border-emerald-200 shadow-2xs hover:shadow-md transition-all flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-[#006d36] flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                    Total Paid Income (To Bank Account)
+                  </span>
+                  <div className="text-2xl sm:text-3xl font-black font-mono text-[#006d36]">
+                    ₹{totalPaidIncome.toLocaleString("en-IN")}
+                  </div>
+                  <span className="text-[10px] text-emerald-700 font-medium block">
+                    Successfully disbursed to registered bank
+                  </span>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-[#006d36] bg-emerald-100/70 px-3.5 py-1.5 rounded-xl flex items-center gap-1 group-hover:bg-emerald-200 transition-colors">
+                <span>Statement</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+
+            {/* Pending Payout Income */}
+            <Link
+              href="/dashboard/statement"
+              className="p-6 rounded-3xl bg-gradient-to-br from-amber-50/70 via-white to-white border border-amber-200 shadow-2xs hover:shadow-md transition-all flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform">
+                  <Clock className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                    Pending Payout Income
+                  </span>
+                  <div className="text-2xl sm:text-3xl font-black font-mono text-amber-800">
+                    ₹{pendingPayoutIncome.toLocaleString("en-IN")}
+                  </div>
+                  <span className="text-[10px] text-amber-800 font-medium block">
+                    Scheduled for upcoming weekly settlement
+                  </span>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-amber-800 bg-amber-100/70 px-3.5 py-1.5 rounded-xl flex items-center gap-1 group-hover:bg-amber-200 transition-colors">
+                <span>View Details</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+          </div>
         </div>
 
         {/* ========================================================
-            4. TEAM COUNTS, TOTAL CUMULATIVE PV, AND PENDING MATCH PV
+            4. BINARY VOLUME & TEAM ANALYTICS (Left / Right Cards)
            ======================================================== */}
         <div className="space-y-4">
-          <h2 className="text-lg font-bold text-[#1a1c1c] flex items-center gap-2">
-            <Network className="w-5 h-5 text-[#006d36]" />
-            <span>Binary Network Volume & Team Analytics</span>
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+              <Network className="w-5 h-5 text-[#006d36]" />
+              <span>Binary Team Analytics & PV Volume</span>
+            </h2>
+            <Link
+              href="/dashboard/tree"
+              className="text-xs font-bold text-[#006d36] hover:underline flex items-center gap-1"
+            >
+              <span>Genealogy Tree</span>
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* 1. Team Members Count */}
-            <div className="rounded-3xl p-6 bg-white border border-gray-100 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* 1. Downline Associates */}
+            <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#5f5e5e]">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
                   Downline Associates
                 </span>
                 <Users className="w-4 h-4 text-[#006d36]" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/60 text-center">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200/70 text-center">
                   <span className="text-[10px] font-bold uppercase text-[#006d36] block">Left Team</span>
-                  <span className="text-xl font-black font-mono text-[#006d36]">{leftTeamCount}</span>
-                  <span className="text-[9px] text-[#5f5e5e] block">Members</span>
+                  <span className="text-2xl font-black font-mono text-[#006d36]">{leftTeamCount}</span>
+                  <span className="text-[9px] text-slate-500 block font-medium">Members</span>
                 </div>
-                <div className="p-3 rounded-2xl bg-purple-50/70 border border-purple-200/60 text-center">
-                  <span className="text-[10px] font-bold uppercase text-purple-700 block">Right Team</span>
-                  <span className="text-xl font-black font-mono text-purple-700">{rightTeamCount}</span>
-                  <span className="text-[9px] text-[#5f5e5e] block">Members</span>
+                <div className="p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-200/70 text-center">
+                  <span className="text-[10px] font-bold uppercase text-indigo-700 block">Right Team</span>
+                  <span className="text-2xl font-black font-mono text-indigo-700">{rightTeamCount}</span>
+                  <span className="text-[9px] text-slate-500 block font-medium">Members</span>
                 </div>
               </div>
-              <div className="mt-3 text-center text-xs text-[#5f5e5e] font-semibold">
-                Total Team: <strong className="text-[#1a1c1c]">{totalTeamCount}</strong> Active Associates
+              <div className="mt-4 text-center text-xs text-slate-500 font-semibold pt-3 border-t border-slate-100">
+                Total Team: <strong className="text-slate-900">{totalTeamCount}</strong> Associates
               </div>
             </div>
 
-            {/* 2. Total Cumulative PV (Matched + Non-Matched) */}
-            <div className="rounded-3xl p-6 bg-white border border-gray-100 shadow-sm">
+            {/* 2. Cumulative Lifetime PV */}
+            <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#5f5e5e]">
-                  Total Cumulative PV (Lifetime)
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Cumulative Lifetime PV
                 </span>
-                <Award className="w-4 h-4 text-[#4f378a]" />
+                <Award className="w-4 h-4 text-purple-700" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/60 text-center">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200/70 text-center">
                   <span className="text-[10px] font-bold uppercase text-[#006d36] block">Total Left PV</span>
-                  <span className="text-xl font-black font-mono text-[#006d36]">{totalLeftCumulativePv}</span>
-                  <span className="text-[9px] text-[#5f5e5e] block">PV</span>
+                  <span className="text-2xl font-black font-mono text-[#006d36]">{totalLeftCumulativePv}</span>
+                  <span className="text-[9px] text-slate-500 block font-medium">Lifetime PV</span>
                 </div>
-                <div className="p-3 rounded-2xl bg-purple-50/70 border border-purple-200/60 text-center">
-                  <span className="text-[10px] font-bold uppercase text-purple-700 block">Total Right PV</span>
-                  <span className="text-xl font-black font-mono text-purple-700">{totalRightCumulativePv}</span>
-                  <span className="text-[9px] text-[#5f5e5e] block">PV</span>
+                <div className="p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-200/70 text-center">
+                  <span className="text-[10px] font-bold uppercase text-indigo-700 block">Total Right PV</span>
+                  <span className="text-2xl font-black font-mono text-indigo-700">{totalRightCumulativePv}</span>
+                  <span className="text-[9px] text-slate-500 block font-medium">Lifetime PV</span>
                 </div>
               </div>
-              <div className="mt-3 text-center text-xs text-[#5f5e5e] font-semibold">
-                All Matched & Carry Forward Volume
+              <div className="mt-4 text-center text-xs text-slate-500 font-semibold pt-3 border-t border-slate-100">
+                All Matched & Carry Volume
               </div>
             </div>
 
-            {/* 3. Pending Match PV (Unmatched Carry Volume) */}
-            <div className="rounded-3xl p-6 bg-white border border-gray-100 shadow-sm">
+            {/* 3. Pending Match PV (Active Volume) */}
+            <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#5f5e5e]">
-                  Pending Match PV (Next Cut-off)
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Pending Match PV (Carry Forward)
                 </span>
                 <Clock className="w-4 h-4 text-blue-600" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/60 text-center">
-                  <span className="text-[10px] font-bold uppercase text-[#006d36] block">Pending Left PV</span>
-                  <span className="text-xl font-black font-mono text-[#006d36]">{carryLeftPv}</span>
-                  <span className="text-[9px] text-[#5f5e5e] block">PV Ready</span>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200/70 text-center">
+                  <span className="text-[10px] font-bold uppercase text-[#006d36] block">Pending Left</span>
+                  <span className="text-2xl font-black font-mono text-[#006d36]">{carryLeftPv}</span>
+                  <span className="text-[9px] text-slate-500 block font-medium">PV Available</span>
                 </div>
-                <div className="p-3 rounded-2xl bg-purple-50/70 border border-purple-200/60 text-center">
-                  <span className="text-[10px] font-bold uppercase text-purple-700 block">Pending Right PV</span>
-                  <span className="text-xl font-black font-mono text-purple-700">{carryRightPv}</span>
-                  <span className="text-[9px] text-[#5f5e5e] block">PV Ready</span>
+                <div className="p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-200/70 text-center">
+                  <span className="text-[10px] font-bold uppercase text-indigo-700 block">Pending Right</span>
+                  <span className="text-2xl font-black font-mono text-indigo-700">{carryRightPv}</span>
+                  <span className="text-[9px] text-slate-500 block font-medium">PV Available</span>
                 </div>
               </div>
-              <div className="mt-3 text-center text-xs text-[#5f5e5e] font-semibold">
-                Matched automatically 1:1 on next pair
+              <div className="mt-4 text-center text-xs text-slate-500 font-semibold pt-3 border-t border-slate-100">
+                1:1 Instant Matching on new volume
               </div>
             </div>
           </div>
         </div>
 
         {/* ========================================================
-            5. BRIEF DETAILS CARD (Activation Date, KYC Status, Capping, Sponsor)
+            5. ACCOUNT BRIEF & COMPLIANCE DETAILS
            ======================================================== */}
-        <div className="rounded-3xl p-6 sm:p-8 bg-white border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-6 pb-3 border-b border-gray-100">
+        <div className="rounded-3xl p-6 sm:p-8 bg-white border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-100">
             <div>
-              <h2 className="text-lg font-bold text-[#1a1c1c]">Account Brief & Compliance Details</h2>
-              <p className="text-xs text-[#5f5e5e]">Associate verification credentials and daily capping boundaries</p>
+              <h2 className="text-base sm:text-lg font-black text-slate-900">
+                Account Credentials & Daily Boundaries
+              </h2>
+              <p className="text-xs text-slate-500">
+                Verification credentials, daily capping boundaries, and upline hierarchy
+              </p>
             </div>
             <Link
               href="/dashboard/kyc"
               className="text-xs font-bold text-[#006d36] hover:underline flex items-center gap-1"
             >
               <span>Manage KYC</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Activation Date */}
-            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200/60">
-              <div className="flex items-center gap-2 text-[#5f5e5e] mb-1">
+            <div className="p-4 rounded-2xl bg-slate-50/75 border border-slate-200/70">
+              <div className="flex items-center gap-2 text-slate-500 mb-1">
                 <Calendar className="w-4 h-4 text-[#006d36]" />
                 <span className="text-xs font-bold uppercase tracking-wider">Activation Date</span>
               </div>
-              <div className="font-mono font-bold text-sm text-[#1a1c1c] mt-1">
+              <div className="font-mono font-bold text-sm text-slate-900 mt-1">
                 {user?.activationDate
                   ? new Date(user.activationDate).toLocaleDateString("en-IN", {
                       day: "2-digit",
@@ -553,14 +692,14 @@ export default function DashboardPage() {
                     })
                   : "Verified"}
               </div>
-              <span className="text-[10px] text-[#5f5e5e]">Account Registration</span>
+              <span className="text-[10px] text-slate-400">Account Registration</span>
             </div>
 
             {/* KYC Status */}
-            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200/60">
-              <div className="flex items-center gap-2 text-[#5f5e5e] mb-1">
+            <div className="p-4 rounded-2xl bg-slate-50/75 border border-slate-200/70">
+              <div className="flex items-center gap-2 text-slate-500 mb-1">
                 <FileCheck className="w-4 h-4 text-purple-700" />
-                <span className="text-xs font-bold uppercase tracking-wider">KYC Status</span>
+                <span className="text-xs font-bold uppercase tracking-wider">KYC Compliance</span>
               </div>
               <div className="mt-1">
                 <span
@@ -570,70 +709,74 @@ export default function DashboardPage() {
                       : user?.kycStatus === "PENDING"
                       ? "bg-amber-100 text-amber-800"
                       : user?.kycStatus === "REJECTED"
-                      ? "bg-red-100 text-red-700"
-                      : "bg-gray-200 text-gray-700"
+                      ? "bg-rose-100 text-rose-700"
+                      : "bg-slate-200 text-slate-700"
                   }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-current" />
                   {user?.kycStatus || "NOT SUBMITTED"}
                 </span>
               </div>
-              <span className="text-[10px] text-[#5f5e5e] block mt-1">Bank & Aadhaar ID</span>
+              <span className="text-[10px] text-slate-400 block mt-1">Aadhaar, PAN, Bank</span>
             </div>
 
-            {/* Daily Capping Limit */}
-            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200/60">
-              <div className="flex items-center gap-2 text-[#5f5e5e] mb-1">
+            {/* Daily Capping */}
+            <div className="p-4 rounded-2xl bg-slate-50/75 border border-slate-200/70">
+              <div className="flex items-center gap-2 text-slate-500 mb-1">
                 <ShieldCheck className="w-4 h-4 text-blue-600" />
                 <span className="text-xs font-bold uppercase tracking-wider">Daily Capping Limit</span>
               </div>
               <div className="font-mono font-black text-sm text-[#006d36] mt-1">
                 ₹{(user?.dailyCapping || (isUserActive ? 1000 : 0)).toLocaleString("en-IN")} / Day
               </div>
-              <span className="text-[10px] text-[#5f5e5e]">Based on Personal PV rank</span>
+              <span className="text-[10px] text-slate-400">Based on Personal PV rank</span>
             </div>
 
-            {/* Sponsor Information */}
-            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200/60">
-              <div className="flex items-center gap-2 text-[#5f5e5e] mb-1">
+            {/* Direct Sponsor */}
+            <div className="p-4 rounded-2xl bg-slate-50/75 border border-slate-200/70">
+              <div className="flex items-center gap-2 text-slate-500 mb-1">
                 <Users className="w-4 h-4 text-amber-600" />
                 <span className="text-xs font-bold uppercase tracking-wider">Direct Sponsor</span>
               </div>
-              <div className="font-mono font-bold text-sm text-[#1a1c1c] mt-1 truncate">
+              <div className="font-mono font-bold text-sm text-slate-900 mt-1 truncate">
                 {user?.sponsorId || "DIRECT"}
               </div>
-              <span className="text-[10px] text-[#5f5e5e] truncate block">
-                {user?.sponsorName || "Direct Company Upline"}
+              <span className="text-[10px] text-slate-400 truncate block">
+                {user?.sponsorName || "Direct Upline Master"}
               </span>
             </div>
           </div>
         </div>
 
         {/* ========================================================
-            6. RECENT TRANSACTIONS LEDGER
+            6. RECENT FINANCIAL ACTIVITY STATEMENT
            ======================================================== */}
-        <div className="rounded-3xl p-6 sm:p-8 bg-white border border-gray-100 shadow-sm">
+        <div className="rounded-3xl p-6 sm:p-8 bg-white border border-slate-200/80 shadow-2xs">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-lg font-bold text-[#1a1c1c]">Recent Financial Statement</h2>
-              <p className="text-xs text-[#5f5e5e]">Real-time payout settlements, binary matches, and repurchase deposits</p>
+              <h2 className="text-base sm:text-lg font-black text-slate-900">
+                Recent Financial Statement
+              </h2>
+              <p className="text-xs text-slate-500">
+                Real-time binary pair match bonuses, payout settlements, and wallet entries
+              </p>
             </div>
             <Link
               href="/dashboard/earnings/binary"
               className="text-xs font-bold text-[#006d36] hover:underline flex items-center gap-1"
             >
-              <span>View Full Statement</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>View Full Ledger</span>
+              <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
 
           {transactions.length === 0 ? (
-            <div className="py-12 text-center text-sm text-[#5f5e5e] flex flex-col items-center gap-3 bg-gray-50/60 rounded-2xl border border-dashed border-gray-200">
-              <Clock className="w-8 h-8 text-gray-400" />
-              <span>No transactions recorded yet. Complete 100 PV order or match pairs to earn commissions.</span>
+            <div className="py-12 text-center text-sm text-slate-500 flex flex-col items-center gap-3 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
+              <Clock className="w-8 h-8 text-slate-400" />
+              <span>No transactions recorded yet. Place orders or build your team to earn 1:1 pair bonuses.</span>
               <Link
                 href="/dashboard/store"
-                className="px-4 py-2 rounded-xl bg-[#006d36] text-white font-bold text-xs"
+                className="px-4 py-2 rounded-xl bg-[#006d36] text-white font-bold text-xs shadow-xs"
               >
                 Browse Store Products
               </Link>
@@ -642,19 +785,19 @@ export default function DashboardPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-gray-200/80 text-[#5f5e5e] uppercase tracking-wider font-extrabold">
+                  <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider font-extrabold text-[10px]">
                     <th className="py-3 px-4">Date</th>
                     <th className="py-3 px-4">Description</th>
                     <th className="py-3 px-4">Type</th>
                     <th className="py-3 px-4 text-right">Amount</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-slate-100">
                   {transactions.slice(0, 8).map((tx) => {
                     const isCredit = tx.type !== "WITHDRAWAL";
                     return (
-                      <tr key={tx.id} className="hover:bg-gray-50/70 transition-colors">
-                        <td className="py-3 px-4 font-mono text-[#5f5e5e]">
+                      <tr key={tx.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3.5 px-4 font-mono text-slate-500">
                           {tx.date
                             ? new Date(tx.date).toLocaleDateString("en-IN", {
                                 day: "2-digit",
@@ -663,23 +806,23 @@ export default function DashboardPage() {
                               })
                             : "Recent"}
                         </td>
-                        <td className="py-3 px-4 font-bold text-[#1a1c1c]">
+                        <td className="py-3.5 px-4 font-bold text-slate-900">
                           {tx.description}
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3.5 px-4">
                           <span
                             className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                               isCredit
                                 ? "bg-emerald-100 text-[#006d36]"
-                                : "bg-red-100 text-red-700"
+                                : "bg-rose-100 text-rose-700"
                             }`}
                           >
                             {tx.type.replace(/_/g, " ")}
                           </span>
                         </td>
                         <td
-                          className={`py-3 px-4 text-right font-mono font-bold text-sm ${
-                            isCredit ? "text-[#006d36]" : "text-red-600"
+                          className={`py-3.5 px-4 text-right font-mono font-bold text-sm ${
+                            isCredit ? "text-[#006d36]" : "text-rose-600"
                           }`}
                         >
                           {isCredit ? "+" : "-"}₹{tx.amount.toLocaleString("en-IN")}

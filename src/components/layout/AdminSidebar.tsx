@@ -16,6 +16,7 @@ import {
   FileText,
   Users,
   FileCheck,
+  Wallet,
   Zap,
   TrendingUp,
   BarChart3,
@@ -44,7 +45,9 @@ interface AdminNavGroup {
 }
 
 interface AdminSidebarProps {
-  user: User | null;
+  user?: User | null;
+  adminUser?: User | null;
+  onNavigate?: () => void;
   pendingOrdersCount?: number;
   confirmedOrdersCount?: number;
   packedOrdersCount?: number;
@@ -52,12 +55,13 @@ interface AdminSidebarProps {
   totalOrdersCount?: number;
   kycPendingCount?: number;
   totalMembersCount?: number;
-  onLogout: () => void;
-  onNavigate?: () => void;
+  onLogout?: () => void;
 }
 
 export default function AdminSidebar({
   user,
+  adminUser,
+  onNavigate,
   pendingOrdersCount = 0,
   confirmedOrdersCount = 0,
   packedOrdersCount = 0,
@@ -66,7 +70,6 @@ export default function AdminSidebar({
   kycPendingCount = 0,
   totalMembersCount = 0,
   onLogout,
-  onNavigate,
 }: AdminSidebarProps) {
   const pathname = usePathname();
 
@@ -104,7 +107,14 @@ export default function AdminSidebar({
       ],
     },
     {
-      category: "5. PV Manager",
+      category: "5. Payouts & Settlement",
+      icon: Wallet,
+      links: [
+        { name: "Withdraw Master", href: "/admin/withdraw", icon: Wallet },
+      ],
+    },
+    {
+      category: "6. PV Manager",
       icon: Zap,
       links: [
         { name: "Self PV Transfer", href: "/admin/pv/self", icon: Zap },
@@ -112,7 +122,7 @@ export default function AdminSidebar({
       ],
     },
     {
-      category: "6. Business Reports",
+      category: "7. Business Reports",
       icon: BarChart3,
       links: [
         { name: "Today's Report", href: "/admin/reports?range=today", icon: Calendar },
@@ -123,13 +133,7 @@ export default function AdminSidebar({
     },
   ];
 
-  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
-    "2. Product Manager": true,
-    "3. Order Manager": true,
-    "4. Member Manager": true,
-    "5. PV Manager": true,
-    "6. Business Reports": true,
-  });
+  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const active = adminNavGroups.find((g) =>

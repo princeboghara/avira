@@ -299,18 +299,22 @@ export default function AdminKycMasterPage() {
 
         {/* COMPREHENSIVE KYC REVIEW MODAL */}
         {reviewMember && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-3xs animate-fadeIn overflow-y-auto">
-            <div className="w-full max-w-4xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 border border-gray-100 my-8">
-              {/* Modal Header */}
-              <div className="flex items-start justify-between pb-4 border-b border-gray-100">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/75 backdrop-blur-xs animate-fadeIn overflow-hidden">
+            {/* Click outside backdrop to close */}
+            <div className="absolute inset-0" onClick={() => setReviewMember(null)} />
+
+            {/* Modal Dialog Card */}
+            <div className="relative w-full max-w-4xl max-h-[92vh] sm:max-h-[90vh] bg-white rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col border border-gray-100 overflow-hidden z-10">
+              {/* Sticky Modal Header */}
+              <div className="p-4 sm:p-5 bg-white border-b border-gray-100 flex items-center justify-between gap-3 shrink-0">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-0.5">
                     <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-[#006d36]">
                       {reviewMember.memberId}
                     </span>
                     <span className="text-xs font-bold text-[#1a1c1c]">{reviewMember.fullName}</span>
                   </div>
-                  <h2 className="text-xl font-black text-[#1a1c1c]">
+                  <h2 className="text-base sm:text-lg font-black text-[#1a1c1c]">
                     KYC Document Verification Review
                   </h2>
                 </div>
@@ -318,11 +322,16 @@ export default function AdminKycMasterPage() {
                 <button
                   type="button"
                   onClick={() => setReviewMember(null)}
-                  className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
+                  className="p-2 sm:px-3 sm:py-2 rounded-xl bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-600 border border-gray-200 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 font-bold text-xs shadow-2xs"
+                  title="Close KYC Review"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-5 h-5 text-current" />
+                  <span className="hidden sm:inline">Close</span>
                 </button>
               </div>
+
+              {/* Scrollable Modal Content */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar">
 
               {/* 3 DOCUMENT CARDS GRID */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -586,18 +595,27 @@ export default function AdminKycMasterPage() {
                   </div>
                 </div>
               </div>
+              </div>
+              {/* END OF SCROLLABLE BODY */}
 
-              {/* OVERALL ACTIONS FOOTER */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-100">
+              {/* OVERALL ACTIONS STICKY FOOTER */}
+              <div className="p-4 sm:px-6 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
                 <span className="text-xs text-[#5f5e5e]">
                   Updating all sections will automatically set overall KYC to <strong>VERIFIED</strong>.
                 </span>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setReviewMember(null)}
+                    className="px-4 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-200 text-gray-700 font-bold text-xs cursor-pointer transition-colors active:scale-95"
+                  >
+                    Close Window
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleUpdateStatus(reviewMember.memberId, "overall", "VERIFIED")}
-                    className="px-5 py-2.5 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs"
+                    className="px-5 py-2.5 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs active:scale-95 transition-all"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Approve & Verify All Documents</span>

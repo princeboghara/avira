@@ -67,39 +67,37 @@ export default function EditMemberDetailPage({ params }: EditMemberPageProps) {
   useEffect(() => {
     async function loadMember() {
       try {
-        const res = await fetch(`/api/admin/members`);
+        const res = await fetch(`/api/admin/members/${encodeURIComponent(targetId)}`, {
+          cache: "no-store",
+        });
         const data = await res.json();
-        if (data.success && data.members) {
-          const found = data.members.find(
-            (m: any) => m.id === targetId || m.memberId === targetId
-          );
-          if (found) {
-            setForm({
-              memberId: found.memberId || "",
-              sponsorId: found.sponsorId || "",
-              fullName: found.fullName || "",
-              mobile: found.mobile || "",
-              email: found.email || "",
-              password: "",
-              pincode: found.pincode || "",
-              city: found.city || "",
-              state: found.state || "",
-              address: found.address || "",
-              gstNumber: found.gstNumber || "",
-              aadhaarName: found.aadhaarName || "",
-              aadhaarNumber: found.aadhaarNumber || "",
-              panNumber: found.panNumber || "",
-              bankName: found.bankName || "",
-              bankAccountNumber: found.bankAccountNumber || "",
-              ifscCode: found.ifscCode || "",
-              upiId: found.upiId || "",
-              status: found.status || "ACTIVE",
-              nomineeName: found.nomineeName || "",
-              nomineeRelation: found.nomineeRelation || "",
-            });
-          } else {
-            setErrorMsg("Member profile not found in master records.");
-          }
+        if (data.success && data.member) {
+          const found = data.member;
+          setForm({
+            memberId: found.memberId || "",
+            sponsorId: found.sponsorId || "",
+            fullName: found.fullName || "",
+            mobile: found.mobile || "",
+            email: found.email || "",
+            password: "",
+            pincode: found.pincode || "",
+            city: found.city || "",
+            state: found.state || "",
+            address: found.address || "",
+            gstNumber: found.gstNumber || "",
+            aadhaarName: found.aadhaarName || "",
+            aadhaarNumber: found.aadhaarNumber || "",
+            panNumber: found.panNumber || "",
+            bankName: found.bankName || "",
+            bankAccountNumber: found.bankAccountNumber || "",
+            ifscCode: found.ifscCode || "",
+            upiId: found.upiId || "",
+            status: found.status || "ACTIVE",
+            nomineeName: found.nomineeName || "",
+            nomineeRelation: found.nomineeRelation || "",
+          });
+        } else {
+          setErrorMsg(data.message || "Member profile not found in master records.");
         }
       } catch (err) {
         console.error("Error loading member:", err);
@@ -148,8 +146,8 @@ export default function EditMemberDetailPage({ params }: EditMemberPageProps) {
     setSuccessMsg("");
 
     try {
-      const res = await fetch("/api/admin/members", {
-        method: "PATCH",
+      const res = await fetch(`/api/admin/members/${encodeURIComponent(targetId)}`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
@@ -159,7 +157,7 @@ export default function EditMemberDetailPage({ params }: EditMemberPageProps) {
         setSuccessMsg(data.message || "Associate member profile updated successfully!");
         setTimeout(() => {
           router.push("/admin/members");
-        }, 1500);
+        }, 1200);
       } else {
         setErrorMsg(data.message || "Failed to update member profile.");
       }
@@ -173,9 +171,11 @@ export default function EditMemberDetailPage({ params }: EditMemberPageProps) {
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-[#006d36]">
-          <Loader2 className="w-8 h-8 animate-spin mb-2" />
-          <span className="text-xs font-bold font-mono">Loading Associate Profile...</span>
+        <div className="space-y-6 max-w-5xl mx-auto pb-16 animate-pulse">
+          <div className="h-14 rounded-2xl bg-gray-200" />
+          <div className="h-44 rounded-3xl bg-gray-200" />
+          <div className="h-64 rounded-3xl bg-gray-200" />
+          <div className="h-64 rounded-3xl bg-gray-200" />
         </div>
       </AdminLayout>
     );

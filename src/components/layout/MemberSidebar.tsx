@@ -13,6 +13,7 @@ import {
   TrendingUp,
   User as UserIcon,
   FileCheck,
+  FileText,
   KeyRound,
   HelpCircle,
   LogOut,
@@ -63,6 +64,7 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
       icon: TrendingUp,
       links: [
         { name: "Binary Income", href: "/dashboard/earnings/binary", icon: TrendingUp },
+        { name: "Payout Statement", href: "/dashboard/statement", icon: FileText },
       ],
     },
     {
@@ -77,12 +79,7 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
     },
   ];
 
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    "2. Shopping Portal": true,
-    "3. Network": true,
-    "4. Income Report": true,
-    "5. Account & Support": true,
-  });
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const active = menuGroups.find((g) => g.links.some((l) => l.href === pathname));

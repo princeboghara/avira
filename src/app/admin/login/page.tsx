@@ -40,8 +40,7 @@ export default function AdminLoginPage() {
         return;
       }
 
-      router.push("/admin/dashboard");
-      router.refresh();
+      window.location.href = "/admin/dashboard";
     } catch {
       setErrorMessage("Network error connecting to operations server.");
     } finally {

@@ -86,7 +86,7 @@ export default function TaxInvoice({ order, onClose }: TaxInvoiceProps) {
 
   // 1. Buyer Details (Billing Associate who billed the order)
   const buyerName = order.buyerName || order.billedBy || "Avira Associate";
-  const buyerMemberId = order.billedBy || order.memberId || "AV00001";
+  const buyerMemberId = order.billedBy || order.memberId || "AV0001";
   const buyerPhone = order.buyerMobile || "9712326273";
   const buyerAddressText =
     order.buyerAddress ||
@@ -102,7 +102,7 @@ export default function TaxInvoice({ order, onClose }: TaxInvoiceProps) {
 
   // 2. Consignee Details (Recipient associate / customer who receives the shipment)
   const consigneeName = order.customerName || order.fullName || "Valued Associate";
-  const consigneeMemberId = order.memberId || order.billedBy || "AV00001";
+  const consigneeMemberId = order.memberId || order.billedBy || "AV0001";
   const consigneePhone = order.customerMobile || order.mobile || "—";
   const consigneeAddressText =
     order.shippingAddress ||

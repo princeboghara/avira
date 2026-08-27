@@ -103,7 +103,7 @@ export default function LoginForm() {
                 autoComplete="username"
                 value={loginIdentifier}
                 onChange={(e) => setLoginIdentifier(e.target.value.toUpperCase())}
-                placeholder="e.g. AV00001"
+                placeholder="e.g. AV0001"
                 required
                 className="w-full pl-12 pr-4 py-3 bg-[#f9f9f9] border-none rounded-xl neo-inset text-[#1a1c1c] focus:ring-2 focus:ring-[#006d36] transition-all text-sm font-mono font-bold tracking-wider placeholder-[#5f5e5e]/40 outline-none"
               />

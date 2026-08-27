@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { pool } from "@/lib/db";
 
-interface TreeNodeData {
+export interface TreeNodeData {
   id: string;
   memberId: string;
   fullName: string;
@@ -13,12 +13,18 @@ interface TreeNodeData {
   rightPv: number;
   carryLeftPv: number;
   carryRightPv: number;
+  leftTeamCount: number;
+  rightTeamCount: number;
   sponsorId: string;
+  sponsorName: string;
   activationDate: string;
-  position?: "LEFT" | "RIGHT" | "ROOT";
+  position?: "LEFT" | "RIGHT" | "TOP" | "ROOT";
   leftChild?: TreeNodeData | null;
   rightChild?: TreeNodeData | null;
-  hasMoreChildren?: boolean;
+  hasLeftChild: boolean;
+  hasRightChild: boolean;
+  hasMoreChildren: boolean;
+  parentMemberId?: string | null;
 }
 
 export async function GET(req: NextRequest) {
@@ -29,19 +35,25 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const targetRoot = (searchParams.get("root") || session.memberId).trim().toUpperCase();
-    const maxDepth = Math.min(Number(searchParams.get("depth") || 3), 4);
+    const nodeParam = searchParams.get("node");
+    const targetRoot = (nodeParam || searchParams.get("root") || session.memberId).trim().toUpperCase();
+    const requestedDepth = Math.min(Math.max(Number(searchParams.get("depth") || 3), 1), 5);
 
     const client = await pool.connect();
     try {
-      // Build tree recursively
+      // 1. Recursive helper to build tree nodes up to maxDepth
       async function buildNode(memberIdOrId: string, currentDepth: number): Promise<TreeNodeData | null> {
         const res = await client.query(
-          `SELECT id, member_id, full_name, avatar_url, status, personal_pv,
-                  left_pv, right_pv, carry_left_pv, carry_right_pv, sponsor_id,
-                  joined_date, created_at, binary_position, left_child_id, right_child_id
-           FROM users
-           WHERE UPPER(member_id) = UPPER($1) OR id = $1
+          `SELECT u.id, u.member_id, u.full_name, u.avatar_url, u.status, u.personal_pv,
+                  u.left_pv, u.right_pv, u.carry_left_pv, u.carry_right_pv,
+                  u.sponsor_id, u.sponsor_name,
+                  u.total_team_count,
+                  u.joined_date, u.created_at, u.binary_position, u.binary_parent_id,
+                  u.left_child_id, u.right_child_id,
+                  p.member_id as parent_member_id
+           FROM users u
+           LEFT JOIN users p ON u.binary_parent_id = p.id
+           WHERE UPPER(u.member_id) = UPPER($1) OR u.id = $1
            LIMIT 1`,
           [memberIdOrId]
         );
@@ -58,7 +70,7 @@ export async function GET(req: NextRequest) {
         let leftChild: TreeNodeData | null = null;
         let rightChild: TreeNodeData | null = null;
 
-        if (currentDepth < maxDepth) {
+        if (currentDepth < requestedDepth) {
           if (row.left_child_id) {
             leftChild = await buildNode(row.left_child_id, currentDepth + 1);
           }
@@ -78,12 +90,18 @@ export async function GET(req: NextRequest) {
           rightPv: parseFloat(row.right_pv || "0"),
           carryLeftPv: parseFloat(row.carry_left_pv || "0"),
           carryRightPv: parseFloat(row.carry_right_pv || "0"),
-          sponsorId: row.sponsor_id || "None",
+          leftTeamCount: row.left_pv ? Math.round(parseFloat(row.left_pv) / 100) : 0,
+          rightTeamCount: row.right_pv ? Math.round(parseFloat(row.right_pv) / 100) : 0,
+          sponsorId: row.sponsor_id || "AV0001",
+          sponsorName: row.sponsor_name || "Avira LifeCare",
           activationDate: row.joined_date || (row.created_at ? new Date(row.created_at).toISOString() : "Recent"),
-          position: row.binary_position || "ROOT",
+          position: (row.binary_position || "ROOT").toUpperCase() as any,
           leftChild,
           rightChild,
+          hasLeftChild: hasLeft,
+          hasRightChild: hasRight,
           hasMoreChildren: (hasLeft && !leftChild) || (hasRight && !rightChild),
+          parentMemberId: row.parent_member_id || null,
         };
       }
 
@@ -95,9 +113,36 @@ export async function GET(req: NextRequest) {
         );
       }
 
+      // 2. Fetch ancestor breadcrumb path from Root down to targetRoot
+      const breadcrumbsRes = await client.query(
+        `
+        WITH RECURSIVE ancestors AS (
+          SELECT id, member_id, full_name, binary_parent_id, binary_position, 1 as depth
+          FROM users
+          WHERE UPPER(member_id) = UPPER($1)
+          UNION ALL
+          SELECT u.id, u.member_id, u.full_name, u.binary_parent_id, u.binary_position, a.depth + 1
+          FROM users u
+          INNER JOIN ancestors a ON u.id = a.binary_parent_id
+        )
+        SELECT member_id, full_name, binary_position, depth 
+        FROM ancestors 
+        ORDER BY depth DESC;
+      `,
+        [targetRoot]
+      );
+
+      const breadcrumbs = breadcrumbsRes.rows.map((r) => ({
+        memberId: r.member_id,
+        fullName: r.full_name,
+        position: r.binary_position,
+      }));
+
       return NextResponse.json({
         success: true,
         tree,
+        breadcrumbs,
+        parentMemberId: tree.parentMemberId,
       });
     } finally {
       client.release();

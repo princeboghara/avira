@@ -21,6 +21,9 @@ export default function TreeViewPage() {
   const [searching, setSearching] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  const [breadcrumbs, setBreadcrumbs] = useState<Array<{ memberId: string; fullName: string; position?: string }>>([]);
+  const [parentMemberId, setParentMemberId] = useState<string | null>(null);
+
   const loadTree = async (memberId?: string) => {
     setSearching(true);
     setErrorMsg("");
@@ -33,6 +36,8 @@ export default function TreeViewPage() {
       if (data.success && data.tree) {
         setTree(data.tree);
         setCurrentRootId(data.tree.memberId);
+        setBreadcrumbs(data.breadcrumbs || []);
+        setParentMemberId(data.parentMemberId || null);
         if (!myMemberId && !memberId) {
           setMyMemberId(data.tree.memberId);
         }
@@ -146,6 +151,8 @@ export default function TreeViewPage() {
           <BinaryGenealogyTree
             rootNode={tree}
             onSelectRootId={(id) => loadTree(id)}
+            breadcrumbs={breadcrumbs}
+            parentMemberId={parentMemberId}
           />
         )}
       </div>

@@ -7,11 +7,12 @@ const orderItemSchema = z.object({
   productId: z.string().optional(),
   name: z.string(),
   hsnCode: z.string().optional(),
-  quantity: z.number().int().positive(),
-  mrp: z.number().nonnegative(),
+  quantity: z.number().int().positive().default(1),
+  mrp: z.number().nonnegative().default(0),
+  price: z.number().nonnegative().optional(),
   discountPrice: z.number().nonnegative().optional(),
   gst: z.number().nonnegative().optional(),
-  pv: z.number().nonnegative(),
+  pv: z.number().nonnegative().default(0),
   subtotalMrp: z.number().nonnegative().optional(),
   subtotalPv: z.number().nonnegative().optional(),
 });
@@ -38,12 +39,48 @@ const purchaseSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.json();
+
+    const normalizedItems = Array.isArray(rawBody.items)
+      ? rawBody.items.map((it: any) => ({
+          productId: it.productId || it.id || "",
+          name: it.name || "Avira Product",
+          hsnCode: it.hsnCode || "30049011",
+          quantity: Number(it.quantity || 1),
+          mrp: Number(
+            it.mrp !== undefined
+              ? it.mrp
+              : it.price !== undefined
+              ? it.price
+              : it.discountPrice || 0
+          ),
+          price: Number(
+            it.price !== undefined
+              ? it.price
+              : it.discountPrice !== undefined
+              ? it.discountPrice
+              : it.mrp || 0
+          ),
+          discountPrice: Number(
+            it.discountPrice !== undefined
+              ? it.discountPrice
+              : it.price !== undefined
+              ? it.price
+              : it.mrp || 0
+          ),
+          gst: Number(it.gst || 0),
+          pv: Number(it.pv || 0),
+          subtotalMrp: Number(it.subtotalMrp || 0),
+          subtotalPv: Number(it.subtotalPv || 0),
+        }))
+      : [];
+
     const body = {
       ...rawBody,
       memberId: (rawBody.memberId || rawBody.targetMemberId || "").trim().toUpperCase(),
       amount: Number(rawBody.amount !== undefined ? rawBody.amount : rawBody.totalAmount || 0),
       pv: Number(rawBody.pv !== undefined ? rawBody.pv : rawBody.totalPv || 0),
       paymentSlip: rawBody.paymentSlip || rawBody.paymentSlipUrl || "",
+      items: normalizedItems,
     };
 
     const result = purchaseSchema.safeParse(body);
