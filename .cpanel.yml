@@ -1,8 +1,0 @@
----
-deployment:
-  tasks:
-    - export DEPLOYPATH=$(pwd)
-    - npm install --production=false
-    - npm run build
-    - mkdir -p tmp
-    - touch tmp/restart.txt

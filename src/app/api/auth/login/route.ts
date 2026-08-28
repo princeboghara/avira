@@ -99,10 +99,13 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Login error:", error);
     return NextResponse.json(
-      { success: false, message: "Internal server error during login." },
+      {
+        success: false,
+        message: error?.message || "Internal server error during login.",
+      },
       { status: 500 }
     );
   }
