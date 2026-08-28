@@ -54,7 +54,13 @@ export async function GET(req: NextRequest) {
       query += ` WHERE o.status = $1`;
     }
 
-    query += ` ORDER BY o.created_at DESC LIMIT 500;`;
+    const limitParam = searchParams.get("limit");
+    if (limitParam && !isNaN(Number(limitParam))) {
+      queryParams.push(Number(limitParam));
+      query += ` ORDER BY o.created_at DESC LIMIT $${queryParams.length};`;
+    } else {
+      query += ` ORDER BY o.created_at DESC;`;
+    }
 
     const ordersRes = await client.query(query, queryParams);
 

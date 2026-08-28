@@ -35,7 +35,13 @@ export async function GET(req: NextRequest) {
       params.push(`%${search.trim()}%`);
     }
 
-    query += ` ORDER BY created_at DESC LIMIT 500;`;
+    const limitParam = searchParams.get("limit");
+    if (limitParam && !isNaN(Number(limitParam))) {
+      params.push(Number(limitParam));
+      query += ` ORDER BY created_at DESC LIMIT $${params.length};`;
+    } else {
+      query += ` ORDER BY created_at DESC;`;
+    }
 
     const res = await client.query(query, params);
 

@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { User } from "@/types";
+import IndiaStateMap from "@/components/dashboard/IndiaStateMap";
 
 interface AdminDashboardStats {
   pendingOrders: number;
@@ -502,6 +503,9 @@ export default function AdminOverviewDashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Pan-India Associates Geographic Distribution Map */}
+        <IndiaStateMap />
       </div>
     </AdminLayout>
   );

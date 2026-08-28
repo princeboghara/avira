@@ -91,7 +91,7 @@ export async function syncAndGetWeeklyPayouts(week: WeekPeriod) {
         u.kyc_status,
         COALESCE(SUM(t.amount), 0) as gross_amount
       FROM transactions t
-      JOIN users u ON u.id = t.user_id
+      JOIN v_users_full u ON u.id = t.user_id
       WHERE (t.type = 'BINARY_MATCHING' OR t.description ILIKE '%binary%')
         AND t.created_at >= $1::timestamp
         AND t.created_at <= ($2 || ' 23:59:59')::timestamp

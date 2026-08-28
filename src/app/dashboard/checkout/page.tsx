@@ -17,9 +17,12 @@ import {
   ShieldCheck,
   Wallet,
   Coins,
+  CreditCard,
+  Zap,
 } from "lucide-react";
 import MemberLayout from "@/components/member/MemberLayout";
 import { Product, User } from "@/types";
+import { openRazorpayCheckout } from "@/lib/razorpayClient";
 
 interface CartItem {
   product: Product;
@@ -40,6 +43,9 @@ export default function MemberCheckoutPage() {
   const [totalDiscount, setTotalDiscount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
   const [totalPv, setTotalPv] = useState(0);
+
+  // Payment Method Selection: 'razorpay' | 'manual'
+  const [paymentMode, setPaymentMode] = useState<"razorpay" | "manual">("razorpay");
 
   // Fund Wallet State
   const [useFundWallet, setUseFundWallet] = useState(false);
@@ -98,11 +104,7 @@ export default function MemberCheckoutPage() {
           setTargetMemberId(parsed.memberId || "");
           setTargetMemberName(parsed.fullName || "");
           setTargetMemberMobile(parsed.mobile || "");
-          setShippingAddress(parsed.address || "");
-          setTotalMrpAmount(parsed.totalMrpAmount || parsed.totalAmount || 0);
-          setTotalDiscount(parsed.totalDiscount || 0);
-          setTotalAmount(parsed.totalAmount || 0);
-          setTotalPv(parsed.totalPv || 0);
+          setShippingAddress(parsed.shippingAddress || "");
         } else {
           router.replace("/dashboard/cart");
           return;
@@ -111,15 +113,39 @@ export default function MemberCheckoutPage() {
         router.replace("/dashboard/cart");
         return;
       }
+
+      // Calculate totals
+      let mrpSum = 0;
+      let finalSum = 0;
+      let pvSum = 0;
+
+      loadedCart.forEach((item) => {
+        const qty = item.quantity || 1;
+        const mrp = item.product.mrp || item.product.discountPrice || 0;
+        const price = item.product.discountPrice || item.product.mrp || 0;
+        const pv = item.product.pv || 0;
+
+        mrpSum += mrp * qty;
+        finalSum += price * qty;
+        pvSum += pv * qty;
+      });
+
+      setTotalMrpAmount(mrpSum);
+      setTotalDiscount(mrpSum - finalSum);
+      setTotalAmount(finalSum);
+      setTotalPv(pvSum);
     }
+
     loadData();
   }, [router]);
 
   // Fund Wallet Calculations
   const fundWalletBalance = Number(user?.fundWallet || 0);
-  const walletDeduction = useFundWallet ? Math.min(totalAmount, fundWalletBalance) : 0;
+  const walletDeduction = useFundWallet
+    ? Math.min(fundWalletBalance, totalAmount)
+    : 0;
   const remainingPayable = Math.max(0, totalAmount - walletDeduction);
-  const isFullWalletPayment = useFundWallet && walletDeduction >= totalAmount;
+  const isFullWalletPayment = useFundWallet && remainingPayable === 0;
 
   const handleCopy = (text: string, type: "upi" | "bank") => {
     navigator.clipboard.writeText(text);
@@ -137,13 +163,13 @@ export default function MemberCheckoutPage() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Slip image must be under 5MB.");
+      alert("File size exceeds 5MB limit.");
       return;
     }
 
     setUploadingSlip(true);
     const reader = new FileReader();
-    reader.onloadend = async () => {
+    reader.onload = async () => {
       const base64 = reader.result as string;
       try {
         const res = await fetch("/api/upload", {
@@ -166,28 +192,9 @@ export default function MemberCheckoutPage() {
     reader.readAsDataURL(file);
   };
 
-  const handlePlaceOrderClick = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!isFullWalletPayment) {
-      if (!transactionId.trim()) {
-        alert("Please enter the Bank UTR or UPI Transaction Reference ID.");
-        return;
-      }
-
-      if (!paymentSlipUrl) {
-        alert("Please upload your payment screenshot / receipt for the remaining amount.");
-        return;
-      }
-    }
-
-    setShowConfirmModal(true);
-  };
-
-  const handleConfirmOrder = async () => {
-    setShowConfirmModal(false);
+  // Submit order helper function
+  const executeOrderSubmission = async (txnId: string, slip: string) => {
     setSubmittingOrder(true);
-
     try {
       const res = await fetch("/api/products/purchase", {
         method: "POST",
@@ -207,9 +214,9 @@ export default function MemberCheckoutPage() {
           amount: totalAmount,
           pv: totalPv,
           fundWalletUsed: walletDeduction,
-          transactionId: isFullWalletPayment ? "100% FUND WALLET" : transactionId.trim(),
-          paymentSlip: isFullWalletPayment ? "" : paymentSlipUrl,
-          paymentSlipUrl: isFullWalletPayment ? "" : paymentSlipUrl,
+          transactionId: txnId,
+          paymentSlip: slip,
+          paymentSlipUrl: slip,
           shippingAddress: shippingAddress.trim(),
           customerName: targetMemberName,
           customerMobile: targetMemberMobile,
@@ -237,6 +244,75 @@ export default function MemberCheckoutPage() {
     }
   };
 
+  // Trigger Razorpay Standard Modal
+  const handleRazorpayOnlinePay = async () => {
+    if (remainingPayable <= 0) {
+      await executeOrderSubmission("100% FUND WALLET", "");
+      return;
+    }
+
+    try {
+      setSubmittingOrder(true);
+      await openRazorpayCheckout({
+        amount: remainingPayable,
+        name: "AVIRA LIFE CARE",
+        description: `Order Checkout (${totalPv} PV)`,
+        prefill: {
+          name: targetMemberName || user?.fullName || "",
+          contact: targetMemberMobile || user?.mobile || "",
+          email: user?.email || "",
+        },
+        onSuccess: async (paymentData) => {
+          // Razorpay payment verified via HMAC-SHA256
+          await executeOrderSubmission(
+            paymentData.razorpay_payment_id,
+            `https://dashboard.razorpay.com/app/payments/${paymentData.razorpay_payment_id}`
+          );
+        },
+        onFailure: (err) => {
+          setSubmittingOrder(false);
+          alert("Razorpay Payment Failed: " + (err?.message || "Payment cancelled"));
+        },
+        onDismiss: () => {
+          setSubmittingOrder(false);
+        },
+      });
+    } catch (err: any) {
+      setSubmittingOrder(false);
+      alert("Error initiating Razorpay: " + err.message);
+    }
+  };
+
+  const handlePlaceOrderClick = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!isFullWalletPayment && paymentMode === "manual") {
+      if (!transactionId.trim()) {
+        alert("Please enter the Bank UTR or UPI Transaction Reference ID.");
+        return;
+      }
+
+      if (!paymentSlipUrl) {
+        alert("Please upload your payment screenshot / receipt for the remaining amount.");
+        return;
+      }
+    }
+
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmOrder = async () => {
+    setShowConfirmModal(false);
+
+    if (isFullWalletPayment) {
+      await executeOrderSubmission("100% FUND WALLET", "");
+    } else if (paymentMode === "razorpay") {
+      await handleRazorpayOnlinePay();
+    } else {
+      await executeOrderSubmission(transactionId.trim(), paymentSlipUrl);
+    }
+  };
+
   return (
     <MemberLayout user={user}>
       <div className="space-y-6 animate-fadeIn max-w-4xl mx-auto pb-12">
@@ -249,76 +325,186 @@ export default function MemberCheckoutPage() {
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Shopping Cart</span>
           </Link>
-          <span className="text-xs text-[#5f5e5e] font-mono">
-            Checkout & Payment Verification
-          </span>
+          <div className="flex items-center gap-2 text-xs font-mono text-[#5f5e5e]">
+            <span>Cart</span>
+            <span>&rarr;</span>
+            <span className="text-[#006d36] font-bold">Secure Checkout</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Bank QR & Company Account */}
+          {/* Left Column: Payment Credentials / Modes */}
           <div className="md:col-span-6 space-y-6">
-            {/* Company Bank Account Card */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-4">
-              <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#006d36] flex items-center justify-center">
-                  <Building className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-sm text-[#1a1c1c]">Avira Life Care Account</h3>
-                  <span className="text-[10px] text-[#5f5e5e]">Official Verified Company Bank</span>
+            {/* Payment Method Selector */}
+            {!isFullWalletPayment && (
+              <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm space-y-3">
+                <h3 className="font-bold text-xs uppercase text-[#1a1c1c] tracking-wider flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-[#006d36]" />
+                  <span>Choose Payment Method</span>
+                </h3>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("razorpay")}
+                    className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                      paymentMode === "razorpay"
+                        ? "border-[#006d36] bg-emerald-50/60 shadow-xs"
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <Zap className={`w-5 h-5 ${paymentMode === "razorpay" ? "text-[#006d36]" : "text-gray-400"}`} />
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-[#006d36]">Instant</span>
+                    </div>
+                    <div>
+                      <strong className="block text-xs text-[#1a1c1c]">Razorpay Online</strong>
+                      <span className="text-[10px] text-gray-500">UPI, QR, Cards, NetBanking</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("manual")}
+                    className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                      paymentMode === "manual"
+                        ? "border-[#006d36] bg-emerald-50/60 shadow-xs"
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <Building className={`w-5 h-5 ${paymentMode === "manual" ? "text-[#006d36]" : "text-gray-400"}`} />
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Manual</span>
+                    </div>
+                    <div>
+                      <strong className="block text-xs text-[#1a1c1c]">Bank Transfer</strong>
+                      <span className="text-[10px] text-gray-500">NEFT / IMPS & UTR Slip</span>
+                    </div>
+                  </button>
                 </div>
               </div>
+            )}
 
-              {/* Dynamic QR Code */}
-              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 text-center space-y-2">
-                <div className="w-36 h-36 bg-white rounded-xl mx-auto flex items-center justify-center p-2 border border-gray-200 shadow-inner">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                      `upi://pay?pa=${COMPANY_BANK.upiId}&pn=${COMPANY_BANK.accountName}&am=${remainingPayable}&cu=INR`
-                    )}`}
-                    alt="Company UPI QR Code"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <div className="space-y-0.5">
-                  <span className="text-xs font-black font-mono text-[#006d36] block">
-                    {remainingPayable > 0 ? `Pay ₹${remainingPayable.toLocaleString("en-IN")}` : "100% Covered by Wallet"}
-                  </span>
-                  <span className="text-[11px] font-mono text-gray-600 block">
-                    {COMPANY_BANK.upiId}
+            {/* If Manual Bank Transfer is selected, show Bank Details */}
+            {paymentMode === "manual" && !isFullWalletPayment && (
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-6 animate-fadeIn">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                  <h3 className="font-bold text-xs uppercase text-[#1a1c1c] tracking-wider flex items-center gap-2">
+                    <Building className="w-4 h-4 text-[#006d36]" />
+                    <span>Company Bank Account</span>
+                  </h3>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full">
+                    Verified Account
                   </span>
                 </div>
+
+                {/* Company UPI QR */}
+                <div className="p-4 rounded-2xl bg-gray-50 flex flex-col items-center justify-center space-y-3 border border-gray-200/80">
+                  <div className="w-40 h-40 bg-white p-2 rounded-xl border border-gray-200 shadow-2xs flex items-center justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+                        `upi://pay?pa=${COMPANY_BANK.upiId}&pn=${COMPANY_BANK.accountName}&am=${remainingPayable}&cu=INR`
+                      )}`}
+                      alt="Company UPI QR"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1 text-xs font-mono font-bold text-[#1a1c1c]">
+                    <span>{COMPANY_BANK.upiId}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(COMPANY_BANK.upiId, "upi")}
+                      className="p-1 rounded-md hover:bg-gray-200 text-gray-500 cursor-pointer"
+                      title="Copy UPI ID"
+                    >
+                      {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <span className="text-[10px] text-gray-400">Scan via GPay / PhonePe / Paytm</span>
+                </div>
+
+                {/* Bank Account Details */}
+                <div className="space-y-2 text-xs bg-emerald-50/50 p-4 rounded-2xl border border-emerald-200/60">
+                  <div className="flex justify-between">
+                    <span className="text-[#5f5e5e]">Bank Name:</span>
+                    <strong className="text-[#1a1c1c]">{COMPANY_BANK.bankName}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#5f5e5e]">Account Name:</span>
+                    <strong className="text-[#1a1c1c]">{COMPANY_BANK.accountName}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#5f5e5e]">Account Number:</span>
+                    <strong className="font-mono text-[#006d36]">{COMPANY_BANK.accountNumber}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#5f5e5e]">IFSC Code:</span>
+                    <strong className="font-mono text-[#1a1c1c]">{COMPANY_BANK.ifsc}</strong>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* If Razorpay is selected, show Instant Gateway Card with direct PAY button */}
+            {paymentMode === "razorpay" && !isFullWalletPayment && (
+              <div className="bg-gradient-to-br from-emerald-900 via-teal-900 to-emerald-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl space-y-5 animate-fadeIn border border-emerald-500/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30">
+                      <CreditCard className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-base">Razorpay Online Payment</h3>
+                      <p className="text-xs text-emerald-200/80">Standard 256-bit Secure Gateway</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-400 text-gray-950 uppercase tracking-wider">
+                    Fast & Live
+                  </span>
+                </div>
+
+                <div className="p-4 bg-white/10 rounded-2xl border border-white/10 space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between text-emerald-100 pb-2 border-b border-white/10">
+                    <span className="text-emerald-200">Payable Amount:</span>
+                    <strong className="font-mono text-base text-white">₹{remainingPayable.toLocaleString("en-IN")}</strong>
+                  </div>
+                  <div className="flex items-center gap-2 text-emerald-300 font-bold">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                    <span>Instant PV Credit & Order Confirmation</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-emerald-300 font-bold">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                    <span>UPI (GPay, PhonePe, Paytm), Cards, NetBanking, QR</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-emerald-300 font-bold">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                    <span>0 Waiting • 0 Manual Slip Uploads</span>
+                  </div>
+                </div>
+
+                {/* Direct Pay Button Inside this Card */}
                 <button
                   type="button"
-                  onClick={() => handleCopy(COMPANY_BANK.upiId, "upi")}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-[#006d36] hover:bg-emerald-50 cursor-pointer"
+                  onClick={handleRazorpayOnlinePay}
+                  disabled={submittingOrder}
+                  className="w-full py-4 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-xl hover:shadow-emerald-400/20 active:scale-98 transition-all cursor-pointer disabled:opacity-50"
                 >
-                  {copiedUpi ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedUpi ? "Copied UPI" : "Copy UPI ID"}</span>
+                  {submittingOrder ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Opening Razorpay Window...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-5 h-5" />
+                      <span>Pay ₹{remainingPayable.toLocaleString("en-IN")} via Razorpay</span>
+                      <Zap className="w-4 h-4 text-emerald-900 fill-emerald-900 ml-1" />
+                    </>
+                  )}
                 </button>
               </div>
-
-              {/* Bank Account Details */}
-              <div className="space-y-2 text-xs bg-emerald-50/50 p-4 rounded-2xl border border-emerald-200/60">
-                <div className="flex justify-between">
-                  <span className="text-[#5f5e5e]">Bank Name:</span>
-                  <strong className="text-[#1a1c1c]">{COMPANY_BANK.bankName}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#5f5e5e]">Account Name:</span>
-                  <strong className="text-[#1a1c1c]">{COMPANY_BANK.accountName}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#5f5e5e]">Account Number:</span>
-                  <strong className="font-mono text-[#006d36]">{COMPANY_BANK.accountNumber}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#5f5e5e]">IFSC Code:</span>
-                  <strong className="font-mono text-[#1a1c1c]">{COMPANY_BANK.ifsc}</strong>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Right Column: Order Summary, Fund Wallet & Transaction Slip Form */}
@@ -337,7 +523,7 @@ export default function MemberCheckoutPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#5f5e5e]">Point Volume:</span>
-                  <strong className="font-mono text-purple-700">{totalPv} PV</strong>
+                  <strong className="font-mono text-purple-700 font-bold">{totalPv} PV</strong>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#5f5e5e]">Shipping Address:</span>
@@ -397,11 +583,17 @@ export default function MemberCheckoutPage() {
               )}
             </div>
 
-            {/* Payment Proof Form */}
-            <form onSubmit={handlePlaceOrderClick} className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-4">
+            {/* Payment Execution Box */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-4">
               <h3 className="font-bold text-xs uppercase text-[#1a1c1c] tracking-wider pb-2 border-b border-gray-100 flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#006d36]" />
-                <span>{isFullWalletPayment ? "Wallet Payment Confirmation" : "Submit Payment Reference"}</span>
+                <span>
+                  {isFullWalletPayment
+                    ? "Wallet Payment Confirmation"
+                    : paymentMode === "razorpay"
+                    ? "Online Razorpay Payment"
+                    : "Submit Bank Transfer Reference"}
+                </span>
               </h3>
 
               {isFullWalletPayment ? (
@@ -409,11 +601,51 @@ export default function MemberCheckoutPage() {
                   <CheckCircle2 className="w-8 h-8 text-[#006d36] mx-auto" />
                   <h4 className="font-black text-xs text-[#006d36]">100% Covered by Fund Wallet!</h4>
                   <p className="text-[11px] text-emerald-800">
-                    No manual bank transfer or slip upload required. ₹{totalAmount.toLocaleString("en-IN")} will be deducted from your Fund Wallet instantly.
+                    No payment gateway or bank slip required. ₹{totalAmount.toLocaleString("en-IN")} will be deducted from your Fund Wallet instantly.
                   </p>
+                  <button
+                    type="button"
+                    disabled={submittingOrder}
+                    onClick={() => setShowConfirmModal(true)}
+                    className="w-full mt-2 py-3.5 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md cursor-pointer"
+                  >
+                    {submittingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                    <span>Confirm & Place Order with Wallet</span>
+                  </button>
+                </div>
+              ) : paymentMode === "razorpay" ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200/80 text-xs space-y-1.5">
+                    <div className="flex justify-between text-gray-700">
+                      <span>Payable Amount:</span>
+                      <strong className="font-mono text-sm text-[#006d36]">₹{remainingPayable.toLocaleString("en-IN")}</strong>
+                    </div>
+                    <p className="text-[11px] text-gray-500">
+                      Click the button below to open the Razorpay payment window.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleRazorpayOnlinePay}
+                    disabled={submittingOrder}
+                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-lg active:scale-98 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {submittingOrder ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Processing Razorpay Checkout...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="w-5 h-5 text-emerald-300" />
+                        <span>Pay ₹{remainingPayable.toLocaleString("en-IN")} via Razorpay</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               ) : (
-                <>
+                <form onSubmit={handlePlaceOrderClick} className="space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-[#1a1c1c] mb-1">
                       Bank UTR / UPI Transaction Reference ID (for ₹{remainingPayable.toLocaleString("en-IN")}):
@@ -459,22 +691,18 @@ export default function MemberCheckoutPage() {
                       </label>
                     )}
                   </div>
-                </>
-              )}
 
-              <button
-                type="submit"
-                disabled={submittingOrder || (!isFullWalletPayment && (!transactionId.trim() || !paymentSlipUrl))}
-                className="w-full mt-2 py-3.5 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-              >
-                {submittingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                <span>
-                  {isFullWalletPayment
-                    ? `Confirm & Pay ₹${totalAmount.toLocaleString("en-IN")} with Fund Wallet`
-                    : `Confirm & Place Order (₹${remainingPayable.toLocaleString("en-IN")})`}
-                </span>
-              </button>
-            </form>
+                  <button
+                    type="submit"
+                    disabled={submittingOrder || !transactionId.trim() || !paymentSlipUrl}
+                    className="w-full mt-2 py-3.5 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {submittingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                    <span>Confirm & Place Order (₹{remainingPayable.toLocaleString("en-IN")})</span>
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
 
@@ -504,16 +732,30 @@ export default function MemberCheckoutPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmModal(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-[#5f5e5e] hover:bg-gray-50 cursor-pointer"
+                  className="flex-1 py-3 rounded-xl border border-gray-200 text-xs font-bold text-[#5f5e5e] hover:bg-gray-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmOrder}
-                  className="flex-1 py-2.5 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white text-xs font-bold shadow-xs cursor-pointer"
+                  disabled={submittingOrder}
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-800 hover:brightness-110 text-white text-xs font-black shadow-md cursor-pointer flex items-center justify-center gap-2"
                 >
-                  Yes, Submit Order
+                  {submittingOrder ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : paymentMode === "razorpay" && !isFullWalletPayment ? (
+                    <CreditCard className="w-4 h-4 text-emerald-300" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4" />
+                  )}
+                  <span>
+                    {isFullWalletPayment
+                      ? "Pay with Fund Wallet"
+                      : paymentMode === "razorpay"
+                      ? `Pay ₹${remainingPayable.toLocaleString("en-IN")} via Razorpay`
+                      : "Confirm & Submit Order"}
+                  </span>
                 </button>
               </div>
             </div>

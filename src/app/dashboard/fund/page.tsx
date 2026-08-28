@@ -25,9 +25,12 @@ import {
   ExternalLink,
   X,
   FileText,
+  CreditCard,
+  Zap,
 } from "lucide-react";
 import MemberLayout from "@/components/member/MemberLayout";
 import { User, FundRequest } from "@/types";
+import { openRazorpayCheckout } from "@/lib/razorpayClient";
 
 export default function MemberFundManagerPage() {
   const searchParams = useSearchParams();
@@ -204,6 +207,68 @@ export default function MemberFundManagerPage() {
       setToastMessage({ type: "error", text: "Network error submitting request. Please try again." });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleInstantRazorpayDeposit = async () => {
+    const numAmount = Number(amount);
+    if (isNaN(numAmount) || numAmount < 1) {
+      setToastMessage({ type: "error", text: "Please enter a valid deposit amount (min ₹1)." });
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await openRazorpayCheckout({
+        amount: numAmount,
+        name: "AVIRA LIFE CARE",
+        description: "Fund Wallet Instant Deposit",
+        prefill: {
+          name: user?.fullName || "",
+          contact: user?.mobile || "",
+          email: user?.email || "",
+        },
+        onSuccess: async (data) => {
+          try {
+            const res = await fetch("/api/member/fund/instant-deposit", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                amount: numAmount,
+                razorpay_order_id: data.razorpay_order_id,
+                razorpay_payment_id: data.razorpay_payment_id,
+                razorpay_signature: data.razorpay_signature,
+              }),
+            });
+            const resData = await res.json();
+            if (resData.success) {
+              setToastMessage({
+                type: "success",
+                text: `₹${numAmount.toLocaleString("en-IN")} deposited successfully into your Fund Wallet via Razorpay!`,
+              });
+              setAmount("");
+              await loadData();
+              setActiveTab("history");
+            } else {
+              setToastMessage({ type: "error", text: resData.message || "Failed to credit wallet." });
+            }
+          } catch {
+            setToastMessage({ type: "error", text: "Error verifying deposit on server." });
+          } finally {
+            setSubmitting(false);
+          }
+        },
+        onFailure: (err) => {
+          setSubmitting(false);
+          setToastMessage({ type: "error", text: "Razorpay payment cancelled or failed: " + (err?.message || "") });
+        },
+        onDismiss: () => {
+          setSubmitting(false);
+        },
+      });
+    } catch (err: any) {
+      setSubmitting(false);
+      setToastMessage({ type: "error", text: "Failed to open Razorpay gateway: " + err.message });
     }
   };
 
@@ -450,10 +515,58 @@ export default function MemberFundManagerPage() {
 
             {/* Right: Submit Fund Deposit Form */}
             <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/90 shadow-2xs space-y-6">
+              {/* INSTANT ONLINE DEPOSIT WITH RAZORPAY */}
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-900 via-teal-900 to-emerald-950 text-white space-y-3.5 shadow-md">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-emerald-400" />
+                    <strong className="text-sm font-black">Instant Online Deposit</strong>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-500/30">
+                    No Waiting
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-100/80">
+                  Deposit funds directly using UPI, QR, Debit/Credit Card or NetBanking. Funds are credited instantly without manual approval.
+                </p>
+
+                <div className="pt-1 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">₹</span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="Enter Amount (e.g. 500)"
+                      className="w-full pl-8 pr-3 py-2.5 rounded-xl bg-white text-gray-900 font-mono font-bold text-xs outline-hidden focus:ring-2 focus:ring-emerald-400"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleInstantRazorpayDeposit}
+                    disabled={submitting || !amount || Number(amount) < 1}
+                    className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-black text-xs uppercase tracking-wide flex items-center justify-center gap-2 transition-all active:scale-98 shadow-md cursor-pointer disabled:opacity-50"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    <span>Pay with Razorpay</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* DIVIDER */}
+              <div className="relative flex py-1 items-center">
+                <div className="flex-grow border-t border-gray-200"></div>
+                <span className="flex-shrink mx-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-white px-2">
+                  Or Deposit via Manual Bank Transfer
+                </span>
+                <div className="flex-grow border-t border-gray-200"></div>
+              </div>
+
               <div>
-                <h3 className="font-black text-base text-[#1a1c1c]">Submit Deposit Information</h3>
+                <h3 className="font-black text-base text-[#1a1c1c]">Submit Offline Transfer Slip</h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  After transferring money to the company account, submit your payment UTR and screenshot slip below.
+                  If you made a direct IMPS/NEFT transfer to the company account, submit your UTR and screenshot slip below.
                 </p>
               </div>
 

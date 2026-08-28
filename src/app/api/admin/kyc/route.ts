@@ -41,7 +41,13 @@ export async function GET(req: NextRequest) {
       params.push(`%${search.trim()}%`);
     }
 
-    query += ` ORDER BY k.kyc_submitted_at DESC NULLS LAST, u.created_at DESC LIMIT 200;`;
+    const limitParam = searchParams.get("limit");
+    if (limitParam && !isNaN(Number(limitParam))) {
+      params.push(Number(limitParam));
+      query += ` ORDER BY k.kyc_submitted_at DESC NULLS LAST, u.created_at DESC LIMIT $${params.length};`;
+    } else {
+      query += ` ORDER BY k.kyc_submitted_at DESC NULLS LAST, u.created_at DESC;`;
+    }
 
     const res = await client.query(query, params);
 

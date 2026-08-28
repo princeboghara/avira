@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { User, Transaction } from "@/types";
 import MemberLayout from "@/components/member/MemberLayout";
+import IndiaStateMap from "@/components/dashboard/IndiaStateMap";
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -865,6 +866,9 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* 6. PAN-INDIA ASSOCIATE GEOGRAPHIC DISTRIBUTION MAP */}
+        <IndiaStateMap />
       </div>
     </MemberLayout>
   );
