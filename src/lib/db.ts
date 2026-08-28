@@ -1,17 +1,11 @@
 import { Pool } from "pg";
 import { User, Transaction, Order } from "@/types";
 
-const isProduction = process.env.NODE_ENV === "production";
+const DEFAULT_DATABASE_URL =
+  "postgresql://postgres.jtwpsnezyppfpqcpbnkj:C%2BZS7%4023hUidBfH@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres";
 
 function getConnectionString(): string {
-  const url = process.env.DATABASE_URL;
-  if (!url) {
-    if (isProduction) {
-      throw new Error("CRITICAL CONFIGURATION ERROR: DATABASE_URL environment variable is missing.");
-    }
-    return "postgresql://postgres:postgres@localhost:5432/avira_dev";
-  }
-  return url;
+  return process.env.DATABASE_URL || DEFAULT_DATABASE_URL;
 }
 
 declare global {

@@ -1,13 +1,15 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
 
-export function getRazorpayInstance(): Razorpay {
-  const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+const DEFAULT_RAZORPAY_KEY_ID = "rzp_test_TVDtnzMXyvMMER";
+const DEFAULT_RAZORPAY_KEY_SECRET = "JMHR6MaZiY1rEWxKnCQu4Q1q";
 
-  if (!keyId || !keySecret) {
-    throw new Error("Razorpay credentials missing. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env");
-  }
+export function getRazorpayInstance(): Razorpay {
+  const keyId =
+    process.env.RAZORPAY_KEY_ID ||
+    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+    DEFAULT_RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET || DEFAULT_RAZORPAY_KEY_SECRET;
 
   return new Razorpay({
     key_id: keyId,
@@ -24,10 +26,7 @@ export function verifyRazorpaySignature(
   paymentId: string,
   signature: string
 ): boolean {
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
-  if (!keySecret) {
-    throw new Error("RAZORPAY_KEY_SECRET is not configured.");
-  }
+  const keySecret = process.env.RAZORPAY_KEY_SECRET || DEFAULT_RAZORPAY_KEY_SECRET;
 
   if (!orderId || !paymentId || !signature) {
     return false;

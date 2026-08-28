@@ -1,27 +1,18 @@
 import jwt from "jsonwebtoken";
 
-const isProduction = process.env.NODE_ENV === "production";
-
 function getAccessSecret(): string {
-  const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET;
-  if (!secret) {
-    if (isProduction) {
-      throw new Error("CRITICAL SECURITY ERROR: JWT_ACCESS_SECRET is not configured in production environment.");
-    }
-    return "dev_avira_mlm_access_secret_key_2026_x789";
-  }
-  return secret;
+  return (
+    process.env.JWT_ACCESS_SECRET ||
+    process.env.JWT_SECRET ||
+    "avira_mlm_emerald_super_secret_access_jwt_key_2026"
+  );
 }
 
 function getRefreshSecret(): string {
-  const secret = process.env.JWT_REFRESH_SECRET;
-  if (!secret) {
-    if (isProduction) {
-      throw new Error("CRITICAL SECURITY ERROR: JWT_REFRESH_SECRET is not configured in production environment.");
-    }
-    return "dev_avira_mlm_refresh_secret_key_2026_r456";
-  }
-  return secret;
+  return (
+    process.env.JWT_REFRESH_SECRET ||
+    "avira_mlm_emerald_super_secret_refresh_jwt_key_2026"
+  );
 }
 
 export interface TokenPayload {
