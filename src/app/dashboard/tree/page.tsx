@@ -9,8 +9,8 @@ import {
   RotateCcw,
   Sparkles,
 } from "lucide-react";
-import BinaryGenealogyTree, { TreeNode } from "@/components/dashboard/BinaryGenealogyTree";
-import MemberLayout from "@/components/dashboard/MemberLayout";
+import BinaryGenealogyTree, { TreeNode } from "@/components/member/BinaryGenealogyTree";
+import MemberLayout from "@/components/member/MemberLayout";
 
 export default function TreeViewPage() {
   const [tree, setTree] = useState<TreeNode | null>(null);

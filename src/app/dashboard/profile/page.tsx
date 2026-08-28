@@ -15,7 +15,7 @@ import {
   Loader2,
   Save,
 } from "lucide-react";
-import MemberLayout from "@/components/dashboard/MemberLayout";
+import MemberLayout from "@/components/member/MemberLayout";
 
 interface ProfileData {
   id: string;

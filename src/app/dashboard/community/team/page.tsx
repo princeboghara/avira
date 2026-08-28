@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Users, Loader2, Layers } from "lucide-react";
-import MemberLayout from "@/components/dashboard/MemberLayout";
+import MemberLayout from "@/components/member/MemberLayout";
 import DataTable, { Column } from "@/components/ui/DataTable";
 
 interface TeamMember {

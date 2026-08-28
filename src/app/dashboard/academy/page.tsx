@@ -16,7 +16,7 @@ import {
   ShieldCheck,
   Video,
 } from "lucide-react";
-import MemberLayout from "@/components/dashboard/MemberLayout";
+import MemberLayout from "@/components/member/MemberLayout";
 
 interface CourseModule {
   id: string;

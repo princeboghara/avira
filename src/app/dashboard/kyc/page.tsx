@@ -12,8 +12,14 @@ import {
   AlertCircle,
   Check,
   Sparkles,
+  Eye,
+  X,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  ExternalLink,
 } from "lucide-react";
-import MemberLayout from "@/components/dashboard/MemberLayout";
+import MemberLayout from "@/components/member/MemberLayout";
 
 interface KycData {
   memberId: string;
@@ -45,6 +51,11 @@ export default function MemberKycVerificationPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Lightbox Document Preview Modal
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [rotation, setRotation] = useState<number>(0);
 
   // Form State
   const [aadhaarName, setAadhaarName] = useState("");
@@ -338,12 +349,24 @@ export default function MemberKycVerificationPage() {
                   <div>
                     <label className="block text-[10px] font-bold text-[#5f5e5e] mb-1">Front Image:</label>
                     {aadhaarFrontUrl ? (
-                      <div className="relative rounded-xl overflow-hidden border border-gray-200 h-20 bg-gray-50">
+                      <div className="relative rounded-xl overflow-hidden border border-gray-200 h-24 bg-white p-1 group">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={aadhaarFrontUrl} alt="Aadhaar Front" className="w-full h-full object-cover" />
+                        <img src={aadhaarFrontUrl} alt="Aadhaar Front" className="w-full h-full object-contain" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLightboxImage({ url: aadhaarFrontUrl, title: "Aadhaar Front Image" });
+                            setZoomLevel(1);
+                            setRotation(0);
+                          }}
+                          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1 rounded-lg cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View Full</span>
+                        </button>
                       </div>
                     ) : (
-                      <label className="h-20 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#006d36] flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
+                      <label className="h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#006d36] flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
                         <Upload className="w-4 h-4 text-gray-400" />
                         <span className="text-[9px] text-[#5f5e5e] mt-1 font-bold">Upload Front</span>
                         <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, setAadhaarFrontUrl)} className="hidden" />
@@ -354,12 +377,24 @@ export default function MemberKycVerificationPage() {
                   <div>
                     <label className="block text-[10px] font-bold text-[#5f5e5e] mb-1">Back Image:</label>
                     {aadhaarBackUrl ? (
-                      <div className="relative rounded-xl overflow-hidden border border-gray-200 h-20 bg-gray-50">
+                      <div className="relative rounded-xl overflow-hidden border border-gray-200 h-24 bg-white p-1 group">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={aadhaarBackUrl} alt="Aadhaar Back" className="w-full h-full object-cover" />
+                        <img src={aadhaarBackUrl} alt="Aadhaar Back" className="w-full h-full object-contain" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLightboxImage({ url: aadhaarBackUrl, title: "Aadhaar Back Image" });
+                            setZoomLevel(1);
+                            setRotation(0);
+                          }}
+                          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1 rounded-lg cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View Full</span>
+                        </button>
                       </div>
                     ) : (
-                      <label className="h-20 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#006d36] flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
+                      <label className="h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#006d36] flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
                         <Upload className="w-4 h-4 text-gray-400" />
                         <span className="text-[9px] text-[#5f5e5e] mt-1 font-bold">Upload Back</span>
                         <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, setAadhaarBackUrl)} className="hidden" />
@@ -430,9 +465,21 @@ export default function MemberKycVerificationPage() {
                 <div>
                   <label className="block text-[10px] font-bold text-[#5f5e5e] mb-1">PAN Photo Proof:</label>
                   {panCardUrl ? (
-                    <div className="relative rounded-xl overflow-hidden border border-gray-200 h-28 bg-gray-50">
+                    <div className="relative rounded-xl overflow-hidden border border-gray-200 h-28 bg-white p-1 group">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={panCardUrl} alt="PAN Card" className="w-full h-full object-cover" />
+                      <img src={panCardUrl} alt="PAN Card" className="w-full h-full object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLightboxImage({ url: panCardUrl, title: "PAN Card Document" });
+                          setZoomLevel(1);
+                          setRotation(0);
+                        }}
+                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1 rounded-lg cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>View Full</span>
+                      </button>
                     </div>
                   ) : (
                     <label className="h-28 rounded-xl border-2 border-dashed border-gray-300 hover:border-purple-600 flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
@@ -526,12 +573,24 @@ export default function MemberKycVerificationPage() {
                 <div>
                   <label className="block text-[10px] font-bold text-[#5f5e5e] mb-1">Cheque / Passbook Image:</label>
                   {bankProofUrl ? (
-                    <div className="relative rounded-xl overflow-hidden border border-gray-200 h-20 bg-gray-50">
+                    <div className="relative rounded-xl overflow-hidden border border-gray-200 h-24 bg-white p-1 group">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={bankProofUrl} alt="Bank Proof" className="w-full h-full object-cover" />
+                      <img src={bankProofUrl} alt="Bank Proof" className="w-full h-full object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLightboxImage({ url: bankProofUrl, title: "Bank Cheque / Passbook Document" });
+                          setZoomLevel(1);
+                          setRotation(0);
+                        }}
+                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1 rounded-lg cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>View Full</span>
+                      </button>
                     </div>
                   ) : (
-                    <label className="h-20 rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-600 flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
+                    <label className="h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-600 flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
                       <Upload className="w-4 h-4 text-gray-400" />
                       <span className="text-[9px] text-[#5f5e5e] mt-0.5 font-bold">Upload Passbook / Cheque</span>
                       <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, setBankProofUrl)} className="hidden" />
@@ -548,11 +607,105 @@ export default function MemberKycVerificationPage() {
                 disabled={submitting || !bankAccountNumber || !ifscCode || !bankProofUrl}
                 className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer disabled:opacity-50 transition-all"
               >
-                {submitting ? "Saving..." : "Submit Bank"}
+                {submitting ? "Saving..." : "Submit Bank Details"}
               </button>
             )}
           </div>
         </div>
+
+        {/* ========================================================
+            FULLSCREEN MEMBER KYC DOCUMENT LIGHTBOX VIEWER
+           ======================================================== */}
+        {lightboxImage && (
+          <div className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+            <div className="relative w-full max-w-4xl max-h-[92vh] bg-white rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col border border-emerald-300 overflow-hidden space-y-4 animate-scaleUp">
+              {/* Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+                <div className="overflow-hidden pr-2">
+                  <h3 className="font-black text-sm sm:text-base text-[#1a1c1c] truncate">{lightboxImage.title}</h3>
+                  <span className="text-[11px] text-[#006d36] font-bold font-mono">100% Uncropped Document Preview</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* Zoom Controls */}
+                  <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setZoomLevel((z) => Math.max(0.5, z - 0.25))}
+                      className="p-1.5 rounded-lg hover:bg-white text-gray-700 hover:text-black cursor-pointer"
+                      title="Zoom Out"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </button>
+                    <span className="text-[10px] font-mono font-bold px-1.5">{Math.round(zoomLevel * 100)}%</span>
+                    <button
+                      type="button"
+                      onClick={() => setZoomLevel((z) => Math.min(3, z + 0.25))}
+                      className="p-1.5 rounded-lg hover:bg-white text-gray-700 hover:text-black cursor-pointer"
+                      title="Zoom In"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setRotation((r) => (r + 90) % 360)}
+                    className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer"
+                    title="Rotate Image"
+                  >
+                    <RotateCw className="w-4 h-4" />
+                  </button>
+
+                  <a
+                    href={lightboxImage.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006d36] cursor-pointer"
+                    title="Open Full Image in New Tab"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => setLightboxImage(null)}
+                    className="p-2 rounded-xl bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 cursor-pointer"
+                    title="Close Viewer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Image Viewport */}
+              <div className="flex-1 flex items-center justify-center overflow-auto max-h-[68vh] bg-gray-900/5 rounded-2xl p-4 border border-gray-100 select-none">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={lightboxImage.url}
+                  alt={lightboxImage.title}
+                  style={{
+                    transform: `scale(${zoomLevel}) rotate(${rotation}deg)`,
+                    transition: "transform 0.2s ease-out",
+                  }}
+                  className="max-h-[60vh] max-w-full object-contain rounded-xl shadow-lg"
+                />
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between text-xs text-[#5f5e5e] pt-1">
+                <span>Inspect your uploaded document clearly to ensure all numbers and names are readable.</span>
+                <button
+                  type="button"
+                  onClick={() => setLightboxImage(null)}
+                  className="px-5 py-2 rounded-xl bg-[#006d36] text-white font-bold text-xs hover:bg-[#005025] cursor-pointer"
+                >
+                  Close Document
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </MemberLayout>
   );

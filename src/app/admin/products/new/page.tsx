@@ -328,7 +328,7 @@ function AddProductForm() {
                 />
               </label>
               <span className="text-[11px] text-[#5f5e5e]">
-                Recommended: Square JPG, PNG, WebP (Max 3MB)
+                Recommended: 3:4 Aspect Ratio (Portrait) JPG, PNG, WebP (Max 5MB)
               </span>
             </div>
 
@@ -339,7 +339,7 @@ function AddProductForm() {
                 <img
                   src={imageUrl}
                   alt="Product Preview"
-                  className="w-16 h-16 rounded-lg object-contain border border-[#e2e2e2] bg-[#f9f9f9] p-1"
+                  className="w-16 h-20 rounded-lg object-contain border border-[#e2e2e2] bg-[#f9f9f9] p-1"
                 />
                 <div className="text-xs">
                   <span className="font-bold text-[#006d36] block">✓ Image Attached Ready</span>

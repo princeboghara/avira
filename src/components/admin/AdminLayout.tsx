@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { User } from "@/types";
-import AdminHeader from "@/components/layout/AdminHeader";
-import AdminSidebar from "@/components/layout/AdminSidebar";
+import AdminHeader from "./AdminHeader";
+import AdminSidebar from "./AdminSidebar";
 
 interface AdminLayoutProps {
   children: React.ReactNode;

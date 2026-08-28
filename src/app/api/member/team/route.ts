@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
             personal_pv, joined_date, created_at, status,
             1 AS level,
             binary_position AS side
-          FROM users
+          FROM v_users_full
           WHERE binary_parent_id = $1
 
           UNION ALL
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
             u.personal_pv, u.joined_date, u.created_at, u.status,
             d.level + 1,
             d.side
-          FROM users u
+          FROM v_users_full u
           INNER JOIN downline d ON u.binary_parent_id = d.id
         )
         SELECT * FROM downline ORDER BY level ASC, created_at ASC;

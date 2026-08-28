@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { findUserByIdentifier } from "@/lib/db";
+import { findUserByIdentifier, pool } from "@/lib/db";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+
+export const dynamic = "force-dynamic";
 
 const orderItemSchema = z.object({
   productId: z.string().optional(),
@@ -24,8 +26,8 @@ const purchaseSchema = z.object({
   customerName: z.string().optional(),
   customerMobile: z.string().optional(),
   shippingAddress: z.string().optional(),
-  transactionId: z.string().min(1, "Transaction ID / UTR is required"),
-  paymentSlip: z.string().min(1, "Payment slip image is required"),
+  transactionId: z.string().optional().default(""),
+  paymentSlip: z.string().optional().default(""),
   paymentSlipUrl: z.string().optional(),
   packageName: z.string().optional(),
   amount: z.number().positive("Amount must be positive"),
@@ -34,6 +36,7 @@ const purchaseSchema = z.object({
   totalPv: z.number().optional(),
   purchaseType: z.enum(["ACTIVATION", "REPURCHASE"]).default("ACTIVATION"),
   items: z.array(orderItemSchema).min(1, "Order cart cannot be empty"),
+  fundWalletUsed: z.number().nonnegative().default(0),
 });
 
 export async function POST(req: NextRequest) {
@@ -80,6 +83,7 @@ export async function POST(req: NextRequest) {
       amount: Number(rawBody.amount !== undefined ? rawBody.amount : rawBody.totalAmount || 0),
       pv: Number(rawBody.pv !== undefined ? rawBody.pv : rawBody.totalPv || 0),
       paymentSlip: rawBody.paymentSlip || rawBody.paymentSlipUrl || "",
+      fundWalletUsed: Number(rawBody.fundWalletUsed || 0),
       items: normalizedItems,
     };
 
@@ -102,6 +106,7 @@ export async function POST(req: NextRequest) {
       pv,
       purchaseType,
       items,
+      fundWalletUsed,
     } = result.data;
 
     // Determine who billed the order
@@ -133,6 +138,45 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Verify buyer / billedBy user exists
+    const buyerUser = await findUserByIdentifier(finalBilledBy);
+    if (!buyerUser) {
+      return NextResponse.json(
+        { success: false, message: `Billed-By Associate "${finalBilledBy}" not found in system.` },
+        { status: 404 }
+      );
+    }
+
+    // Check Fund Wallet deduction validity
+    if (fundWalletUsed > 0) {
+      if ((buyerUser.fundWallet || 0) < fundWalletUsed) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Insufficient Fund Wallet balance. Available: ₹${buyerUser.fundWallet || 0}, requested: ₹${fundWalletUsed}`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Calculate remaining amount payable via slip
+    const remainingToPay = Math.max(0, amount - fundWalletUsed);
+    if (remainingToPay > 0) {
+      if (!transactionId || !transactionId.trim()) {
+        return NextResponse.json(
+          { success: false, message: `Transaction ID is required for remaining payment of ₹${remainingToPay}.` },
+          { status: 400 }
+        );
+      }
+      if (!paymentSlip || !paymentSlip.trim()) {
+        return NextResponse.json(
+          { success: false, message: `Payment slip upload is required for remaining payment of ₹${remainingToPay}.` },
+          { status: 400 }
+        );
+      }
+    }
+
     // Determine descriptive package/order name
     let finalOrderName = result.data.packageName;
     if (!finalOrderName || finalOrderName.trim() === "") {
@@ -155,10 +199,40 @@ export async function POST(req: NextRequest) {
     const uniqueSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
     const orderId = `AV-ORD-${Date.now().toString().slice(-6)}-${uniqueSuffix}`;
     const finalSlipUrl = paymentSlip ? await uploadToCloudinary(paymentSlip, "slips") : "";
+    const finalTxnId = transactionId.trim() || (fundWalletUsed >= amount ? "100% FUND WALLET" : "FUND_WALLET");
 
-    const { pool } = await import("@/lib/db");
     const client = await pool.connect();
     try {
+      await client.query("BEGIN");
+
+      // 1. If Fund Wallet was used, deduct immediately from buyer's user_wallets
+      if (fundWalletUsed > 0) {
+        await client.query(
+          `UPDATE user_wallets 
+           SET fund_wallet = fund_wallet - $1,
+               updated_at = NOW()
+           WHERE user_id = $2`,
+          [fundWalletUsed, buyerUser.id]
+        );
+
+        // Record Fund Wallet deduction transaction
+        const txnId = `txn_fund_use_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+        await client.query(
+          `INSERT INTO transactions (
+            id, user_id, type, amount, tds_amount, admin_charge, rp_wallet_amount, net_amount, description, status, date, created_at
+          ) VALUES (
+            $1, $2, 'FUND_DEBIT', $3, 0, 0, 0, $3, $4, 'COMPLETED', NOW(), NOW()
+          )`,
+          [
+            txnId,
+            buyerUser.id,
+            fundWalletUsed,
+            `Fund Wallet Used for Order #${orderId}`,
+          ]
+        );
+      }
+
+      // 2. Insert Order (amount stored is the standard total amount so invoice is unchanged)
       await client.query(
         `
         INSERT INTO orders (
@@ -191,17 +265,22 @@ export async function POST(req: NextRequest) {
           finalCustomerName,
           finalCustomerMobile,
           finalShippingAddress,
-          transactionId.trim(),
+          finalTxnId,
           finalSlipUrl,
         ]
       );
+
+      await client.query("COMMIT");
+    } catch (dbErr) {
+      await client.query("ROLLBACK");
+      throw dbErr;
     } finally {
       client.release();
     }
 
     return NextResponse.json({
       success: true,
-      message: `Order #${orderId} submitted successfully! Awaiting Admin Approval to verify payment slip and credit +${pv} PV.`,
+      message: `Order #${orderId} submitted successfully! Awaiting Admin Approval to verify payment and credit +${pv} PV.`,
       status: "PENDING",
       data: {
         orderId,
@@ -210,10 +289,12 @@ export async function POST(req: NextRequest) {
         customerName: finalCustomerName,
         customerMobile: finalCustomerMobile,
         shippingAddress: finalShippingAddress,
-        transactionId: transactionId.trim(),
+        transactionId: finalTxnId,
         personalPv: user.personalPv,
         pendingPv: pv,
         amount,
+        fundWalletUsed,
+        remainingPaid: remainingToPay,
         purchaseType,
         orderName: finalOrderName,
         itemsCount: items ? items.reduce((acc, cur) => acc + cur.quantity, 0) : 1,

@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import MemberLayout from "@/components/dashboard/MemberLayout";
-import BinaryGenealogyTree from "@/components/dashboard/BinaryGenealogyTree";
+import MemberLayout from "@/components/member/MemberLayout";
+import BinaryGenealogyTree from "@/components/member/BinaryGenealogyTree";
 import { User, BinaryTreeNode } from "@/types";
 import {
   Loader2,

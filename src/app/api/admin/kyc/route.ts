@@ -13,34 +13,35 @@ export async function GET(req: NextRequest) {
 
     let query = `
       SELECT 
-        id, member_id, full_name, mobile, email,
-        aadhaar_name, aadhaar_number, aadhaar_front_url, aadhaar_back_url, aadhaar_status, aadhaar_rejection_reason,
-        pan_number, pan_card_url, pan_status, pan_rejection_reason,
-        bank_name, bank_account_number, ifsc_code, bank_proof_url, bank_status, bank_rejection_reason,
-        kyc_document_url, kyc_status,
-        kyc_submitted_at, kyc_verified_at, kyc_rejection_reason
-      FROM users
-      WHERE (kyc_status IS NOT NULL AND kyc_status != 'NOT_SUBMITTED')
-         OR (aadhaar_number IS NOT NULL AND aadhaar_number != '')
-         OR (pan_number IS NOT NULL AND pan_number != '')
-         OR (bank_account_number IS NOT NULL AND bank_account_number != '')
+        u.id, u.member_id, u.full_name, u.mobile, u.email, u.created_at,
+        k.aadhaar_name, k.aadhaar_number, k.aadhaar_front_url, k.aadhaar_back_url, k.aadhaar_status, k.aadhaar_rejection_reason,
+        k.pan_number, k.pan_card_url, k.pan_status, k.pan_rejection_reason,
+        k.bank_name, k.bank_account_number, k.ifsc_code, k.bank_proof_url, k.bank_status, k.bank_rejection_reason,
+        k.kyc_document_url, k.kyc_status,
+        k.kyc_submitted_at, k.kyc_verified_at, k.kyc_rejection_reason
+      FROM users u
+      LEFT JOIN user_kyc k ON u.id = k.user_id
+      WHERE (k.kyc_status IS NOT NULL AND k.kyc_status != 'NOT_SUBMITTED')
+         OR (k.aadhaar_number IS NOT NULL AND k.aadhaar_number != '')
+         OR (k.pan_number IS NOT NULL AND k.pan_number != '')
+         OR (k.bank_account_number IS NOT NULL AND k.bank_account_number != '')
     `;
 
     const params: unknown[] = [];
     if (search.trim()) {
       query += `
         AND (
-          member_id ILIKE $1 
-          OR full_name ILIKE $1 
-          OR pan_number ILIKE $1 
-          OR aadhaar_number ILIKE $1
-          OR bank_account_number ILIKE $1
+          u.member_id ILIKE $1 
+          OR u.full_name ILIKE $1 
+          OR k.pan_number ILIKE $1 
+          OR k.aadhaar_number ILIKE $1
+          OR k.bank_account_number ILIKE $1
         )
       `;
       params.push(`%${search.trim()}%`);
     }
 
-    query += ` ORDER BY kyc_submitted_at DESC NULLS LAST, created_at DESC LIMIT 200;`;
+    query += ` ORDER BY k.kyc_submitted_at DESC NULLS LAST, u.created_at DESC LIMIT 200;`;
 
     const res = await client.query(query, params);
 
@@ -117,35 +118,49 @@ async function handleKycUpdate(req: NextRequest) {
       );
     }
 
+    // Get user id
+    const uRes = await client.query(
+      "SELECT id FROM users WHERE UPPER(member_id) = UPPER($1) OR id = $1 LIMIT 1",
+      [memberId]
+    );
+
+    if (uRes.rows.length === 0) {
+      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+    }
+    const userId = uRes.rows[0].id;
+
     if (section === "aadhaar") {
       await client.query(
-        `UPDATE users SET
+        `UPDATE user_kyc SET
           aadhaar_status = $1,
-          aadhaar_rejection_reason = $2
-         WHERE UPPER(member_id) = UPPER($3) OR id = $3`,
-        [status, status === "REJECTED" ? (reason || "Aadhaar verification rejected") : null, memberId]
+          aadhaar_rejection_reason = $2,
+          updated_at = NOW()
+         WHERE user_id = $3`,
+        [status, status === "REJECTED" ? (reason || "Aadhaar verification rejected") : null, userId]
       );
     } else if (section === "pan") {
       await client.query(
-        `UPDATE users SET
+        `UPDATE user_kyc SET
           pan_status = $1,
-          pan_rejection_reason = $2
-         WHERE UPPER(member_id) = UPPER($3) OR id = $3`,
-        [status, status === "REJECTED" ? (reason || "PAN verification rejected") : null, memberId]
+          pan_rejection_reason = $2,
+          updated_at = NOW()
+         WHERE user_id = $3`,
+        [status, status === "REJECTED" ? (reason || "PAN verification rejected") : null, userId]
       );
     } else if (section === "bank") {
       await client.query(
-        `UPDATE users SET
+        `UPDATE user_kyc SET
           bank_status = $1,
-          bank_rejection_reason = $2
-         WHERE UPPER(member_id) = UPPER($3) OR id = $3`,
-        [status, status === "REJECTED" ? (reason || "Bank details verification rejected") : null, memberId]
+          bank_rejection_reason = $2,
+          updated_at = NOW()
+         WHERE user_id = $3`,
+        [status, status === "REJECTED" ? (reason || "Bank details verification rejected") : null, userId]
       );
     } else {
       // Overall update
       if (status === "VERIFIED") {
         await client.query(
-          `UPDATE users SET
+          `UPDATE user_kyc SET
             kyc_status = 'VERIFIED',
             aadhaar_status = 'VERIFIED',
             pan_status = 'VERIFIED',
@@ -154,17 +169,19 @@ async function handleKycUpdate(req: NextRequest) {
             pan_rejection_reason = NULL,
             bank_rejection_reason = NULL,
             kyc_verified_at = NOW(),
-            kyc_rejection_reason = NULL
-           WHERE UPPER(member_id) = UPPER($1) OR id = $1`,
-          [memberId]
+            kyc_rejection_reason = NULL,
+            updated_at = NOW()
+           WHERE user_id = $1`,
+          [userId]
         );
       } else if (status === "REJECTED") {
         await client.query(
-          `UPDATE users SET
+          `UPDATE user_kyc SET
             kyc_status = 'REJECTED',
-            kyc_rejection_reason = $1
-           WHERE UPPER(member_id) = UPPER($2) OR id = $2`,
-          [reason || "KYC documents rejected. Please re-upload.", memberId]
+            kyc_rejection_reason = $1,
+            updated_at = NOW()
+           WHERE user_id = $2`,
+          [reason || "KYC documents rejected. Please re-upload.", userId]
         );
       }
     }
@@ -173,10 +190,9 @@ async function handleKycUpdate(req: NextRequest) {
     if (section) {
       const userRes = await client.query(
         `SELECT aadhaar_status, pan_status, bank_status, aadhaar_rejection_reason, pan_rejection_reason, bank_rejection_reason
-         FROM users
-         WHERE UPPER(member_id) = UPPER($1) OR id = $1
-         LIMIT 1`,
-        [memberId]
+         FROM user_kyc
+         WHERE user_id = $1 LIMIT 1`,
+        [userId]
       );
 
       if (userRes.rows.length > 0) {
@@ -187,12 +203,13 @@ async function handleKycUpdate(req: NextRequest) {
 
         if (aStatus === "VERIFIED" && pStatus === "VERIFIED" && bStatus === "VERIFIED") {
           await client.query(
-            `UPDATE users SET
+            `UPDATE user_kyc SET
               kyc_status = 'VERIFIED',
               kyc_verified_at = NOW(),
-              kyc_rejection_reason = NULL
-             WHERE UPPER(member_id) = UPPER($1) OR id = $1`,
-            [memberId]
+              kyc_rejection_reason = NULL,
+              updated_at = NOW()
+             WHERE user_id = $1`,
+            [userId]
           );
         } else if (aStatus === "REJECTED" || pStatus === "REJECTED" || bStatus === "REJECTED") {
           const rejectedParts: string[] = [];
@@ -201,20 +218,22 @@ async function handleKycUpdate(req: NextRequest) {
           if (bStatus === "REJECTED") rejectedParts.push(`Bank: ${u.bank_rejection_reason || "Rejected"}`);
 
           await client.query(
-            `UPDATE users SET
+            `UPDATE user_kyc SET
               kyc_status = 'REJECTED',
-              kyc_rejection_reason = $1
-             WHERE UPPER(member_id) = UPPER($2) OR id = $2`,
-            [rejectedParts.join(" | ") || "One or more KYC documents were rejected. Please re-upload.", memberId]
+              kyc_rejection_reason = $1,
+              updated_at = NOW()
+             WHERE user_id = $2`,
+            [rejectedParts.join(" | ") || "One or more KYC documents were rejected. Please re-upload.", userId]
           );
         } else {
           await client.query(
-            `UPDATE users SET
+            `UPDATE user_kyc SET
               kyc_status = 'PENDING',
               kyc_verified_at = NULL,
-              kyc_rejection_reason = NULL
-             WHERE UPPER(member_id) = UPPER($1) OR id = $1`,
-            [memberId]
+              kyc_rejection_reason = NULL,
+              updated_at = NOW()
+             WHERE user_id = $1`,
+            [userId]
           );
         }
       }

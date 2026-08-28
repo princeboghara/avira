@@ -16,11 +16,11 @@ export async function GET(req: NextRequest) {
       SELECT 
         id, member_id, full_name, mobile, email, sponsor_id, sponsor_name,
         pincode, city, state, address, gst_number, role, status, wallet_balance, total_earnings,
-        personal_pv, left_pv, right_pv, joined_date,
+        personal_pv, left_pv, right_pv, carry_left_pv, carry_right_pv, joined_date,
         pan_number, aadhaar_name, aadhaar_number, bank_name, bank_account_number, ifsc_code, upi_id,
         nominee_name, nominee_relation, kyc_document_url, kyc_status, kyc_submitted_at, kyc_verified_at,
         created_at
-      FROM users
+      FROM v_users_full
     `;
 
     const params: any[] = [];
@@ -59,6 +59,8 @@ export async function GET(req: NextRequest) {
       personalPv: parseFloat(row.personal_pv || "0"),
       leftPv: parseFloat(row.left_pv || "0"),
       rightPv: parseFloat(row.right_pv || "0"),
+      carryLeftPv: parseFloat(row.carry_left_pv || "0"),
+      carryRightPv: parseFloat(row.carry_right_pv || "0"),
       joinedDate: row.joined_date || row.created_at,
       panNumber: row.pan_number || "",
       aadhaarName: row.aadhaar_name || "",

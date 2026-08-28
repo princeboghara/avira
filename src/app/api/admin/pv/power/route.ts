@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   try {
     const res = await client.query(
       `SELECT id, member_id, full_name, mobile, status, personal_pv, left_pv, right_pv, carry_left_pv, carry_right_pv
-       FROM users 
+       FROM v_users_full 
        WHERE UPPER(member_id) = $1 LIMIT 1`,
       [memberId]
     );
@@ -82,7 +82,10 @@ export async function POST(req: NextRequest) {
 
     // 1. Get Target Member
     const userRes = await client.query(
-      "SELECT id, member_id, full_name, left_pv, right_pv, binary_parent_id, binary_position FROM users WHERE UPPER(member_id) = $1 FOR UPDATE",
+      `SELECT u.id, u.member_id, u.full_name, b.left_pv, b.right_pv, b.binary_parent_id, b.binary_position 
+       FROM users u
+       JOIN user_binary_pv b ON u.id = b.user_id
+       WHERE UPPER(u.member_id) = $1 FOR UPDATE`,
       [memberIdClean]
     );
 
@@ -94,16 +97,16 @@ export async function POST(req: NextRequest) {
     const user = userRes.rows[0];
     const userId = user.id;
 
-    // 2. Add Power PV to chosen leg of the target member
+    // 2. Add Power PV to chosen leg in user_binary_pv
     const legColumn = targetLeg === "LEFT" ? "left_pv" : "right_pv";
     const carryColumn = targetLeg === "LEFT" ? "carry_left_pv" : "carry_right_pv";
 
     await client.query(
-      `UPDATE users 
+      `UPDATE user_binary_pv 
        SET ${legColumn} = ${legColumn} + $1,
            ${carryColumn} = ${carryColumn} + $1,
            updated_at = NOW() 
-       WHERE id = $2`,
+       WHERE user_id = $2`,
       [pv, userId]
     );
 
@@ -125,7 +128,7 @@ export async function POST(req: NextRequest) {
 
     while (parentId) {
       const parentRes = await client.query(
-        "SELECT id, left_child_id, right_child_id, binary_parent_id FROM users WHERE id = $1 FOR UPDATE",
+        "SELECT user_id, left_child_id, right_child_id, binary_parent_id FROM user_binary_pv WHERE user_id = $1 FOR UPDATE",
         [parentId]
       );
 
@@ -135,20 +138,20 @@ export async function POST(req: NextRequest) {
       if (parent.left_child_id === currentChildId) {
         // Belongs to Parent's LEFT Leg
         await client.query(
-          "UPDATE users SET left_pv = left_pv + $1, carry_left_pv = carry_left_pv + $1, updated_at = NOW() WHERE id = $2",
-          [pv, parent.id]
+          "UPDATE user_binary_pv SET left_pv = left_pv + $1, carry_left_pv = carry_left_pv + $1, updated_at = NOW() WHERE user_id = $2",
+          [pv, parent.user_id]
         );
         propagatedAncestorsCount++;
       } else if (parent.right_child_id === currentChildId) {
         // Belongs to Parent's RIGHT Leg
         await client.query(
-          "UPDATE users SET right_pv = right_pv + $1, carry_right_pv = carry_right_pv + $1, updated_at = NOW() WHERE id = $2",
-          [pv, parent.id]
+          "UPDATE user_binary_pv SET right_pv = right_pv + $1, carry_right_pv = carry_right_pv + $1, updated_at = NOW() WHERE user_id = $2",
+          [pv, parent.user_id]
         );
         propagatedAncestorsCount++;
       }
 
-      currentChildId = parent.id;
+      currentChildId = parent.user_id;
       parentId = parent.binary_parent_id;
     }
 

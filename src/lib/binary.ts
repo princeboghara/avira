@@ -28,9 +28,12 @@ export async function findAvailableBinarySpot(
 ): Promise<{ parentId: string; position: "LEFT" | "RIGHT" }> {
   const client = await pool.connect();
   try {
-    // 1. Get sponsor record
+    // 1. Get sponsor record from users + user_binary_pv
     const sponsorRes = await client.query(
-      "SELECT id, member_id, left_child_id, right_child_id FROM users WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
+      `SELECT u.id, u.member_id, b.left_child_id, b.right_child_id 
+       FROM users u
+       LEFT JOIN user_binary_pv b ON u.id = b.user_id
+       WHERE UPPER(u.member_id) = UPPER($1) LIMIT 1`,
       [sponsorMemberId]
     );
 
@@ -52,7 +55,7 @@ export async function findAvailableBinarySpot(
 
     while (currentId) {
       const nodeRes = await client.query(
-        "SELECT id, left_child_id, right_child_id FROM users WHERE id = $1 LIMIT 1",
+        "SELECT user_id, left_child_id, right_child_id FROM user_binary_pv WHERE user_id = $1 LIMIT 1",
         [currentId]
       );
 
@@ -62,7 +65,7 @@ export async function findAvailableBinarySpot(
       const nextChildId = preferredPosition === "LEFT" ? node.left_child_id : node.right_child_id;
 
       if (!nextChildId) {
-        return { parentId: node.id, position: preferredPosition };
+        return { parentId: node.user_id, position: preferredPosition };
       }
 
       currentId = nextChildId;
@@ -86,16 +89,21 @@ export async function linkBinaryNode(
   try {
     await client.query("BEGIN");
 
-    // 1. Update child's parent and position
+    // 1. Update child's parent and position in user_binary_pv
     await client.query(
-      "UPDATE users SET binary_parent_id = $1, binary_position = $2, updated_at = NOW() WHERE id = $3",
-      [parentUserId, position, childUserId]
+      `INSERT INTO user_binary_pv (user_id, binary_parent_id, binary_position, updated_at)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (user_id) DO UPDATE SET
+         binary_parent_id = EXCLUDED.binary_parent_id,
+         binary_position = EXCLUDED.binary_position,
+         updated_at = NOW()`,
+      [childUserId, parentUserId, position]
     );
 
-    // 2. Update parent's left_child_id or right_child_id
+    // 2. Update parent's left_child_id or right_child_id in user_binary_pv
     const childColumn = position === "LEFT" ? "left_child_id" : "right_child_id";
     await client.query(
-      `UPDATE users SET ${childColumn} = $1, updated_at = NOW() WHERE id = $2`,
+      `UPDATE user_binary_pv SET ${childColumn} = $1, updated_at = NOW() WHERE user_id = $2`,
       [childUserId, parentUserId]
     );
 
@@ -110,13 +118,19 @@ export async function linkBinaryNode(
 
 /**
  * Executes INSTANT 1:1 Binary matching for a single user if:
- * - left_pv > 0 AND right_pv > 0
+ * - carry_left_pv > 0 AND carry_right_pv > 0
  * - personal_pv >= 100 (if < 100, capping is 0 so no payout is distributed until activation)
+ * 
+ * IMPORTANT: left_pv and right_pv are CUMULATIVE LIFETIME TOTALS and MUST NEVER DECREASE!
+ * Only carry_left_pv and carry_right_pv are decremented by the matched volume.
  */
-async function matchBinaryForUser(client: any, userId: string) {
+async function matchBinaryForUser(client: PoolClient, userId: string) {
   const userRes = await client.query(
-    `SELECT id, member_id, full_name, personal_pv, left_pv, right_pv, wallet_balance, total_earnings 
-     FROM users WHERE id = $1 FOR UPDATE`,
+    `SELECT u.id, u.member_id, u.full_name, b.personal_pv, b.left_pv, b.right_pv, b.carry_left_pv, b.carry_right_pv, w.wallet_balance, w.total_earnings 
+     FROM users u
+     JOIN user_binary_pv b ON u.id = b.user_id
+     JOIN user_wallets w ON u.id = w.user_id
+     WHERE u.id = $1 FOR UPDATE`,
     [userId]
   );
 
@@ -129,35 +143,43 @@ async function matchBinaryForUser(client: any, userId: string) {
     return null;
   }
 
-  const leftPv = parseFloat(user.left_pv || "0");
-  const rightPv = parseFloat(user.right_pv || "0");
-  const matchedPv = Math.min(leftPv, rightPv);
+  // Use carry_left_pv and carry_right_pv for matching!
+  const carryLeft = parseFloat(user.carry_left_pv !== null && user.carry_left_pv !== undefined ? user.carry_left_pv : user.left_pv || "0");
+  const carryRight = parseFloat(user.carry_right_pv !== null && user.carry_right_pv !== undefined ? user.carry_right_pv : user.right_pv || "0");
+  const matchedPv = Math.min(carryLeft, carryRight);
 
   if (matchedPv <= 0) return null;
 
   const capping = calculateDailyCapping(personalPv);
   const payout = Math.min(matchedPv, capping);
 
-  const newLeft = leftPv - matchedPv;
-  const newRight = rightPv - matchedPv;
+  const newCarryLeft = carryLeft - matchedPv;
+  const newCarryRight = carryRight - matchedPv;
 
+  // Update carry_left_pv, carry_right_pv in user_binary_pv
   await client.query(
-    `UPDATE users 
-     SET left_pv = $1, 
-         right_pv = $2, 
-         carry_left_pv = $1, 
+    `UPDATE user_binary_pv 
+     SET carry_left_pv = $1, 
          carry_right_pv = $2, 
-         wallet_balance = wallet_balance + $3, 
-         total_earnings = total_earnings + $3, 
-         today_earnings = today_earnings + $3, 
          updated_at = NOW() 
-     WHERE id = $4`,
-    [newLeft, newRight, payout, user.id]
+     WHERE user_id = $3`,
+    [newCarryLeft, newCarryRight, user.id]
+  );
+
+  // Update wallet_balance, total_earnings, today_earnings in user_wallets
+  await client.query(
+    `UPDATE user_wallets 
+     SET wallet_balance = wallet_balance + $1, 
+         total_earnings = total_earnings + $1, 
+         today_earnings = today_earnings + $1, 
+         updated_at = NOW() 
+     WHERE user_id = $2`,
+    [payout, user.id]
   );
 
   const dateStr = new Date().toISOString().replace("T", " ").substring(0, 16);
   const txId = `tx_${Date.now()}_bin_${user.member_id}`;
-  const desc = `Instant 1:1 Binary Match ${matchedPv} PV (L: ${leftPv} PV, R: ${rightPv} PV). Daily Cap ₹${capping}. Payout: ₹${payout}. Carry: L:${newLeft}, R:${newRight}`;
+  const desc = `Instant 1:1 Binary Match ${matchedPv} PV. Daily Cap ₹${capping}. Payout: ₹${payout}. Carry: L:${newCarryLeft}, R:${newCarryRight}`;
 
   await client.query(
     `INSERT INTO transactions (id, user_id, type, amount, description, status, date)
@@ -165,7 +187,7 @@ async function matchBinaryForUser(client: any, userId: string) {
     [txId, user.id, payout, desc, dateStr]
   );
 
-  return { memberId: user.member_id, matchedPv, payout, newLeft, newRight };
+  return { memberId: user.member_id, matchedPv, payout, newLeft: newCarryLeft, newRight: newCarryRight };
 }
 
 /**
@@ -206,9 +228,12 @@ export async function creditPurchasePV(
       );
     }
 
-    // 2. Update user's personal_pv and daily_capping
+    // 2. Update user's personal_pv and daily_capping in user_binary_pv
     const userRes = await client.query(
-      "SELECT id, personal_pv, binary_parent_id, binary_position FROM users WHERE id = $1 FOR UPDATE",
+      `SELECT u.id, b.personal_pv, b.binary_parent_id, b.binary_position 
+       FROM users u
+       JOIN user_binary_pv b ON u.id = b.user_id
+       WHERE u.id = $1 FOR UPDATE`,
       [userId]
     );
 
@@ -221,14 +246,20 @@ export async function creditPurchasePV(
     const updatedCapping = calculateDailyCapping(updatedPersonalPv);
     const newStatus = updatedPersonalPv >= 100 ? "ACTIVE" : "INACTIVE";
 
+    // Update status in users
     await client.query(
-      `UPDATE users 
+      "UPDATE users SET status = $1, updated_at = NOW() WHERE id = $2",
+      [newStatus, userId]
+    );
+
+    // Update personal_pv and daily_capping in user_binary_pv
+    await client.query(
+      `UPDATE user_binary_pv 
        SET personal_pv = $1, 
            daily_capping = $2, 
-           status = $3,
            updated_at = NOW() 
-       WHERE id = $4`,
-      [updatedPersonalPv, updatedCapping, newStatus, userId]
+       WHERE user_id = $3`,
+      [updatedPersonalPv, updatedCapping, userId]
     );
 
     const instantMatches: Array<{ memberId: string; matchedPv: number; payout: number }> = [];
@@ -243,7 +274,7 @@ export async function creditPurchasePV(
 
     while (parentId) {
       const parentRes = await client.query(
-        "SELECT id, left_child_id, right_child_id, binary_parent_id FROM users WHERE id = $1 FOR UPDATE",
+        "SELECT user_id, left_child_id, right_child_id, binary_parent_id FROM user_binary_pv WHERE user_id = $1 FOR UPDATE",
         [parentId]
       );
 
@@ -252,25 +283,25 @@ export async function creditPurchasePV(
       const parent = parentRes.rows[0];
 
       if (parent.left_child_id === currentChildId) {
-        // PV belongs to Parent's LEFT Leg
+        // PV belongs to Parent's LEFT Leg (Updates cumulative lifetime and carry-forward balance)
         await client.query(
-          "UPDATE users SET left_pv = left_pv + $1, updated_at = NOW() WHERE id = $2",
-          [pv, parent.id]
+          "UPDATE user_binary_pv SET left_pv = left_pv + $1, carry_left_pv = carry_left_pv + $1, updated_at = NOW() WHERE user_id = $2",
+          [pv, parent.user_id]
         );
       } else if (parent.right_child_id === currentChildId) {
-        // PV belongs to Parent's RIGHT Leg
+        // PV belongs to Parent's RIGHT Leg (Updates cumulative lifetime and carry-forward balance)
         await client.query(
-          "UPDATE users SET right_pv = right_pv + $1, updated_at = NOW() WHERE id = $2",
-          [pv, parent.id]
+          "UPDATE user_binary_pv SET right_pv = right_pv + $1, carry_right_pv = carry_right_pv + $1, updated_at = NOW() WHERE user_id = $2",
+          [pv, parent.user_id]
         );
       }
 
       // INSTANT MATCHING: Check and credit matching bonus to parent immediately!
-      const parentMatch = await matchBinaryForUser(client, parent.id);
+      const parentMatch = await matchBinaryForUser(client, parent.user_id);
       if (parentMatch) instantMatches.push(parentMatch);
 
       // Climb up
-      currentChildId = parent.id;
+      currentChildId = parent.user_id;
       parentId = parent.binary_parent_id;
     }
 
@@ -310,9 +341,10 @@ export async function runBinaryMatchingCutoff(): Promise<{
     await client.query("BEGIN");
 
     const candidates = await client.query(
-      `SELECT id, member_id, full_name, left_pv, right_pv, personal_pv, daily_capping
-       FROM users
-       WHERE left_pv > 0 AND right_pv > 0 AND personal_pv >= 100
+      `SELECT u.id, u.member_id, u.full_name, b.left_pv, b.right_pv, b.carry_left_pv, b.carry_right_pv, b.personal_pv, b.daily_capping
+       FROM users u
+       JOIN user_binary_pv b ON u.id = b.user_id
+       WHERE (COALESCE(b.carry_left_pv, b.left_pv) > 0) AND (COALESCE(b.carry_right_pv, b.right_pv) > 0) AND b.personal_pv >= 100
        FOR UPDATE`
     );
 
@@ -322,34 +354,41 @@ export async function runBinaryMatchingCutoff(): Promise<{
     const results = [];
 
     for (const row of candidates.rows) {
-      const leftPv = parseFloat(row.left_pv || "0");
-      const rightPv = parseFloat(row.right_pv || "0");
+      const carryLeft = parseFloat(row.carry_left_pv !== null && row.carry_left_pv !== undefined ? row.carry_left_pv : row.left_pv || "0");
+      const carryRight = parseFloat(row.carry_right_pv !== null && row.carry_right_pv !== undefined ? row.carry_right_pv : row.right_pv || "0");
       const personalPv = parseFloat(row.personal_pv || "0");
       const capping = calculateDailyCapping(personalPv);
 
-      const matchedPv = Math.min(leftPv, rightPv);
+      const matchedPv = Math.min(carryLeft, carryRight);
       if (matchedPv <= 0) continue;
 
       const finalPayout = Math.min(matchedPv, capping);
-      const carryLeft = leftPv - matchedPv;
-      const carryRight = rightPv - matchedPv;
+      const newCarryLeft = carryLeft - matchedPv;
+      const newCarryRight = carryRight - matchedPv;
 
+      // Update ONLY carry_left_pv and carry_right_pv in user_binary_pv
       await client.query(
-        `UPDATE users
-         SET left_pv = $1,
-             right_pv = $2,
-             carry_left_pv = $1,
+        `UPDATE user_binary_pv
+         SET carry_left_pv = $1,
              carry_right_pv = $2,
-             wallet_balance = wallet_balance + $3,
-             total_earnings = total_earnings + $3,
-             today_earnings = today_earnings + $3,
              updated_at = NOW()
-         WHERE id = $4`,
-        [carryLeft, carryRight, finalPayout, row.id]
+         WHERE user_id = $3`,
+        [newCarryLeft, newCarryRight, row.id]
+      );
+
+      // Update wallet in user_wallets
+      await client.query(
+        `UPDATE user_wallets
+         SET wallet_balance = wallet_balance + $1,
+             total_earnings = total_earnings + $1,
+             today_earnings = today_earnings + $1,
+             updated_at = NOW()
+         WHERE user_id = $2`,
+        [finalPayout, row.id]
       );
 
       const txId = `tx_${Date.now()}_bin_${row.member_id}`;
-      const description = `1:1 Binary Match ${matchedPv} PV (L: ${leftPv} PV, R: ${rightPv} PV). Daily Cap ₹${capping}. Payout ₹${finalPayout}. Carry: L:${carryLeft}, R:${carryRight}`;
+      const description = `1:1 Binary Match ${matchedPv} PV. Daily Cap ₹${capping}. Payout ₹${finalPayout}. Carry: L:${newCarryLeft}, R:${newCarryRight}`;
 
       await client.query(
         `INSERT INTO transactions (id, user_id, type, amount, description, status, date)
@@ -364,8 +403,8 @@ export async function runBinaryMatchingCutoff(): Promise<{
         matchedPv,
         payout: finalPayout,
         capping,
-        carryLeft,
-        carryRight,
+        carryLeft: newCarryLeft,
+        carryRight: newCarryRight,
       });
     }
 
@@ -397,9 +436,10 @@ export async function getBinaryTree(
       if (depth > maxDepth) return null;
 
       const res = await client.query(
-        `SELECT id, member_id, full_name, status, personal_pv, left_pv, right_pv, daily_capping, binary_position, left_child_id, right_child_id
-         FROM users
-         WHERE UPPER(member_id) = UPPER($1) OR id = $1
+        `SELECT u.id, u.member_id, u.full_name, u.status, b.personal_pv, b.left_pv, b.right_pv, b.daily_capping, b.binary_position, b.left_child_id, b.right_child_id
+         FROM users u
+         LEFT JOIN user_binary_pv b ON u.id = b.user_id
+         WHERE UPPER(u.member_id) = UPPER($1) OR u.id = $1
          LIMIT 1`,
         [memberIdOrId]
       );

@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const pendingRes = await client.query(`
       SELECT 
         (SELECT COUNT(*) FROM orders WHERE status = 'PENDING') as pending_orders,
-        (SELECT COUNT(*) FROM users WHERE kyc_status = 'PENDING' OR aadhaar_status = 'PENDING' OR pan_status = 'PENDING' OR bank_status = 'PENDING') as pending_kyc;
+        (SELECT COUNT(*) FROM user_kyc WHERE kyc_status = 'PENDING' OR aadhaar_status = 'PENDING' OR pan_status = 'PENDING' OR bank_status = 'PENDING') as pending_kyc;
     `);
 
     // 2. Today's Metrics
@@ -31,9 +31,9 @@ export async function GET(req: NextRequest) {
         COALESCE((SELECT SUM(pv) FROM orders WHERE status != 'REJECTED'), 0) as total_pv,
         (SELECT COUNT(*) FROM orders) as total_orders,
         (SELECT COUNT(*) FROM users) as total_members,
-        (SELECT COUNT(*) FROM users WHERE status = 'ACTIVE' OR personal_pv >= 100) as active_members,
-        COALESCE((SELECT SUM(wallet_balance) FROM users), 0) as total_wallet_liability,
-        COALESCE((SELECT SUM(total_earnings) FROM users), 0) as total_earnings_distributed;
+        (SELECT COUNT(*) FROM v_users_full WHERE status = 'ACTIVE' OR personal_pv >= 100) as active_members,
+        COALESCE((SELECT SUM(wallet_balance) FROM user_wallets), 0) as total_wallet_liability,
+        COALESCE((SELECT SUM(total_earnings) FROM user_wallets), 0) as total_earnings_distributed;
     `);
 
     // 4. Recent Transactions for Live Stream

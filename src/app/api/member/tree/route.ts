@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
                   u.joined_date, u.created_at, u.binary_position, u.binary_parent_id,
                   u.left_child_id, u.right_child_id,
                   p.member_id as parent_member_id
-           FROM users u
+           FROM v_users_full u
            LEFT JOIN users p ON u.binary_parent_id = p.id
            WHERE UPPER(u.member_id) = UPPER($1) OR u.id = $1
            LIMIT 1`,

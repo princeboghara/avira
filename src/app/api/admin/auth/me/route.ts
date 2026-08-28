@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     try {
       if (payload.memberId && payload.memberId !== "ADMIN") {
         const res = await client.query(
-          "SELECT * FROM users WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
+          "SELECT * FROM v_users_full WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
           [payload.memberId]
         );
         if (res.rows.length > 0) adminRecord = res.rows[0];
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 
       if (!adminRecord) {
         const res = await client.query(
-          "SELECT * FROM users WHERE role = 'ADMIN' ORDER BY created_at ASC LIMIT 1"
+          "SELECT * FROM v_users_full WHERE role = 'ADMIN' ORDER BY created_at ASC LIMIT 1"
         );
         if (res.rows.length > 0) adminRecord = res.rows[0];
       }

@@ -92,14 +92,21 @@ export default function AdminItemManagerPage() {
 
   const handleBulkDelete = async (selectedIds: string[]) => {
     if (!confirm(`Delete ${selectedIds.length} selected products?`)) return;
-    for (const id of selectedIds) {
-      try {
-        await fetch(`/api/admin/products?id=${id}`, { method: "DELETE" });
-      } catch {
-        // ignore
+    try {
+      const res = await fetch("/api/admin/products", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await loadItems();
+      } else {
+        alert(data.message || "Failed to delete products");
       }
+    } catch {
+      alert("Network error deleting products");
     }
-    await loadItems();
   };
 
   const columns: Column<ProductItem>[] = [
@@ -109,10 +116,10 @@ export default function AdminItemManagerPage() {
       sortable: true,
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+          <div className="w-12 h-14 rounded-xl bg-gray-50/80 border border-gray-200/60 flex items-center justify-center overflow-hidden shrink-0 p-1">
             {row.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={row.imageUrl} alt={row.name} className="w-full h-full object-cover" />
+              <img src={row.imageUrl} alt={row.name} className="w-full h-full object-contain" />
             ) : (
               <Package className="w-5 h-5 text-gray-400" />
             )}

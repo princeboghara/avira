@@ -6,6 +6,10 @@ import {
   FileText,
   Search,
   X,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  ExternalLink,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 
@@ -28,10 +32,8 @@ interface AdminOrder {
     productId?: string;
     name: string;
     quantity: number;
-    mrp: number;
+    price: number;
     pv: number;
-    subtotalMrp?: number;
-    subtotalPv?: number;
   }>;
   status: string;
   createdAt: string;
@@ -56,6 +58,8 @@ export default function AdminApproveOrdersPage() {
     memberId?: string;
     fullName?: string;
   } | null>(null);
+  const [slipZoom, setSlipZoom] = useState<number>(1);
+  const [slipRotation, setSlipRotation] = useState<number>(0);
 
   const loadOrders = async () => {
     try {
@@ -433,7 +437,7 @@ export default function AdminApproveOrdersPage() {
          ======================================================== */}
       {selectedPaymentSlip && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border border-emerald-200 space-y-4 animate-scaleUp">
+          <div className="bg-white rounded-3xl p-5 sm:p-7 max-w-2xl w-full shadow-2xl border border-emerald-200 space-y-4 animate-scaleUp">
             <div className="flex items-center justify-between pb-3 border-b border-[#e2e2e2]">
               <div>
                 <h3 className="font-black text-base text-[#1a1c1c]">Payment Transaction Slip</h3>
@@ -441,13 +445,50 @@ export default function AdminApproveOrdersPage() {
                   Order #{selectedPaymentSlip.orderId} • Associate: {selectedPaymentSlip.memberId} ({selectedPaymentSlip.fullName})
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedPaymentSlip(null)}
-                className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+
+              <div className="flex items-center gap-2">
+                {/* Zoom Controls */}
+                <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setSlipZoom((z) => Math.max(0.5, z - 0.25))}
+                    className="p-1.5 rounded-lg hover:bg-white text-gray-700 cursor-pointer"
+                    title="Zoom Out"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </button>
+                  <span className="text-[10px] font-mono font-bold px-1.5">{Math.round(slipZoom * 100)}%</span>
+                  <button
+                    type="button"
+                    onClick={() => setSlipZoom((z) => Math.min(3, z + 0.25))}
+                    className="p-1.5 rounded-lg hover:bg-white text-gray-700 cursor-pointer"
+                    title="Zoom In"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSlipRotation((r) => (r + 90) % 360)}
+                  className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer"
+                  title="Rotate Slip"
+                >
+                  <RotateCw className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedPaymentSlip(null);
+                    setSlipZoom(1);
+                    setSlipRotation(0);
+                  }}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div className="p-3 bg-[#f9f9f9] rounded-2xl border border-[#e2e2e2] flex items-center justify-between text-xs font-mono">
@@ -455,12 +496,16 @@ export default function AdminApproveOrdersPage() {
               <span>Amount: <strong className="text-[#006d36]">₹{selectedPaymentSlip.amount?.toLocaleString("en-IN")}</strong></span>
             </div>
 
-            <div className="p-2 border border-[#e2e2e2] rounded-2xl flex items-center justify-center bg-[#f9f9f9] max-h-[60vh] overflow-hidden">
+            <div className="p-4 border border-[#e2e2e2] rounded-2xl flex items-center justify-center bg-gray-900/5 max-h-[60vh] overflow-auto select-none">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={selectedPaymentSlip.slipUrl}
                 alt="Payment Slip"
-                className="max-h-[55vh] max-w-full rounded-xl object-contain shadow-xs"
+                style={{
+                  transform: `scale(${slipZoom}) rotate(${slipRotation}deg)`,
+                  transition: "transform 0.2s ease-out",
+                }}
+                className="max-h-[50vh] max-w-full rounded-xl object-contain shadow-md"
               />
             </div>
 
@@ -469,13 +514,18 @@ export default function AdminApproveOrdersPage() {
                 href={selectedPaymentSlip.slipUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full py-2.5 rounded-xl border border-[#e2e2e2] hover:bg-gray-100 text-center font-bold text-xs text-[#1a1c1c]"
+                className="w-full py-2.5 rounded-xl border border-[#e2e2e2] hover:bg-gray-100 text-center font-bold text-xs text-[#1a1c1c] flex items-center justify-center gap-1.5"
               >
-                Open in Full Window
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Open in Full Window</span>
               </a>
               <button
                 type="button"
-                onClick={() => setSelectedPaymentSlip(null)}
+                onClick={() => {
+                  setSelectedPaymentSlip(null);
+                  setSlipZoom(1);
+                  setSlipRotation(0);
+                }}
                 className="w-full py-2.5 rounded-xl bg-[#006d36] text-white font-bold text-xs cursor-pointer hover:bg-[#005025]"
               >
                 Close Slip Viewer

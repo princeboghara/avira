@@ -14,6 +14,7 @@ export interface User {
   status: 'ACTIVE' | 'PENDING' | 'BLOCKED' | 'INACTIVE';
   walletBalance: number;
   rpWallet: number; // 2% Repurchase Wallet from Binary Income
+  fundWallet?: number; // Fund Wallet balance for product purchases & deposits
   totalEarnings: number;
   directReferralsCount: number;
   totalTeamCount: number;
@@ -217,4 +218,21 @@ export interface Order {
   items?: OrderItem[];
   status?: string;
   createdAt: string;
+}
+
+export interface FundRequest {
+  id: string;
+  userId: string;
+  memberId: string;
+  fullName: string;
+  mobile: string;
+  amount: number;
+  transactionId: string;
+  slipUrl?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  rejectionReason?: string;
+  createdAt: string;
+  updatedAt: string;
+  approvedAt?: string;
+  approvedBy?: string;
 }

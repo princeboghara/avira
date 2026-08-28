@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Leaf, ArrowLeft, ShieldCheck, Zap, BadgeCheck } from "lucide-react";
-import LoginForm from "@/components/forms/LoginForm";
+import LoginForm from "@/components/auth/LoginForm";
 
 export const metadata = {
   title: "Avira Life Care Global - Associate Login",

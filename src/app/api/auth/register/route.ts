@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
       status: "INACTIVE", // Red status (<100 PV)
       walletBalance: 0,
       rpWallet: 0,
+      fundWallet: 0,
       totalEarnings: 0,
       directReferralsCount: 0,
       totalTeamCount: 0,

@@ -27,7 +27,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { User, Transaction } from "@/types";
-import MemberLayout from "@/components/dashboard/MemberLayout";
+import MemberLayout from "@/components/member/MemberLayout";
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -421,74 +421,104 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Sub-income Cards Grid (Today, Binary, RP Wallet) */}
-            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Sub-income Cards Grid (Today, Binary, RP Wallet, Fund Wallet) */}
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               {/* Today's Income */}
-              <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
+              <div className="rounded-3xl p-5 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold">
-                      <Zap className="w-5 h-5" />
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold">
+                      <Zap className="w-4 h-4" />
                     </div>
                     <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-[#006d36]">
                       Today
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">
                     Today&apos;s Income
                   </span>
-                  <div className="text-2xl font-black font-mono text-slate-900">
+                  <div className="text-xl font-black font-mono text-slate-900">
                     ₹{user?.todayEarnings?.toLocaleString("en-IN") || 0}
                   </div>
                 </div>
-                <div className="text-[10px] text-slate-400 pt-3 mt-3 border-t border-slate-100">
-                  Daily 1:1 pair match credit
+                <div className="text-[9px] text-slate-400 pt-2.5 mt-2.5 border-t border-slate-100">
+                  Daily pair match
                 </div>
               </div>
 
               {/* Binary Matching Income */}
-              <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
+              <div className="rounded-3xl p-5 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
-                      <TrendingUp className="w-5 h-5" />
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="w-9 h-9 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
+                      <TrendingUp className="w-4 h-4" />
                     </div>
                     <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
                       1:1 Pairs
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                    Binary Net Income
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">
+                    Binary Income
                   </span>
-                  <div className="text-2xl font-black font-mono text-slate-900">
+                  <div className="text-xl font-black font-mono text-slate-900">
                     ₹{netBinaryIncome.toLocaleString("en-IN")}
                   </div>
                 </div>
-                <div className="text-[10px] text-slate-400 pt-3 mt-3 border-t border-slate-100">
-                  Net matching commissions
+                <div className="text-[9px] text-slate-400 pt-2.5 mt-2.5 border-t border-slate-100">
+                  Matching payout
                 </div>
               </div>
 
               {/* Repurchase Balance (RP Wallet) */}
-              <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
+              <div className="rounded-3xl p-5 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
-                      <Layers className="w-5 h-5" />
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="w-9 h-9 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                      <Layers className="w-4 h-4" />
                     </div>
                     <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
                       5% RP
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                    Repurchase Wallet
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">
+                    RP Wallet
                   </span>
-                  <div className="text-2xl font-black font-mono text-slate-900">
+                  <div className="text-xl font-black font-mono text-slate-900">
                     ₹{(user?.rpWallet || rpWalletAmount).toLocaleString("en-IN")}
                   </div>
                 </div>
-                <div className="text-[10px] text-slate-400 pt-3 mt-3 border-t border-slate-100">
-                  Usable on shopping portal
+                <div className="text-[9px] text-slate-400 pt-2.5 mt-2.5 border-t border-slate-100">
+                  Auto Repurchase
+                </div>
+              </div>
+
+              {/* NEW: Fund Wallet Card */}
+              <div className="rounded-3xl p-5 bg-gradient-to-br from-emerald-50 via-white to-white border border-emerald-300 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="w-9 h-9 rounded-2xl bg-[#006d36] text-white flex items-center justify-center font-bold shadow-xs">
+                      <Wallet className="w-4 h-4" />
+                    </div>
+                    <Link
+                      href="/dashboard/fund"
+                      className="text-[9px] font-black font-mono px-2 py-0.5 rounded-full bg-[#006d36] text-white hover:bg-[#005025] cursor-pointer"
+                    >
+                      + Add Fund
+                    </Link>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#006d36] block mb-0.5">
+                    Fund Wallet
+                  </span>
+                  <div className="text-xl font-black font-mono text-[#006d36]">
+                    ₹{(user?.fundWallet || 0).toLocaleString("en-IN")}
+                  </div>
+                </div>
+                <div className="text-[9px] text-emerald-700 font-semibold pt-2.5 mt-2.5 border-t border-emerald-100 flex items-center justify-between">
+                  <span>For Purchases</span>
+                  <Link href="/dashboard/fund" className="hover:underline flex items-center gap-0.5">
+                    <span>Deposit</span>
+                    <ArrowRight className="w-2.5 h-2.5" />
+                  </Link>
                 </div>
               </div>
             </div>

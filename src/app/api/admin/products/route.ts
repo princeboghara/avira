@@ -175,21 +175,36 @@ export async function DELETE(req: NextRequest) {
 
   const client = await pool.connect();
   try {
-    const body = await req.json();
-    const { id } = body;
+    const { searchParams } = new URL(req.url);
+    let id = searchParams.get("id");
+    let ids: string[] = [];
 
-    if (!id) {
+    try {
+      const body = await req.json();
+      if (body) {
+        if (body.id) id = body.id;
+        if (Array.isArray(body.ids)) ids = body.ids;
+      }
+    } catch {
+      // Body is empty when called with query params
+    }
+
+    if (!id && ids.length === 0) {
       return NextResponse.json(
         { success: false, message: "Product ID is required for deletion" },
         { status: 400 }
       );
     }
 
-    await client.query("DELETE FROM products WHERE id = $1", [id]);
+    if (ids.length > 0) {
+      await client.query("DELETE FROM products WHERE id = ANY($1)", [ids]);
+    } else if (id) {
+      await client.query("DELETE FROM products WHERE id = $1", [id]);
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Product deleted successfully from catalog!",
+      message: "Product(s) deleted successfully from catalog!",
     });
   } catch (error) {
     console.error("Delete product error:", error);

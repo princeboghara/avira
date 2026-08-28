@@ -16,7 +16,7 @@ import {
   CreditCard,
   Percent,
 } from "lucide-react";
-import MemberLayout from "@/components/dashboard/MemberLayout";
+import MemberLayout from "@/components/member/MemberLayout";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import { User } from "@/types";
 

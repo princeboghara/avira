@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       const res = await client.query(
         `SELECT id, member_id, full_name, mobile, binary_position, personal_pv,
                 joined_date, created_at, status
-         FROM users
+         FROM v_users_full
          WHERE UPPER(sponsor_id) = UPPER($1)
          ORDER BY created_at DESC, joined_date DESC`,
         [session.memberId]

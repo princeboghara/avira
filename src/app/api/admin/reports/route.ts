@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
       SELECT 
         COUNT(*) as new_members_count,
         COUNT(CASE WHEN status = 'ACTIVE' OR personal_pv >= 100 THEN 1 END) as active_new_members
-      FROM users
+      FROM v_users_full
       WHERE ${dateCondition};
     `);
 

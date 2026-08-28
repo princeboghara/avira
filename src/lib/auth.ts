@@ -53,11 +53,17 @@ export async function getAdminSession(req?: NextRequest): Promise<TokenPayload |
       if (authHeader && authHeader.startsWith("Bearer ")) {
         token = authHeader.substring(7);
       } else {
-        token = req.cookies.get("admin_access_token")?.value || "";
+        token =
+          req.cookies.get("admin_access_token")?.value ||
+          req.cookies.get("avira_access_token")?.value ||
+          "";
       }
     } else {
       const cookieStore = await cookies();
-      token = cookieStore.get("admin_access_token")?.value || "";
+      token =
+        cookieStore.get("admin_access_token")?.value ||
+        cookieStore.get("avira_access_token")?.value ||
+        "";
 
       if (!token) {
         const headerList = await headers();

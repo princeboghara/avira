@@ -19,7 +19,7 @@ import {
   FileText,
   Percent,
 } from "lucide-react";
-import MemberLayout from "@/components/dashboard/MemberLayout";
+import MemberLayout from "@/components/member/MemberLayout";
 import { Product, User } from "@/types";
 
 interface CartItem {
@@ -292,10 +292,10 @@ export default function MemberCartPage() {
                   return (
                     <div key={p.id} className="pt-3 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-14 h-18 rounded-2xl bg-gray-50 border border-gray-200/60 flex items-center justify-center overflow-hidden shrink-0 p-1">
                           {p.imageUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+                            <img src={p.imageUrl} alt={p.name} className="w-full h-full object-contain" />
                           ) : (
                             <ShoppingBag className="w-6 h-6 text-gray-400" />
                           )}

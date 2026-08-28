@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   try {
     const res = await client.query(
       `SELECT id, member_id, full_name, mobile, status, personal_pv, daily_capping, wallet_balance, created_at
-       FROM users 
+       FROM v_users_full 
        WHERE UPPER(member_id) = $1 LIMIT 1`,
       [memberId]
     );
@@ -60,11 +60,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST: Credit Self PV to Member
+// POST: Process Self PV Transfer
 export async function POST(req: NextRequest) {
   const auth = await requireAdminSession(req);
   if (auth.errorResponse) return auth.errorResponse;
 
+  const client = await pool.connect();
   try {
     const body = await req.json();
     const { memberId, pv: rawPv, note } = body;
@@ -80,40 +81,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Please enter a valid PV amount greater than 0." }, { status: 400 });
     }
 
-    const client = await pool.connect();
-    let userId = "";
-    let fullName = "";
-    try {
-      const userRes = await client.query(
-        "SELECT id, full_name, personal_pv FROM users WHERE UPPER(member_id) = $1 LIMIT 1",
-        [memberIdClean]
-      );
-      if (userRes.rows.length === 0) {
-        return NextResponse.json({ success: false, message: `Member ${memberIdClean} not found.` }, { status: 404 });
-      }
-      userId = userRes.rows[0].id;
-      fullName = userRes.rows[0].full_name;
-    } finally {
-      client.release();
+    // Lookup member in v_users_full
+    const userRes = await client.query(
+      "SELECT id, member_id, full_name, personal_pv FROM v_users_full WHERE UPPER(member_id) = $1 LIMIT 1",
+      [memberIdClean]
+    );
+
+    if (userRes.rows.length === 0) {
+      return NextResponse.json({ success: false, message: `Member ${memberIdClean} not found.` }, { status: 404 });
     }
 
-    // Use established binary volume crediting engine
+    const user = userRes.rows[0];
+
+    // Credit PV directly through binary engine
+    const packageName = note || `Admin Self PV Transfer: +${pv} PV`;
     const result = await creditPurchasePV(
-      userId,
+      user.id,
       pv,
       "ACTIVATION",
-      note || `Admin Self PV Credit (${pv} PV)`,
-      pv * 30, // standard rate representation
-      [{ name: "Admin Self PV Credit", pv, qty: 1 }],
-      false // creates order record in database
+      packageName,
+      0, // Admin direct PV credit (₹0 bill)
+      [{ name: `Self PV Transfer (+${pv} PV)`, quantity: 1, mrp: 0, price: 0, discountPrice: 0, pv, subtotalMrp: 0, subtotalPv: pv }],
+      false
     );
 
     return NextResponse.json({
       success: true,
-      message: `Successfully credited ${pv} Self PV to ${fullName} (${memberIdClean}).`,
+      message: `Successfully credited +${pv} Self PV to ${user.full_name} (${memberIdClean}). New Personal PV: ${result.newPersonalPv} PV. Daily Cap: ₹${result.newCapping}.`,
       data: {
         memberId: memberIdClean,
-        fullName,
+        fullName: user.full_name,
         addedPv: pv,
         newPersonalPv: result.newPersonalPv,
         newCapping: result.newCapping,
@@ -123,5 +120,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Self PV credit error:", error);
     return NextResponse.json({ success: false, message: error?.message || "Failed to credit Self PV." }, { status: 500 });
+  } finally {
+    client.release();
   }
 }

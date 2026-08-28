@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
         `SELECT id, member_id, full_name, mobile, email, pincode, city, state, address,
                 gst_number, nominee_name, nominee_relation, avatar_url, wallet_balance,
                 personal_pv, status, joined_date, created_at
-         FROM users
+         FROM v_users_full
          WHERE UPPER(member_id) = UPPER($1)
          LIMIT 1`,
         [session.memberId]
@@ -80,9 +80,18 @@ export async function PATCH(req: NextRequest) {
     // Upload avatar to Cloudinary folder 'avatars' if provided
     const finalAvatarUrl = avatarUrl ? await uploadToCloudinary(avatarUrl, "avatars") : null;
 
-    // Strict security: Name, Member ID, Mobile, and Pincode are strictly protected from modification here.
     const client = await pool.connect();
     try {
+      // Get user ID
+      const uRes = await client.query("SELECT id FROM users WHERE UPPER(member_id) = UPPER($1) LIMIT 1", [session.memberId]);
+      if (uRes.rows.length === 0) {
+        return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+      }
+      const userId = uRes.rows[0].id;
+
+      await client.query("BEGIN");
+
+      // 1. Update users table for profile fields
       await client.query(
         `UPDATE users
          SET avatar_url = COALESCE($1, avatar_url),
@@ -90,28 +99,44 @@ export async function PATCH(req: NextRequest) {
              address = COALESCE($3, address),
              city = COALESCE($4, city),
              state = COALESCE($5, state),
-             gst_number = COALESCE($6, gst_number),
-             nominee_name = COALESCE($7, nominee_name),
-             nominee_relation = COALESCE($8, nominee_relation),
              updated_at = NOW()
-         WHERE UPPER(member_id) = UPPER($9)`,
+         WHERE id = $6`,
         [
           finalAvatarUrl,
           email ?? null,
           address ?? null,
           city ?? null,
           state ?? null,
+          userId,
+        ]
+      );
+
+      // 2. Update user_kyc table for gst and nominee fields
+      await client.query(
+        `INSERT INTO user_kyc (user_id, gst_number, nominee_name, nominee_relation, updated_at)
+         VALUES ($1, $2, $3, $4, NOW())
+         ON CONFLICT (user_id) DO UPDATE SET
+           gst_number = COALESCE($2, user_kyc.gst_number),
+           nominee_name = COALESCE($3, user_kyc.nominee_name),
+           nominee_relation = COALESCE($4, user_kyc.nominee_relation),
+           updated_at = NOW()`,
+        [
+          userId,
           gstNumber ?? null,
           nomineeName ?? null,
           nomineeRelation ?? null,
-          session.memberId,
         ]
       );
+
+      await client.query("COMMIT");
 
       return NextResponse.json({
         success: true,
         message: "Profile updated successfully!",
       });
+    } catch (dbErr) {
+      await client.query("ROLLBACK");
+      throw dbErr;
     } finally {
       client.release();
     }

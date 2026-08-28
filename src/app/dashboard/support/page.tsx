@@ -12,7 +12,7 @@ import {
   ChevronDown,
   Sparkles,
 } from "lucide-react";
-import MemberLayout from "@/components/dashboard/MemberLayout";
+import MemberLayout from "@/components/member/MemberLayout";
 import { User, SupportTicket } from "@/types";
 
 export default function MemberSupportPage() {

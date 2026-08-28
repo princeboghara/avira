@@ -15,8 +15,10 @@ import {
   AlertTriangle,
   FileText,
   ShieldCheck,
+  Wallet,
+  Coins,
 } from "lucide-react";
-import MemberLayout from "@/components/dashboard/MemberLayout";
+import MemberLayout from "@/components/member/MemberLayout";
 import { Product, User } from "@/types";
 
 interface CartItem {
@@ -39,6 +41,9 @@ export default function MemberCheckoutPage() {
   const [totalAmount, setTotalAmount] = useState(0);
   const [totalPv, setTotalPv] = useState(0);
 
+  // Fund Wallet State
+  const [useFundWallet, setUseFundWallet] = useState(false);
+
   // Payment Verification State
   const [transactionId, setTransactionId] = useState("");
   const [paymentSlipUrl, setPaymentSlipUrl] = useState("");
@@ -47,6 +52,15 @@ export default function MemberCheckoutPage() {
   const [submittingOrder, setSubmittingOrder] = useState(false);
   const [uploadingSlip, setUploadingSlip] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  // Company Payment Credentials
+  const COMPANY_BANK = {
+    bankName: "HDFC BANK LTD",
+    accountName: "AVIRA LIFE CARE",
+    accountNumber: "50200098451230",
+    ifsc: "HDFC0001234",
+    upiId: "aviracare@hdfcbank",
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -77,6 +91,10 @@ export default function MemberCheckoutPage() {
         const savedTarget = localStorage.getItem("aviracare_checkout_target");
         if (savedTarget) {
           const parsed = JSON.parse(savedTarget);
+          if (!parsed.memberId) {
+            router.replace("/dashboard/cart");
+            return;
+          }
           setTargetMemberId(parsed.memberId || "");
           setTargetMemberName(parsed.fullName || "");
           setTargetMemberMobile(parsed.mobile || "");
@@ -85,21 +103,23 @@ export default function MemberCheckoutPage() {
           setTotalDiscount(parsed.totalDiscount || 0);
           setTotalAmount(parsed.totalAmount || 0);
           setTotalPv(parsed.totalPv || 0);
-        } else if (loadedCart.length > 0) {
-          const amt = loadedCart.reduce(
-            (acc, it) => acc + (it.product.discountPrice || it.product.mrp) * it.quantity,
-            0
-          );
-          const pv = loadedCart.reduce((acc, it) => acc + it.product.pv * it.quantity, 0);
-          setTotalAmount(amt);
-          setTotalPv(pv);
+        } else {
+          router.replace("/dashboard/cart");
+          return;
         }
       } catch {
-        // ignore
+        router.replace("/dashboard/cart");
+        return;
       }
     }
     loadData();
-  }, []);
+  }, [router]);
+
+  // Fund Wallet Calculations
+  const fundWalletBalance = Number(user?.fundWallet || 0);
+  const walletDeduction = useFundWallet ? Math.min(totalAmount, fundWalletBalance) : 0;
+  const remainingPayable = Math.max(0, totalAmount - walletDeduction);
+  const isFullWalletPayment = useFundWallet && walletDeduction >= totalAmount;
 
   const handleCopy = (text: string, type: "upi" | "bank") => {
     navigator.clipboard.writeText(text);
@@ -149,14 +169,16 @@ export default function MemberCheckoutPage() {
   const handlePlaceOrderClick = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!transactionId.trim()) {
-      alert("Please enter the Bank UTR or UPI Transaction Reference ID.");
-      return;
-    }
+    if (!isFullWalletPayment) {
+      if (!transactionId.trim()) {
+        alert("Please enter the Bank UTR or UPI Transaction Reference ID.");
+        return;
+      }
 
-    if (!paymentSlipUrl) {
-      alert("Please upload your payment screenshot / receipt.");
-      return;
+      if (!paymentSlipUrl) {
+        alert("Please upload your payment screenshot / receipt for the remaining amount.");
+        return;
+      }
     }
 
     setShowConfirmModal(true);
@@ -184,9 +206,10 @@ export default function MemberCheckoutPage() {
           })),
           amount: totalAmount,
           pv: totalPv,
-          transactionId: transactionId.trim(),
-          paymentSlip: paymentSlipUrl,
-          paymentSlipUrl: paymentSlipUrl,
+          fundWalletUsed: walletDeduction,
+          transactionId: isFullWalletPayment ? "100% FUND WALLET" : transactionId.trim(),
+          paymentSlip: isFullWalletPayment ? "" : paymentSlipUrl,
+          paymentSlipUrl: isFullWalletPayment ? "" : paymentSlipUrl,
           shippingAddress: shippingAddress.trim(),
           customerName: targetMemberName,
           customerMobile: targetMemberMobile,
@@ -227,7 +250,7 @@ export default function MemberCheckoutPage() {
             <span>Back to Shopping Cart</span>
           </Link>
           <span className="text-xs text-[#5f5e5e] font-mono">
-            Payment & Bank Confirmation
+            Checkout & Payment Verification
           </span>
         </div>
 
@@ -246,22 +269,29 @@ export default function MemberCheckoutPage() {
                 </div>
               </div>
 
-              {/* QR Code */}
+              {/* Dynamic QR Code */}
               <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 text-center space-y-2">
                 <div className="w-36 h-36 bg-white rounded-xl mx-auto flex items-center justify-center p-2 border border-gray-200 shadow-inner">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=aviracare@icici&pn=AviraLifeCare&cu=INR"
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+                      `upi://pay?pa=${COMPANY_BANK.upiId}&pn=${COMPANY_BANK.accountName}&am=${remainingPayable}&cu=INR`
+                    )}`}
                     alt="Company UPI QR Code"
                     className="w-full h-full object-contain"
                   />
                 </div>
-                <span className="text-[11px] font-mono font-bold text-[#1a1c1c] block">
-                  aviracare@icici
-                </span>
+                <div className="space-y-0.5">
+                  <span className="text-xs font-black font-mono text-[#006d36] block">
+                    {remainingPayable > 0 ? `Pay ₹${remainingPayable.toLocaleString("en-IN")}` : "100% Covered by Wallet"}
+                  </span>
+                  <span className="text-[11px] font-mono text-gray-600 block">
+                    {COMPANY_BANK.upiId}
+                  </span>
+                </div>
                 <button
                   type="button"
-                  onClick={() => handleCopy("aviracare@icici", "upi")}
+                  onClick={() => handleCopy(COMPANY_BANK.upiId, "upi")}
                   className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-[#006d36] hover:bg-emerald-50 cursor-pointer"
                 >
                   {copiedUpi ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
@@ -273,34 +303,34 @@ export default function MemberCheckoutPage() {
               <div className="space-y-2 text-xs bg-emerald-50/50 p-4 rounded-2xl border border-emerald-200/60">
                 <div className="flex justify-between">
                   <span className="text-[#5f5e5e]">Bank Name:</span>
-                  <strong className="text-[#1a1c1c]">ICICI Bank Limited</strong>
+                  <strong className="text-[#1a1c1c]">{COMPANY_BANK.bankName}</strong>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#5f5e5e]">Account Name:</span>
-                  <strong className="text-[#1a1c1c]">Avira Life Care Global Pvt Ltd</strong>
+                  <strong className="text-[#1a1c1c]">{COMPANY_BANK.accountName}</strong>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#5f5e5e]">Account Number:</span>
-                  <strong className="font-mono text-[#006d36]">50200088991122</strong>
+                  <strong className="font-mono text-[#006d36]">{COMPANY_BANK.accountNumber}</strong>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#5f5e5e]">IFSC Code:</span>
-                  <strong className="font-mono text-[#1a1c1c]">ICIC0001234</strong>
+                  <strong className="font-mono text-[#1a1c1c]">{COMPANY_BANK.ifsc}</strong>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Order Summary & Transaction Slip Form */}
+          {/* Right Column: Order Summary, Fund Wallet & Transaction Slip Form */}
           <div className="md:col-span-6 space-y-6">
-            {/* Invoice Review Box (BILLED BY IS REMOVED FROM UI) */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-3">
+            {/* Order Summary & Fund Wallet Selection Box */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-4">
               <h3 className="font-bold text-xs uppercase text-[#1a1c1c] tracking-wider pb-2 border-b border-gray-100 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-[#006d36]" />
                 <span>Order Summary</span>
               </h3>
 
-              <div className="space-y-1.5 text-xs">
+              <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-[#5f5e5e]">Recipient Associate:</span>
                   <strong className="text-[#1a1c1c]">{targetMemberName} ({targetMemberId})</strong>
@@ -313,73 +343,136 @@ export default function MemberCheckoutPage() {
                   <span className="text-[#5f5e5e]">Shipping Address:</span>
                   <span className="text-[#1a1c1c] truncate max-w-[200px]">{shippingAddress}</span>
                 </div>
-                <div className="flex justify-between text-sm font-black text-[#1a1c1c] pt-2 border-t border-gray-100">
-                  <span>Payable Amount:</span>
-                  <span className="font-mono text-[#006d36]">₹{totalAmount.toLocaleString("en-IN")}</span>
+                <div className="flex justify-between text-xs font-bold text-[#1a1c1c] pt-2 border-t border-gray-100">
+                  <span>Total Order Amount:</span>
+                  <span className="font-mono">₹{totalAmount.toLocaleString("en-IN")}</span>
                 </div>
               </div>
+
+              {/* FUND WALLET CHECKBOX / TOGGLE */}
+              {fundWalletBalance > 0 ? (
+                <div className="p-3.5 bg-gradient-to-r from-emerald-50 to-white rounded-2xl border border-emerald-300 space-y-2">
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={useFundWallet}
+                      onChange={(e) => setUseFundWallet(e.target.checked)}
+                      className="w-4 h-4 text-[#006d36] rounded border-gray-300 focus:ring-[#006d36] cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <span className="font-bold text-xs text-[#006d36] block">
+                        Use Fund Wallet Balance
+                      </span>
+                      <span className="text-[10px] text-gray-500 font-mono">
+                        Available: ₹{fundWalletBalance.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  </label>
+
+                  {useFundWallet && (
+                    <div className="pt-2 border-t border-emerald-200/80 text-xs space-y-1">
+                      <div className="flex justify-between text-emerald-800">
+                        <span>Fund Wallet Applied:</span>
+                        <strong className="font-mono">- ₹{walletDeduction.toLocaleString("en-IN")}</strong>
+                      </div>
+                      <div className="flex justify-between text-xs font-black text-[#1a1c1c] pt-1 border-t border-dashed border-emerald-200">
+                        <span>Remaining to Pay:</span>
+                        <span className="font-mono text-[#006d36]">
+                          ₹{remainingPayable.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="w-4 h-4 text-gray-400" />
+                    <span>Fund Wallet Balance: ₹0</span>
+                  </div>
+                  <Link href="/dashboard/fund" className="text-[10px] text-[#006d36] font-bold hover:underline">
+                    + Deposit Funds
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Payment Proof Form */}
             <form onSubmit={handlePlaceOrderClick} className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-4">
               <h3 className="font-bold text-xs uppercase text-[#1a1c1c] tracking-wider pb-2 border-b border-gray-100 flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#006d36]" />
-                <span>Submit Payment Reference</span>
+                <span>{isFullWalletPayment ? "Wallet Payment Confirmation" : "Submit Payment Reference"}</span>
               </h3>
 
-              <div>
-                <label className="block text-xs font-bold text-[#1a1c1c] mb-1">
-                  Bank UTR / UPI Transaction Reference ID:
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 423588990012 or UPI Ref ID"
-                  value={transactionId}
-                  onChange={(e) => setTransactionId(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 font-mono font-bold text-xs text-[#1a1c1c] outline-hidden focus:border-[#006d36]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#1a1c1c] mb-1">
-                  Payment Screenshot / Slip:
-                </label>
-                {paymentSlipUrl ? (
-                  <div className="relative rounded-2xl overflow-hidden border border-emerald-300 h-32 bg-gray-50">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={paymentSlipUrl} alt="Payment Slip" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setPaymentSlipUrl("")}
-                      className="absolute top-2 right-2 px-2 py-1 bg-black/60 text-white rounded-lg text-[10px] font-bold"
-                    >
-                      Change Slip
-                    </button>
+              {isFullWalletPayment ? (
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
+                  <CheckCircle2 className="w-8 h-8 text-[#006d36] mx-auto" />
+                  <h4 className="font-black text-xs text-[#006d36]">100% Covered by Fund Wallet!</h4>
+                  <p className="text-[11px] text-emerald-800">
+                    No manual bank transfer or slip upload required. ₹{totalAmount.toLocaleString("en-IN")} will be deducted from your Fund Wallet instantly.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-[#1a1c1c] mb-1">
+                      Bank UTR / UPI Transaction Reference ID (for ₹{remainingPayable.toLocaleString("en-IN")}):
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 423588990012 or UPI Ref ID"
+                      value={transactionId}
+                      onChange={(e) => setTransactionId(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 font-mono font-bold text-xs text-[#1a1c1c] outline-hidden focus:border-[#006d36]"
+                    />
                   </div>
-                ) : (
-                  <label className="h-32 rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#006d36] flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
-                    {uploadingSlip ? (
-                      <Loader2 className="w-6 h-6 animate-spin text-[#006d36]" />
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#1a1c1c] mb-1">
+                      Payment Screenshot / Slip (for ₹{remainingPayable.toLocaleString("en-IN")}):
+                    </label>
+                    {paymentSlipUrl ? (
+                      <div className="relative rounded-2xl overflow-hidden border border-emerald-300 h-32 bg-gray-50">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={paymentSlipUrl} alt="Payment Slip" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setPaymentSlipUrl("")}
+                          className="absolute top-2 right-2 px-2 py-1 bg-black/60 text-white rounded-lg text-[10px] font-bold"
+                        >
+                          Change Slip
+                        </button>
+                      </div>
                     ) : (
-                      <>
-                        <Upload className="w-6 h-6 text-gray-400" />
-                        <span className="text-xs text-[#5f5e5e] font-bold mt-1">Upload Payment Screenshot</span>
-                        <span className="text-[10px] text-gray-400">JPG, PNG (Max 5MB)</span>
-                      </>
+                      <label className="h-32 rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#006d36] flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
+                        {uploadingSlip ? (
+                          <Loader2 className="w-6 h-6 animate-spin text-[#006d36]" />
+                        ) : (
+                          <>
+                            <Upload className="w-6 h-6 text-gray-400" />
+                            <span className="text-xs text-[#5f5e5e] font-bold mt-1">Upload Payment Screenshot</span>
+                            <span className="text-[10px] text-gray-400">JPG, PNG (Max 5MB)</span>
+                          </>
+                        )}
+                        <input type="file" accept="image/*" onChange={handleSlipUpload} className="hidden" />
+                      </label>
                     )}
-                    <input type="file" accept="image/*" onChange={handleSlipUpload} className="hidden" />
-                  </label>
-                )}
-              </div>
+                  </div>
+                </>
+              )}
 
               <button
                 type="submit"
-                disabled={submittingOrder || !transactionId.trim() || !paymentSlipUrl}
+                disabled={submittingOrder || (!isFullWalletPayment && (!transactionId.trim() || !paymentSlipUrl))}
                 className="w-full mt-2 py-3.5 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50"
               >
                 {submittingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                <span>Confirm & Place Order</span>
+                <span>
+                  {isFullWalletPayment
+                    ? `Confirm & Pay ₹${totalAmount.toLocaleString("en-IN")} with Fund Wallet`
+                    : `Confirm & Place Order (₹${remainingPayable.toLocaleString("en-IN")})`}
+                </span>
               </button>
             </form>
           </div>
@@ -399,6 +492,11 @@ export default function MemberCheckoutPage() {
                   Are you sure you want to submit this order of{" "}
                   <strong className="text-[#006d36]">₹{totalAmount.toLocaleString("en-IN")} ({totalPv} PV)</strong> for Associate{" "}
                   <strong className="text-[#1a1c1c]">{targetMemberName} ({targetMemberId})</strong>?
+                  {walletDeduction > 0 && (
+                    <span className="block text-[11px] text-emerald-700 font-bold mt-1">
+                      (₹{walletDeduction.toLocaleString("en-IN")} will be deducted from your Fund Wallet)
+                    </span>
+                  )}
                 </p>
               </div>
 
@@ -406,7 +504,7 @@ export default function MemberCheckoutPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmModal(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-[#5f5e5e] hover:bg-gray-50"
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-[#5f5e5e] hover:bg-gray-50 cursor-pointer"
                 >
                   Cancel
                 </button>

@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import Link from "next/link";
 import { Leaf, ArrowLeft, BadgeCheck, Zap, Truck } from "lucide-react";
-import RegisterForm from "@/components/forms/RegisterForm";
+import RegisterForm from "@/components/auth/RegisterForm";
 
 export const metadata = {
   title: "Avira Life Care Global - Associate Registration",

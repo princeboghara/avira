@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     try {
       // 1. Get current user's profile
       const userRes = await client.query(
-        "SELECT id, member_id, left_pv, right_pv, left_child_id, right_child_id FROM users WHERE id = $1 LIMIT 1",
+        "SELECT id, member_id, left_pv, right_pv, left_child_id, right_child_id FROM v_users_full WHERE id = $1 LIMIT 1",
         [payload.userId]
       );
 
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       // 2. Fetch Direct Referrals
       const directRes = await client.query(
         `SELECT id, member_id, full_name, mobile, status, personal_pv, daily_capping, binary_position, joined_date
-         FROM users
+         FROM v_users_full
          WHERE UPPER(sponsor_id) = UPPER($1)
          ORDER BY created_at DESC`,
         [currentUser.member_id]
@@ -41,11 +41,11 @@ export async function GET(request: NextRequest) {
       const leftDownlineRes = await client.query(
         `WITH RECURSIVE left_downlines AS (
            SELECT id, member_id, full_name, mobile, status, personal_pv, daily_capping, binary_position, joined_date, 1 AS depth
-           FROM users
+           FROM v_users_full
            WHERE binary_parent_id = $1 AND binary_position = 'LEFT'
            UNION ALL
            SELECT u.id, u.member_id, u.full_name, u.mobile, u.status, u.personal_pv, u.daily_capping, u.binary_position, u.joined_date, ld.depth + 1
-           FROM users u
+           FROM v_users_full u
            INNER JOIN left_downlines ld ON u.binary_parent_id = ld.id
          )
          SELECT * FROM left_downlines ORDER BY depth ASC, member_id ASC`,
@@ -56,11 +56,11 @@ export async function GET(request: NextRequest) {
       const rightDownlineRes = await client.query(
         `WITH RECURSIVE right_downlines AS (
            SELECT id, member_id, full_name, mobile, status, personal_pv, daily_capping, binary_position, joined_date, 1 AS depth
-           FROM users
+           FROM v_users_full
            WHERE binary_parent_id = $1 AND binary_position = 'RIGHT'
            UNION ALL
            SELECT u.id, u.member_id, u.full_name, u.mobile, u.status, u.personal_pv, u.daily_capping, u.binary_position, u.joined_date, rd.depth + 1
-           FROM users u
+           FROM v_users_full u
            INNER JOIN right_downlines rd ON u.binary_parent_id = rd.id
          )
          SELECT * FROM right_downlines ORDER BY depth ASC, member_id ASC`,

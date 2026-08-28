@@ -13,6 +13,9 @@ import {
   AlertTriangle,
   ExternalLink,
   Check,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import DataTable, { Column } from "@/components/ui/DataTable";
@@ -58,6 +61,11 @@ export default function AdminKycMasterPage() {
 
   // Active Review Modal for single member
   const [reviewMember, setReviewMember] = useState<KycSubmission | null>(null);
+
+  // Lightbox Document Preview Modal
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [rotation, setRotation] = useState<number>(0);
 
   // Reject Dialog
   const [rejectDialog, setRejectDialog] = useState<{
@@ -366,26 +374,29 @@ export default function AdminKycMasterPage() {
                       </div>
                     </div>
 
-                    {/* Image Previews */}
+                    {/* Image Previews with 3:4 & clean contain format */}
                     <div className="space-y-2 pt-2">
                       {reviewMember.aadhaarFrontUrl ? (
-                        <a
-                          href={reviewMember.aadhaarFrontUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block group relative rounded-xl overflow-hidden border border-gray-300"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLightboxImage({ url: reviewMember.aadhaarFrontUrl!, title: `Aadhaar Front — ${reviewMember.fullName} (${reviewMember.memberId})` });
+                            setZoomLevel(1);
+                            setRotation(0);
+                          }}
+                          className="w-full text-left block group relative rounded-xl overflow-hidden border border-gray-300 bg-white p-1 cursor-pointer"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={reviewMember.aadhaarFrontUrl}
                             alt="Aadhaar Front"
-                            className="w-full h-28 object-cover group-hover:scale-105 transition-transform"
+                            className="w-full h-32 object-contain group-hover:scale-102 transition-transform"
                           />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1">
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            <span>View Front</span>
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1 rounded-lg">
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Preview Full Document</span>
                           </div>
-                        </a>
+                        </button>
                       ) : (
                         <div className="h-20 bg-gray-200/60 rounded-xl flex items-center justify-center text-[10px] text-gray-500">
                           No Front Uploaded
@@ -393,23 +404,26 @@ export default function AdminKycMasterPage() {
                       )}
 
                       {reviewMember.aadhaarBackUrl && (
-                        <a
-                          href={reviewMember.aadhaarBackUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block group relative rounded-xl overflow-hidden border border-gray-300"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLightboxImage({ url: reviewMember.aadhaarBackUrl!, title: `Aadhaar Back — ${reviewMember.fullName} (${reviewMember.memberId})` });
+                            setZoomLevel(1);
+                            setRotation(0);
+                          }}
+                          className="w-full text-left block group relative rounded-xl overflow-hidden border border-gray-300 bg-white p-1 cursor-pointer"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={reviewMember.aadhaarBackUrl}
                             alt="Aadhaar Back"
-                            className="w-full h-28 object-cover group-hover:scale-105 transition-transform"
+                            className="w-full h-32 object-contain group-hover:scale-102 transition-transform"
                           />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1">
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            <span>View Back</span>
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1 rounded-lg">
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Preview Full Document</span>
                           </div>
-                        </a>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -465,23 +479,26 @@ export default function AdminKycMasterPage() {
                     {/* Image Preview */}
                     <div className="pt-2">
                       {reviewMember.panCardUrl ? (
-                        <a
-                          href={reviewMember.panCardUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block group relative rounded-xl overflow-hidden border border-gray-300"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLightboxImage({ url: reviewMember.panCardUrl!, title: `PAN Card — ${reviewMember.fullName} (${reviewMember.memberId})` });
+                            setZoomLevel(1);
+                            setRotation(0);
+                          }}
+                          className="w-full text-left block group relative rounded-xl overflow-hidden border border-gray-300 bg-white p-1 cursor-pointer"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={reviewMember.panCardUrl}
                             alt="PAN Card"
-                            className="w-full h-36 object-cover group-hover:scale-105 transition-transform"
+                            className="w-full h-36 object-contain group-hover:scale-102 transition-transform"
                           />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1">
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            <span>View PAN</span>
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1 rounded-lg">
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Preview Full Document</span>
                           </div>
-                        </a>
+                        </button>
                       ) : (
                         <div className="h-36 bg-gray-200/60 rounded-xl flex items-center justify-center text-[10px] text-gray-500">
                           No PAN Uploaded
@@ -549,23 +566,26 @@ export default function AdminKycMasterPage() {
                     {/* Image Preview */}
                     <div className="pt-1">
                       {reviewMember.bankProofUrl ? (
-                        <a
-                          href={reviewMember.bankProofUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block group relative rounded-xl overflow-hidden border border-gray-300"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLightboxImage({ url: reviewMember.bankProofUrl!, title: `Bank Proof — ${reviewMember.fullName} (${reviewMember.memberId})` });
+                            setZoomLevel(1);
+                            setRotation(0);
+                          }}
+                          className="w-full text-left block group relative rounded-xl overflow-hidden border border-gray-300 bg-white p-1 cursor-pointer"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={reviewMember.bankProofUrl}
                             alt="Bank Proof"
-                            className="w-full h-28 object-cover group-hover:scale-105 transition-transform"
+                            className="w-full h-32 object-contain group-hover:scale-102 transition-transform"
                           />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1">
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            <span>View Proof</span>
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1 rounded-lg">
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Preview Full Document</span>
                           </div>
-                        </a>
+                        </button>
                       ) : (
                         <div className="h-28 bg-gray-200/60 rounded-xl flex items-center justify-center text-[10px] text-gray-500">
                           No Bank Proof Uploaded
@@ -677,6 +697,100 @@ export default function AdminKycMasterPage() {
                   className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold cursor-pointer shadow-xs"
                 >
                   Confirm Rejection
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            FULLSCREEN KYC DOCUMENT LIGHTBOX VIEWER
+           ======================================================== */}
+        {lightboxImage && (
+          <div className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+            <div className="relative w-full max-w-4xl max-h-[92vh] bg-white rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col border border-emerald-300 overflow-hidden space-y-4 animate-scaleUp">
+              {/* Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+                <div className="overflow-hidden pr-2">
+                  <h3 className="font-black text-sm sm:text-base text-[#1a1c1c] truncate">{lightboxImage.title}</h3>
+                  <span className="text-[11px] text-[#006d36] font-bold font-mono">100% Uncropped Original View</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* Zoom Controls */}
+                  <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setZoomLevel((z) => Math.max(0.5, z - 0.25))}
+                      className="p-1.5 rounded-lg hover:bg-white text-gray-700 hover:text-black cursor-pointer"
+                      title="Zoom Out"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </button>
+                    <span className="text-[10px] font-mono font-bold px-1.5">{Math.round(zoomLevel * 100)}%</span>
+                    <button
+                      type="button"
+                      onClick={() => setZoomLevel((z) => Math.min(3, z + 0.25))}
+                      className="p-1.5 rounded-lg hover:bg-white text-gray-700 hover:text-black cursor-pointer"
+                      title="Zoom In"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setRotation((r) => (r + 90) % 360)}
+                    className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer"
+                    title="Rotate Image"
+                  >
+                    <RotateCw className="w-4 h-4" />
+                  </button>
+
+                  <a
+                    href={lightboxImage.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006d36] cursor-pointer"
+                    title="Open Full Image in New Tab"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => setLightboxImage(null)}
+                    className="p-2 rounded-xl bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 cursor-pointer"
+                    title="Close Viewer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Image Viewport (Centered, Scrollable, Contain) */}
+              <div className="flex-1 flex items-center justify-center overflow-auto max-h-[68vh] bg-gray-900/5 rounded-2xl p-4 border border-gray-100 select-none">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={lightboxImage.url}
+                  alt={lightboxImage.title}
+                  style={{
+                    transform: `scale(${zoomLevel}) rotate(${rotation}deg)`,
+                    transition: "transform 0.2s ease-out",
+                  }}
+                  className="max-h-[60vh] max-w-full object-contain rounded-xl shadow-lg"
+                />
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between text-xs text-[#5f5e5e] pt-1">
+                <span>Use zoom controls to inspect document numbers and bank stamps clearly.</span>
+                <button
+                  type="button"
+                  onClick={() => setLightboxImage(null)}
+                  className="px-5 py-2 rounded-xl bg-[#006d36] text-white font-bold text-xs hover:bg-[#005025] cursor-pointer"
+                >
+                  Close Document
                 </button>
               </div>
             </div>
