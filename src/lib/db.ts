@@ -2,7 +2,7 @@ import { Pool } from "pg";
 import { User, Transaction, Order } from "@/types";
 
 const DEFAULT_DATABASE_URL =
-  "postgresql://postgres.jtwpsnezyppfpqcpbnkj:C%2BZS7%4023hUidBfH@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres";
+  "postgresql://postgres.jtwpsnezyppfpqcpbnkj:C%2BZS7%4023hUidBfH@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true";
 
 function getConnectionString(): string {
   return process.env.DATABASE_URL || DEFAULT_DATABASE_URL;
