@@ -5,7 +5,15 @@ const DEFAULT_DATABASE_URL =
   "postgresql://postgres.jtwpsnezyppfpqcpbnkj:C%2BZS7%4023hUidBfH@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true";
 
 function getConnectionString(): string {
-  return process.env.DATABASE_URL || DEFAULT_DATABASE_URL;
+  let url = (process.env.DATABASE_URL || DEFAULT_DATABASE_URL).trim();
+  // Automatically rewrite port 5432 to 6543 session pooler to bypass host firewall blocks
+  if (url.includes(":5432")) {
+    url = url.replace(":5432", ":6543");
+  }
+  if (!url.includes("pgbouncer=true")) {
+    url += (url.includes("?") ? "&" : "?") + "pgbouncer=true";
+  }
+  return url;
 }
 
 declare global {
