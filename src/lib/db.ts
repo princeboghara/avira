@@ -5,15 +5,35 @@ const DEFAULT_DATABASE_URL =
   "postgresql://postgres.jtwpsnezyppfpqcpbnkj:C%2BZS7%4023hUidBfH@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true";
 
 function getConnectionString(): string {
-  let url = (process.env.DATABASE_URL || DEFAULT_DATABASE_URL).trim();
-  // Automatically rewrite port 5432 to 6543 session pooler to bypass host firewall blocks
-  if (url.includes(":5432")) {
-    url = url.replace(":5432", ":6543");
+  let rawUrl = (process.env.DATABASE_URL || process.env.DIRECT_URL || DEFAULT_DATABASE_URL).trim();
+  // Strip enclosing quotes if present
+  if ((rawUrl.startsWith('"') && rawUrl.endsWith('"')) || (rawUrl.startsWith("'") && rawUrl.endsWith("'"))) {
+    rawUrl = rawUrl.substring(1, rawUrl.length - 1).trim();
   }
-  if (!url.includes("pgbouncer=true")) {
-    url += (url.includes("?") ? "&" : "?") + "pgbouncer=true";
+
+  // Rewrite port 5432 to 6543 pooler specifically for Supabase pooler domains
+  if (rawUrl.includes(".pooler.supabase.com:5432")) {
+    rawUrl = rawUrl.replace(".pooler.supabase.com:5432", ".pooler.supabase.com:6543");
   }
-  return url;
+
+  if (rawUrl.includes(".pooler.supabase.com") && !rawUrl.includes("pgbouncer=true")) {
+    rawUrl += (rawUrl.includes("?") ? "&" : "?") + "pgbouncer=true";
+  }
+
+  return rawUrl;
+}
+
+function getSslConfig() {
+  const connStr = getConnectionString();
+  // If local development without SSL
+  if (
+    connStr.includes("localhost") ||
+    connStr.includes("127.0.0.1") ||
+    connStr.includes("sslmode=disable")
+  ) {
+    return false;
+  }
+  return { rejectUnauthorized: false };
 }
 
 declare global {
@@ -24,10 +44,11 @@ export const pool: Pool =
   global.__supabase_pool__ ||
   (global.__supabase_pool__ = new Pool({
     connectionString: getConnectionString(),
-    ssl: { rejectUnauthorized: false },
-    max: 15,
+    ssl: getSslConfig(),
+    max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
+    allowExitOnIdle: false,
   }));
 
 pool.on("error", (err) => {
@@ -412,17 +433,17 @@ export function mapRowToOrder(row: any): Order {
   return {
     id: row.id,
     userId: row.user_id,
-    memberId: row.member_id || "",
+    memberId: row.member_id || row.billed_by || "",
     billedBy: row.billed_by || "",
-    buyerName: row.buyer_name || "",
-    buyerMobile: row.buyer_mobile || "",
-    buyerAddress: row.buyer_address || "",
+    buyerName: row.buyer_name || row.customer_name || "",
+    buyerMobile: row.buyer_mobile || row.customer_mobile || "",
+    buyerAddress: row.buyer_address || row.shipping_address || "",
     buyerCity: row.buyer_city || "",
     buyerState: row.buyer_state || "",
     buyerPincode: row.buyer_pincode || "",
-    customerName: row.customer_name || "",
-    customerMobile: row.customer_mobile || "",
-    shippingAddress: row.shipping_address || "",
+    customerName: row.customer_name || row.buyer_name || "",
+    customerMobile: row.customer_mobile || row.buyer_mobile || "",
+    shippingAddress: row.shipping_address || row.buyer_address || "",
     transactionId: row.transaction_id || "",
     paymentSlip: row.payment_slip || "",
     rejectionReason: row.rejection_reason || "",
@@ -452,7 +473,7 @@ export async function getOrdersForUser(userId: string, memberId?: string): Promi
       FROM orders o
       LEFT JOIN users u ON o.user_id = u.id
       LEFT JOIN users b ON UPPER(o.billed_by) = UPPER(b.member_id)
-      WHERE o.user_id = $1
+      WHERE (o.user_id = $1
     `;
     const params: unknown[] = [userId];
 
@@ -461,7 +482,7 @@ export async function getOrdersForUser(userId: string, memberId?: string): Promi
       params.push(memberId);
     }
 
-    query += ` ORDER BY o.created_at DESC LIMIT 100`;
+    query += `) ORDER BY o.created_at DESC LIMIT 100`;
 
     const res = await client.query(query, params);
     return res.rows.map(mapRowToOrder);

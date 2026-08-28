@@ -118,11 +118,11 @@ export async function GET(req: NextRequest) {
         `
         WITH RECURSIVE ancestors AS (
           SELECT id, member_id, full_name, binary_parent_id, binary_position, 1 as depth
-          FROM users
+          FROM v_users_full
           WHERE UPPER(member_id) = UPPER($1)
           UNION ALL
           SELECT u.id, u.member_id, u.full_name, u.binary_parent_id, u.binary_position, a.depth + 1
-          FROM users u
+          FROM v_users_full u
           INNER JOIN ancestors a ON u.id = a.binary_parent_id
         )
         SELECT member_id, full_name, binary_position, depth 

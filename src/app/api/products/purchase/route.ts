@@ -217,17 +217,19 @@ export async function POST(req: NextRequest) {
 
         // Record Fund Wallet deduction transaction
         const txnId = `txn_fund_use_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+        const dateStr = new Date().toISOString().replace("T", " ").substring(0, 16);
         await client.query(
           `INSERT INTO transactions (
             id, user_id, type, amount, tds_amount, admin_charge, rp_wallet_amount, net_amount, description, status, date, created_at
           ) VALUES (
-            $1, $2, 'FUND_DEBIT', $3, 0, 0, 0, $3, $4, 'COMPLETED', NOW(), NOW()
+            $1, $2, 'FUND_DEBIT', $3, 0, 0, 0, $3, $4, 'COMPLETED', $5, NOW()
           )`,
           [
             txnId,
             buyerUser.id,
             fundWalletUsed,
             `Fund Wallet Used for Order #${orderId}`,
+            dateStr,
           ]
         );
       }

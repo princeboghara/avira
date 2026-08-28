@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
         status,
         created_at,
         sponsor_id
-      FROM users
+      FROM v_users_full
       WHERE ${dateCondition}
       ORDER BY created_at DESC
       LIMIT 100;

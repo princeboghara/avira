@@ -127,7 +127,7 @@ export async function PATCH(req: NextRequest) {
       nomineeRelation,
     } = body;
 
-    const targetIdentifier = memberId || id;
+    const targetIdentifier = String(memberId || id || "").trim();
     if (!targetIdentifier) {
       return NextResponse.json(
         { success: false, message: "Member ID or ID is required" },
@@ -135,32 +135,32 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // Optional: hash new password if provided
-    let passwordHashUpdate = "";
-    const queryParams: any[] = [
-      fullName,
-      mobile,
-      email,
-      sponsorId,
-      pincode,
-      city,
-      state,
-      address,
-      gstNumber,
-      aadhaarName,
-      aadhaarNumber,
-      panNumber,
-      bankName,
-      bankAccountNumber,
-      ifscCode,
-      upiId,
-      status,
-      nomineeName,
-      nomineeRelation,
-      targetIdentifier,
-    ];
+    // 1. Find user by ID or member_id
+    const userRes = await client.query(
+      "SELECT id, member_id FROM users WHERE UPPER(member_id) = UPPER($1) OR id = $1 LIMIT 1",
+      [targetIdentifier]
+    );
 
-    let query = `
+    if (userRes.rows.length === 0) {
+      return NextResponse.json(
+        { success: false, message: `Member "${targetIdentifier}" not found in system` },
+        { status: 404 }
+      );
+    }
+
+    const userId = userRes.rows[0].id;
+
+    let passwordHash: string | null = null;
+    if (password && typeof password === "string" && password.trim().length >= 4) {
+      const salt = await bcrypt.genSalt(10);
+      passwordHash = await bcrypt.hash(password.trim(), salt);
+    }
+
+    await client.query("BEGIN");
+
+    // 2. Update users core profile
+    await client.query(
+      `
       UPDATE users SET
         full_name = COALESCE($1, full_name),
         mobile = COALESCE($2, mobile),
@@ -170,36 +170,72 @@ export async function PATCH(req: NextRequest) {
         city = COALESCE($6, city),
         state = COALESCE($7, state),
         address = COALESCE($8, address),
-        gst_number = COALESCE($9, gst_number),
-        aadhaar_name = COALESCE($10, aadhaar_name),
-        aadhaar_number = COALESCE($11, aadhaar_number),
-        pan_number = COALESCE($12, pan_number),
-        bank_name = COALESCE($13, bank_name),
-        bank_account_number = COALESCE($14, bank_account_number),
-        ifsc_code = COALESCE($15, ifsc_code),
-        upi_id = COALESCE($16, upi_id),
-        status = COALESCE($17, status),
-        nominee_name = COALESCE($18, nominee_name),
-        nominee_relation = COALESCE($19, nominee_relation),
+        status = COALESCE($9, status),
+        password_hash = COALESCE($10, password_hash),
         updated_at = NOW()
-    `;
+      WHERE id = $11;
+    `,
+      [
+        fullName !== undefined ? fullName?.trim() : null,
+        mobile !== undefined ? mobile?.trim() : null,
+        email !== undefined ? (email ? email.trim().toLowerCase() : null) : null,
+        sponsorId !== undefined ? (sponsorId ? sponsorId.trim().toUpperCase() : null) : null,
+        pincode !== undefined ? pincode?.trim() : null,
+        city !== undefined ? city?.trim() : null,
+        state !== undefined ? state?.trim() : null,
+        address !== undefined ? address?.trim() : null,
+        status !== undefined ? status : null,
+        passwordHash,
+        userId,
+      ]
+    );
 
-    if (password && String(password).trim().length > 0) {
-      const salt = await bcrypt.genSalt(10);
-      const hash = await bcrypt.hash(String(password).trim(), salt);
-      queryParams.push(hash);
-      query += `, password_hash = $${queryParams.length}`;
-    }
+    // 3. Update user_kyc table for banking, KYC, nominee, and GST
+    await client.query(
+      `
+      INSERT INTO user_kyc (
+        user_id, gst_number, aadhaar_name, aadhaar_number, pan_number,
+        bank_name, bank_account_number, ifsc_code, upi_id,
+        nominee_name, nominee_relation, updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW()
+      )
+      ON CONFLICT (user_id) DO UPDATE SET
+        gst_number = COALESCE($2, user_kyc.gst_number),
+        aadhaar_name = COALESCE($3, user_kyc.aadhaar_name),
+        aadhaar_number = COALESCE($4, user_kyc.aadhaar_number),
+        pan_number = COALESCE($5, user_kyc.pan_number),
+        bank_name = COALESCE($6, user_kyc.bank_name),
+        bank_account_number = COALESCE($7, user_kyc.bank_account_number),
+        ifsc_code = COALESCE($8, user_kyc.ifsc_code),
+        upi_id = COALESCE($9, user_kyc.upi_id),
+        nominee_name = COALESCE($10, user_kyc.nominee_name),
+        nominee_relation = COALESCE($11, user_kyc.nominee_relation),
+        updated_at = NOW();
+    `,
+      [
+        userId,
+        gstNumber !== undefined ? (gstNumber ? gstNumber.trim().toUpperCase() : null) : null,
+        aadhaarName !== undefined ? (aadhaarName ? aadhaarName.trim() : null) : null,
+        aadhaarNumber !== undefined ? (aadhaarNumber ? aadhaarNumber.trim() : null) : null,
+        panNumber !== undefined ? (panNumber ? panNumber.trim().toUpperCase() : null) : null,
+        bankName !== undefined ? (bankName ? bankName.trim() : null) : null,
+        bankAccountNumber !== undefined ? (bankAccountNumber ? bankAccountNumber.trim() : null) : null,
+        ifscCode !== undefined ? (ifscCode ? ifscCode.trim().toUpperCase() : null) : null,
+        upiId !== undefined ? (upiId ? upiId.trim() : null) : null,
+        nomineeName !== undefined ? (nomineeName ? nomineeName.trim() : null) : null,
+        nomineeRelation !== undefined ? (nomineeRelation ? nomineeRelation.trim() : null) : null,
+      ]
+    );
 
-    query += ` WHERE member_id = $20 OR id::text = $20;`;
-
-    await client.query(query, queryParams);
+    await client.query("COMMIT");
 
     return NextResponse.json({
       success: true,
       message: "Associate member profile updated successfully!",
     });
   } catch (error) {
+    await client.query("ROLLBACK");
     console.error("Update member error in PATCH:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update member profile" },

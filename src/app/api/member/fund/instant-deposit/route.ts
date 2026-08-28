@@ -96,17 +96,19 @@ export async function POST(req: NextRequest) {
 
       // 5. Insert Transaction Audit Log
       const txnId = `txn_rzp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const dateStr = new Date().toISOString().replace("T", " ").substring(0, 16);
       await client.query(
         `INSERT INTO transactions (
           id, user_id, type, amount, tds_amount, admin_charge, rp_wallet_amount, net_amount, description, status, date, created_at
         ) VALUES (
-          $1, $2, 'FUND_CREDIT', $3, 0, 0, 0, $3, $4, 'COMPLETED', NOW(), NOW()
+          $1, $2, 'FUND_CREDIT', $3, 0, 0, 0, $3, $4, 'COMPLETED', $5, NOW()
         )`,
         [
           txnId,
           user.id,
           numAmount,
           `Instant Fund Deposit via Razorpay (Payment ID: ${razorpay_payment_id})`,
+          dateStr,
         ]
       );
 

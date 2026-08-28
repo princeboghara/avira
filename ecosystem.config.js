@@ -2,8 +2,7 @@ module.exports = {
   apps: [
     {
       name: "avira-production",
-      script: "node_modules/next/dist/bin/next",
-      args: "start -p 3000",
+      script: "server.js",
       instances: "max",
       exec_mode: "cluster",
       env: {
