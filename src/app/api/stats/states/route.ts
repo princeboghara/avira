@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getSession, getAdminSession } from "@/lib/auth";
 import { pool } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -48,34 +49,150 @@ const STATE_MAP: Record<string, { code: string; name: string }> = {
   "west bengal": { code: "WB", name: "West Bengal" },
 };
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const client = await pool.connect();
   try {
-    // 1. Group users by state from real users table
-    const stateQuery = await client.query(`
-      SELECT 
-        COALESCE(NULLIF(TRIM(state), ''), 'Gujarat') as raw_state,
-        COUNT(*) as total_count,
-        COUNT(CASE WHEN status = 'ACTIVE' OR personal_pv >= 100 THEN 1 END) as active_count,
-        COALESCE(SUM(personal_pv), 0) as total_pv
-      FROM v_users_full
-      GROUP BY raw_state
-      ORDER BY total_count DESC;
-    `);
+    const scopeParam = req.nextUrl.searchParams.get("scope");
+    const adminSession = await getAdminSession(req);
+    const memberSession = await getSession(req);
 
-    // 2. Query top cities for each state
-    const cityQuery = await client.query(`
-      SELECT 
-        COALESCE(NULLIF(TRIM(state), ''), 'Gujarat') as raw_state,
-        COALESCE(NULLIF(TRIM(city), ''), 'Main District') as raw_city,
-        COUNT(*) as city_count
-      FROM v_users_full
-      GROUP BY raw_state, raw_city
-      ORDER BY raw_state, city_count DESC;
-    `);
+    // Determine if admin request
+    const isAdmin =
+      scopeParam === "admin" &&
+      (adminSession !== null || memberSession?.role === "ADMIN");
 
+    let stateRows: any[] = [];
+    let cityRows: any[] = [];
+    let isMemberScope = false;
+    let targetMemberId: string | null = null;
+
+    if (isAdmin) {
+      // 1. ADMIN SCOPE: All users across India
+      const stateQuery = await client.query(`
+        SELECT 
+          COALESCE(NULLIF(TRIM(state), ''), 'Gujarat') as raw_state,
+          COUNT(*) as total_count,
+          COUNT(CASE WHEN status = 'ACTIVE' OR personal_pv >= 100 THEN 1 END) as active_count,
+          COALESCE(SUM(personal_pv), 0) as total_pv
+        FROM v_users_full
+        GROUP BY raw_state
+        ORDER BY total_count DESC;
+      `);
+      stateRows = stateQuery.rows;
+
+      const cityQuery = await client.query(`
+        SELECT 
+          COALESCE(NULLIF(TRIM(state), ''), 'Gujarat') as raw_state,
+          COALESCE(NULLIF(TRIM(city), ''), 'Main District') as raw_city,
+          COUNT(*) as city_count
+        FROM v_users_full
+        GROUP BY raw_state, raw_city
+        ORDER BY raw_state, city_count DESC;
+      `);
+      cityRows = cityQuery.rows;
+    } else {
+      // 2. MEMBER SCOPE: Only this logged-in member's downline tree
+      isMemberScope = true;
+      if (!memberSession || !memberSession.memberId) {
+        return NextResponse.json({
+          success: true,
+          scope: "member",
+          states: [],
+          summary: {
+            totalMembers: 0,
+            activeMembers: 0,
+            inactiveMembers: 0,
+            totalPv: 0,
+            totalStatesCount: 0,
+            topState: null,
+          },
+        });
+      }
+
+      targetMemberId = memberSession.memberId;
+
+      // Find root user ID
+      const rootRes = await client.query(
+        `SELECT id, member_id FROM users WHERE UPPER(member_id) = UPPER($1) LIMIT 1`,
+        [targetMemberId]
+      );
+
+      if (rootRes.rows.length === 0) {
+        return NextResponse.json({
+          success: true,
+          scope: "member",
+          states: [],
+          summary: {
+            totalMembers: 0,
+            activeMembers: 0,
+            inactiveMembers: 0,
+            totalPv: 0,
+            totalStatesCount: 0,
+            topState: null,
+          },
+        });
+      }
+
+      const rootId = rootRes.rows[0].id;
+
+      // Recursive CTE to fetch ONLY this user's downline subtree
+      const stateQuery = await client.query(
+        `
+        WITH RECURSIVE downline AS (
+          -- Immediate children of root (Level 1)
+          SELECT id, state, city, personal_pv, status, 1 AS level
+          FROM v_users_full
+          WHERE binary_parent_id = $1
+
+          UNION ALL
+
+          -- Recursive downlines
+          SELECT u.id, u.state, u.city, u.personal_pv, u.status, d.level + 1
+          FROM v_users_full u
+          INNER JOIN downline d ON u.binary_parent_id = d.id
+        )
+        SELECT 
+          COALESCE(NULLIF(TRIM(state), ''), 'Gujarat') as raw_state,
+          COUNT(*) as total_count,
+          COUNT(CASE WHEN status = 'ACTIVE' OR personal_pv >= 100 THEN 1 END) as active_count,
+          COALESCE(SUM(personal_pv), 0) as total_pv
+        FROM downline
+        GROUP BY raw_state
+        ORDER BY total_count DESC;
+      `,
+        [rootId]
+      );
+      stateRows = stateQuery.rows;
+
+      const cityQuery = await client.query(
+        `
+        WITH RECURSIVE downline AS (
+          SELECT id, state, city, 1 AS level
+          FROM v_users_full
+          WHERE binary_parent_id = $1
+
+          UNION ALL
+
+          SELECT u.id, u.state, u.city, d.level + 1
+          FROM v_users_full u
+          INNER JOIN downline d ON u.binary_parent_id = d.id
+        )
+        SELECT 
+          COALESCE(NULLIF(TRIM(state), ''), 'Gujarat') as raw_state,
+          COALESCE(NULLIF(TRIM(city), ''), 'Main District') as raw_city,
+          COUNT(*) as city_count
+        FROM downline
+        GROUP BY raw_state, raw_city
+        ORDER BY raw_state, city_count DESC;
+      `,
+        [rootId]
+      );
+      cityRows = cityQuery.rows;
+    }
+
+    // Process cities by state
     const citiesByState: Record<string, Array<{ city: string; count: number }>> = {};
-    for (const crow of cityQuery.rows) {
+    for (const crow of cityRows) {
       const stateName = (crow.raw_state || "Gujarat").trim().toLowerCase();
       if (!citiesByState[stateName]) {
         citiesByState[stateName] = [];
@@ -104,7 +221,7 @@ export async function GET() {
     let grandActive = 0;
     let grandPv = 0;
 
-    for (const row of stateQuery.rows) {
+    for (const row of stateRows) {
       const raw = (row.raw_state || "Gujarat").trim();
       const lower = raw.toLowerCase();
       const count = parseInt(row.total_count, 10) || 0;
@@ -161,6 +278,8 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
+      scope: isMemberScope ? "member" : "admin",
+      memberId: targetMemberId,
       states: rankedStates,
       summary: {
         totalMembers: grandTotal,

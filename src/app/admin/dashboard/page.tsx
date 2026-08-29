@@ -505,7 +505,7 @@ export default function AdminOverviewDashboardPage() {
         </div>
 
         {/* Pan-India Associates Geographic Distribution Map */}
-        <IndiaStateMap />
+        <IndiaStateMap scope="admin" />
       </div>
     </AdminLayout>
   );

@@ -13,6 +13,8 @@ import {
   Layers,
   Building2,
   Palette,
+  Users,
+  Network,
 } from "lucide-react";
 import { INDIA_MAP_PATHS, INDIA_MAP_VIEWBOX, StatePathData } from "@/lib/indiaMapData";
 
@@ -36,6 +38,10 @@ interface StateSummary {
   totalPv: number;
   totalStatesCount: number;
   topState: StateStat | null;
+}
+
+interface IndiaStateMapProps {
+  scope?: "member" | "admin";
 }
 
 // Distinct, vibrant & harmonious color palette for all Indian states and Union Territories
@@ -79,7 +85,7 @@ const STATE_PALETTE: Record<string, string> = {
   PY: "#8b5cf6", // Violet (Puducherry)
 };
 
-export default function IndiaStateMap() {
+export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) {
   const [statesData, setStatesData] = useState<StateStat[]>([]);
   const [summary, setSummary] = useState<StateSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,17 +98,20 @@ export default function IndiaStateMap() {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [viewMode, setViewMode] = useState<"multicolor" | "mint" | "density">("multicolor");
 
-  // Fetch state statistics from backend
+  // Fetch state statistics from backend based on scope
   useEffect(() => {
     async function loadStats() {
       try {
-        const res = await fetch("/api/stats/states");
+        setLoading(true);
+        const res = await fetch(`/api/stats/states?scope=${scope}`);
         const data = await res.json();
         if (data.success) {
           setStatesData(data.states || []);
           setSummary(data.summary || null);
           if (data.states?.length > 0) {
-            setSelectedState(data.states[0]); // default select top state (e.g. Gujarat)
+            setSelectedState(data.states[0]); // default select top state
+          } else {
+            setSelectedState(null);
           }
         }
       } catch (err) {
@@ -112,7 +121,7 @@ export default function IndiaStateMap() {
       }
     }
     loadStats();
-  }, []);
+  }, [scope]);
 
   // Map state codes to stats dictionary
   const statsByCode = useMemo(() => {
@@ -135,24 +144,29 @@ export default function IndiaStateMap() {
     if (isSelected) return "#006d36"; // Deep Avira emerald for selected
     if (isHovered) return "#10b981"; // Bright glowing emerald on hover
 
-    // 1. Multicolor mode (each state has its own distinct unique color)
+    // 1. Multicolor mode
     if (viewMode === "multicolor") {
+      const stat = statsByCode[code];
+      // If in member scope and state has 0 members, give subtle muted pastel
+      if (scope === "member" && (!stat || stat.total === 0)) {
+        return "#e2e8f0"; // Muted clean light gray for states with no team members yet
+      }
       return STATE_PALETTE[code] || "#a3d9be";
     }
 
-    // 2. Light Mint mode (soft sage green)
+    // 2. Light Mint mode
     if (viewMode === "mint") {
       const stat = statsByCode[code];
       if (stat && stat.total > 0) {
         return "#9dd6b7";
       }
-      return "#aee0c7";
+      return "#e2e8f0";
     }
 
     // 3. Heatmap Density Mode
     const stat = statsByCode[code];
     if (!stat || stat.total === 0) {
-      return "#d1fae5";
+      return "#f1f5f9";
     }
 
     const ratio = stat.total / maxMembers;
@@ -184,21 +198,29 @@ export default function IndiaStateMap() {
     setHoveredState(stateData);
   };
 
+  const isMember = scope === "member";
+
   return (
     <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-100 shadow-sm space-y-6">
       {/* 1. Header & Summary Metric Badges */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-emerald-100/80">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-[#006d36] text-[11px] font-black uppercase tracking-wider mb-1.5 border border-emerald-200/60">
-            <Globe className="w-3.5 h-3.5 text-[#006d36]" />
-            <span>Pan-India Live Network</span>
+            {isMember ? (
+              <Network className="w-3.5 h-3.5 text-[#006d36]" />
+            ) : (
+              <Globe className="w-3.5 h-3.5 text-[#006d36]" />
+            )}
+            <span>{isMember ? "My Downline Team Distribution" : "Pan-India Live Network"}</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2.5">
-            <span>India Geographic Network Map</span>
+            <span>{isMember ? "My Team Geographic Map" : "India Geographic Network Map"}</span>
             <Sparkles className="w-5 h-5 text-emerald-500 fill-emerald-400" />
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Real-time live geographic state-wise associate distribution across all Indian States & UTs.
+            {isMember
+              ? "Real-time state-wise distribution of your downline team members across India."
+              : "Real-time live geographic state-wise associate distribution across all Indian States & UTs."}
           </p>
         </div>
 
@@ -207,7 +229,7 @@ export default function IndiaStateMap() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-emerald-50/40 border border-emerald-100 p-3 rounded-2xl">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                Total Associates
+                {isMember ? "Downline Members" : "Total Associates"}
               </span>
               <strong className="text-base font-black text-slate-900 font-mono">
                 {summary.totalMembers.toLocaleString("en-IN")}
@@ -234,10 +256,10 @@ export default function IndiaStateMap() {
 
             <div className="bg-emerald-100/60 border border-emerald-300/70 p-3 rounded-2xl">
               <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
-                Top State (#1)
+                {isMember ? "Top Team State" : "Top State (#1)"}
               </span>
               <strong className="text-xs font-black text-emerald-950 truncate block">
-                {summary.topState?.name || "Gujarat"} ({summary.topState?.total})
+                {summary.topState ? `${summary.topState.name} (${summary.topState.total})` : "—"}
               </strong>
             </div>
           </div>
@@ -377,7 +399,7 @@ export default function IndiaStateMap() {
                         textAnchor="middle"
                         fontSize={statePath.labelPos.fontSize || "11"}
                         fontWeight="900"
-                        fill={isSelected ? "#ffffff" : "#ffffff"}
+                        fill="#ffffff"
                         stroke="#000000"
                         strokeWidth="0.5"
                         paintOrder="stroke"
@@ -398,7 +420,7 @@ export default function IndiaStateMap() {
                 INDIA
               </div>
               <div className="text-[9px] font-sans tracking-widest text-[#006d36]/30 uppercase font-medium">
-                ASSOCIATE NETWORK MAP
+                {isMember ? "DOWNLINE NETWORK MAP" : "ASSOCIATE NETWORK MAP"}
               </div>
               <div className="inline-block px-2 py-0.5 rounded-full bg-[#006d36]/10 text-[8px] font-mono text-[#006d36]/50 uppercase font-bold tracking-wider mt-0.5">
                 GIS VECTOR
@@ -426,7 +448,9 @@ export default function IndiaStateMap() {
 
                 <div className="space-y-1.5 text-[11px]">
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Total Associates:</span>
+                    <span className="text-slate-400">
+                      {isMember ? "Downline Members:" : "Total Associates:"}
+                    </span>
                     <strong className="font-mono text-white text-sm font-black">
                       {hoveredState.total.toLocaleString("en-IN")}
                     </strong>
@@ -438,17 +462,17 @@ export default function IndiaStateMap() {
                     </strong>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-400">National Share:</span>
+                    <span className="text-slate-400">{isMember ? "Team Share:" : "National Share:"}</span>
                     <strong className="font-mono text-amber-300 font-bold">
                       {hoveredState.percentage}%
                     </strong>
                   </div>
                 </div>
 
-                {hoveredState.rank <= 5 && (
+                {hoveredState.total > 0 && hoveredState.rank <= 5 && (
                   <div className="pt-1.5 border-t border-slate-800 text-[10px] text-amber-400 font-bold flex items-center gap-1">
                     <Award className="w-3.5 h-3.5" />
-                    <span>Rank #{hoveredState.rank} State in India</span>
+                    <span>Rank #{hoveredState.rank} {isMember ? "in Your Team" : "in India"}</span>
                   </div>
                 )}
               </div>
@@ -459,7 +483,7 @@ export default function IndiaStateMap() {
         {/* RIGHT COLUMN: STATE DETAILS & LEADERBOARD */}
         <div className="lg:col-span-5 space-y-6">
           {/* Selected State Card */}
-          {selectedState ? (
+          {selectedState && selectedState.total > 0 ? (
             <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-[#006d36] via-[#055c30] to-[#014723] text-white shadow-xl space-y-5 border border-emerald-400/30">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -474,7 +498,7 @@ export default function IndiaStateMap() {
                   <div>
                     <h3 className="font-black text-lg sm:text-xl">{selectedState.name}</h3>
                     <span className="text-xs text-emerald-200 font-mono">
-                      State Code: {selectedState.code} • National Rank #{selectedState.rank}
+                      State Code: {selectedState.code} • {isMember ? "Team Rank" : "National Rank"} #{selectedState.rank}
                     </span>
                   </div>
                 </div>
@@ -487,13 +511,13 @@ export default function IndiaStateMap() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3.5 bg-white/10 rounded-2xl border border-white/10">
                   <span className="text-[10px] text-emerald-200 uppercase font-bold block">
-                    Total Associates
+                    {isMember ? "Downline Members" : "Total Associates"}
                   </span>
                   <strong className="text-2xl font-black font-mono text-white">
                     {selectedState.total.toLocaleString("en-IN")}
                   </strong>
                   <span className="text-[10px] text-emerald-300/80 block mt-0.5">
-                    {selectedState.percentage}% of all members
+                    {selectedState.percentage}% of your network
                   </span>
                 </div>
 
@@ -553,7 +577,9 @@ export default function IndiaStateMap() {
             </div>
           ) : (
             <div className="p-6 rounded-3xl bg-emerald-50/50 border border-emerald-100 text-center text-emerald-800 text-xs">
-              Click on any state in the map to inspect live metrics.
+              {isMember && statesData.length === 0
+                ? "No downline members in your team yet. Your team's geographic distribution will appear here as your network expands!"
+                : "Click on any active state in the map to inspect team metrics."}
             </div>
           )}
 
@@ -562,7 +588,7 @@ export default function IndiaStateMap() {
             <div className="flex items-center justify-between">
               <h4 className="font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-2">
                 <Layers className="w-4 h-4 text-emerald-600" />
-                <span>State Rankings Leaderboard</span>
+                <span>{isMember ? "Team States Leaderboard" : "State Rankings Leaderboard"}</span>
               </h4>
               <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
                 {filteredStates.length} Active States
@@ -582,71 +608,79 @@ export default function IndiaStateMap() {
             </div>
 
             {/* Scrollable State List */}
-            <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-              {filteredStates.map((st) => {
-                const isSelected = selectedState?.code === st.code;
-                const stateColor = STATE_PALETTE[st.code] || "#059669";
-                return (
-                  <div
-                    key={st.code}
-                    onClick={() => setSelectedState(st)}
-                    className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                      isSelected
-                        ? "bg-[#006d36] text-white border-[#006d36] shadow-md scale-[1.01]"
-                        : "bg-white text-slate-800 border-emerald-100/70 hover:border-emerald-300 hover:bg-emerald-50/40"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      {/* Color indicator pip */}
-                      <span
-                        className="w-3.5 h-3.5 rounded-full shrink-0 border border-white shadow-xs"
-                        style={{ backgroundColor: stateColor }}
-                        title={st.name}
-                      />
-
-                      <span
-                        className={`w-6 h-6 rounded-lg text-[10px] font-mono font-black flex items-center justify-center shrink-0 ${
-                          isSelected
-                            ? "bg-white/20 text-white"
-                            : st.rank === 1
-                            ? "bg-amber-100 text-amber-800"
-                            : st.rank === 2
-                            ? "bg-slate-200 text-slate-800"
-                            : st.rank === 3
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-emerald-50 text-emerald-800"
-                        }`}
-                      >
-                        {st.rank}
-                      </span>
-                      <div className="truncate">
-                        <strong className="block text-xs truncate">{st.name}</strong>
+            {filteredStates.length > 0 ? (
+              <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                {filteredStates.map((st) => {
+                  const isSelected = selectedState?.code === st.code;
+                  const stateColor = STATE_PALETTE[st.code] || "#059669";
+                  return (
+                    <div
+                      key={st.code}
+                      onClick={() => setSelectedState(st)}
+                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                        isSelected
+                          ? "bg-[#006d36] text-white border-[#006d36] shadow-md scale-[1.01]"
+                          : "bg-white text-slate-800 border-emerald-100/70 hover:border-emerald-300 hover:bg-emerald-50/40"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {/* Color indicator pip */}
                         <span
-                          className={`text-[10px] font-mono ${
-                            isSelected ? "text-emerald-100" : "text-slate-400"
+                          className="w-3.5 h-3.5 rounded-full shrink-0 border border-white shadow-xs"
+                          style={{ backgroundColor: stateColor }}
+                          title={st.name}
+                        />
+
+                        <span
+                          className={`w-6 h-6 rounded-lg text-[10px] font-mono font-black flex items-center justify-center shrink-0 ${
+                            isSelected
+                              ? "bg-white/20 text-white"
+                              : st.rank === 1
+                              ? "bg-amber-100 text-amber-800"
+                              : st.rank === 2
+                              ? "bg-slate-200 text-slate-800"
+                              : st.rank === 3
+                              ? "bg-orange-100 text-orange-800"
+                              : "bg-emerald-50 text-emerald-800"
                           }`}
                         >
-                          {st.active} Active (100+ PV)
+                          {st.rank}
+                        </span>
+                        <div className="truncate">
+                          <strong className="block text-xs truncate">{st.name}</strong>
+                          <span
+                            className={`text-[10px] font-mono ${
+                              isSelected ? "text-emerald-100" : "text-slate-400"
+                            }`}
+                          >
+                            {st.active} Active (100+ PV)
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <strong className="font-mono text-xs block">
+                          {st.total.toLocaleString("en-IN")}
+                        </strong>
+                        <span
+                          className={`text-[10px] font-mono ${
+                            isSelected ? "text-emerald-200" : "text-[#006d36] font-bold"
+                          }`}
+                        >
+                          {st.percentage}%
                         </span>
                       </div>
                     </div>
-
-                    <div className="text-right shrink-0">
-                      <strong className="font-mono text-xs block">
-                        {st.total.toLocaleString("en-IN")}
-                      </strong>
-                      <span
-                        className={`text-[10px] font-mono ${
-                          isSelected ? "text-emerald-200" : "text-[#006d36] font-bold"
-                        }`}
-                      >
-                        {st.percentage}%
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-4 text-center text-xs text-slate-400 bg-white rounded-2xl border border-slate-100">
+                {isMember
+                  ? "No downline members enrolled in this state yet."
+                  : "No states matching your search."}
+              </div>
+            )}
           </div>
         </div>
       </div>

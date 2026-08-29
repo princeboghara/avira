@@ -867,8 +867,8 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* 6. PAN-INDIA ASSOCIATE GEOGRAPHIC DISTRIBUTION MAP */}
-        <IndiaStateMap />
+        {/* 6. MEMBER DOWNLINE GEOGRAPHIC DISTRIBUTION MAP */}
+        <IndiaStateMap scope="member" />
       </div>
     </MemberLayout>
   );
