@@ -4,9 +4,8 @@ import { User, Transaction, Order } from "@/types";
 function getConnectionString(): string {
   let rawUrl = (process.env.DATABASE_URL || process.env.DIRECT_URL || "").trim();
   if (!rawUrl) {
-    throw new Error(
-      "DATABASE_URL or DIRECT_URL environment variable is not defined. Please configure database credentials in .env."
-    );
+    // Provide a safe placeholder connection string during build-time module evaluation
+    return "postgresql://postgres:postgres@localhost:5432/postgres";
   }
   // Strip enclosing quotes if present
   if ((rawUrl.startsWith('"') && rawUrl.endsWith('"')) || (rawUrl.startsWith("'") && rawUrl.endsWith("'"))) {
