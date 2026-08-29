@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   MapPin,
   Globe,
@@ -15,8 +15,17 @@ import {
   Palette,
   Users,
   Network,
+  Compass,
+  CheckCircle2,
+  Move,
 } from "lucide-react";
-import { INDIA_MAP_PATHS, INDIA_MAP_VIEWBOX, StatePathData } from "@/lib/indiaMapData";
+import {
+  INDIA_MAP_PATHS,
+  INDIA_MAP_VIEWBOX,
+  StatePathData,
+  ALL_INDIAN_STATES_AND_UTS,
+  SMALL_STATES_AND_UTS,
+} from "@/lib/indiaMapData";
 
 interface StateStat {
   code: string;
@@ -44,45 +53,45 @@ interface IndiaStateMapProps {
   scope?: "member" | "admin";
 }
 
-// Distinct, vibrant & harmonious color palette for all Indian states and Union Territories
+// Professional, Elegant Light/Pastel Harmonious Color Palette for all 28 States & 8 UTs
 const STATE_PALETTE: Record<string, string> = {
-  JK: "#ef4444", // Coral Red (Jammu & Kashmir)
-  LA: "#f97316", // Vibrant Orange (Ladakh)
-  HP: "#84cc16", // Lime Green (Himachal Pradesh)
-  PB: "#f59e0b", // Amber/Gold (Punjab)
-  UT: "#a855f7", // Violet (Uttarakhand)
-  HR: "#06b6d4", // Cyan (Haryana)
-  DL: "#e11d48", // Crimson Red (Delhi)
-  RJ: "#8b5cf6", // Royal Purple (Rajasthan)
-  UP: "#10b981", // Emerald Green (Uttar Pradesh)
-  BR: "#ec4899", // Magenta/Pink (Bihar)
-  GJ: "#f59e0b", // Warm Amber Gold (Gujarat)
-  MP: "#c084fc", // Lavender (Madhya Pradesh)
-  JH: "#fb923c", // Orange (Jharkhand)
-  WB: "#38bdf8", // Sky Blue (West Bengal)
-  OR: "#f97316", // Coral Orange (Odisha)
-  CT: "#14b8a6", // Teal (Chhattisgarh)
-  MH: "#f43f5e", // Rose Red (Maharashtra)
-  GA: "#eab308", // Yellow (Goa)
-  KA: "#7c3aed", // Deep Purple (Karnataka)
-  TG: "#65a30d", // Olive Green (Telangana)
-  AP: "#ec4899", // Bright Rose (Andhra Pradesh)
-  KL: "#f59e0b", // Golden Amber (Kerala)
-  TN: "#10b981", // Forest Green (Tamil Nadu)
-  SK: "#f59e0b", // Amber (Sikkim)
-  AS: "#84cc16", // Lime Green (Assam)
-  AR: "#ef4444", // Red (Arunachal Pradesh)
-  NL: "#0ea5e9", // Blue (Nagaland)
-  MN: "#9333ea", // Purple (Manipur)
-  MZ: "#facc15", // Sunny Yellow (Mizoram)
-  TR: "#f43f5e", // Rose (Tripura)
-  ML: "#fb923c", // Orange (Meghalaya)
-  AN: "#0284c7", // Ocean Blue (Andaman)
-  LD: "#0284c7", // Ocean Blue (Lakshadweep)
-  CH: "#6366f1", // Indigo (Chandigarh)
-  DN: "#14b8a6", // Teal (Dadra & Nagar Haveli)
-  DD: "#f43f5e", // Rose (Daman & Diu)
-  PY: "#8b5cf6", // Violet (Puducherry)
+  JK: "#c7dcfc", // Soft Sky Blue (Jammu & Kashmir)
+  LA: "#fed7aa", // Pale Warm Peach (Ladakh)
+  HP: "#bbf7d0", // Soft Mint Green (Himachal Pradesh)
+  PB: "#fef08a", // Light Chamomile Yellow (Punjab)
+  UT: "#ddd6fe", // Soft Wisteria Lavender (Uttarakhand)
+  HR: "#cffafe", // Pale Ice Cyan (Haryana)
+  DL: "#fecdd3", // Soft Rosewater (Delhi)
+  RJ: "#fed7aa", // Warm Desert Sand (Rajasthan)
+  UP: "#bbf7d0", // Gentle Herbal Mint (Uttar Pradesh)
+  BR: "#fbcfe8", // Soft Pastel Blush (Bihar)
+  GJ: "#fde68a", // Light Golden Honey (Gujarat)
+  MP: "#e9d5ff", // Light Orchid (Madhya Pradesh)
+  JH: "#ffedd5", // Pale Apricot (Jharkhand)
+  WB: "#bae6fd", // Delicate Sky Blue (West Bengal)
+  OR: "#fed7aa", // Light Terracotta (Odisha)
+  CT: "#99f6e4", // Pale Turquoise (Chhattisgarh)
+  MH: "#fecdd3", // Soft Coral Rose (Maharashtra)
+  GA: "#fef08a", // Warm Sunlight (Goa)
+  KA: "#ddd6fe", // Soft Lavender Mist (Karnataka)
+  TG: "#d9f99d", // Light Olive Sprout (Telangana)
+  AP: "#fbcfe8", // Delicate Blossom (Andhra Pradesh)
+  KL: "#fde68a", // Pale Amber Gold (Kerala)
+  TN: "#a7f3d0", // Soft Botanical Sage (Tamil Nadu)
+  SK: "#fef08a", // Pale Primrose (Sikkim)
+  AS: "#bbf7d0", // Light Green Tea (Assam)
+  AR: "#fed7aa", // Soft Apricot (Arunachal Pradesh)
+  NL: "#bae6fd", // Light Powder Blue (Nagaland)
+  MN: "#e9d5ff", // Soft Lilac (Manipur)
+  MZ: "#fef08a", // Pale Buttercup (Mizoram)
+  TR: "#fecdd3", // Soft Petal (Tripura)
+  ML: "#fed7aa", // Light Melon (Meghalaya)
+  AN: "#bae6fd", // Pale Ocean (Andaman & Nicobar)
+  LD: "#bae6fd", // Pale Lagoon (Lakshadweep)
+  CH: "#c7d2fe", // Soft Periwinkle (Chandigarh)
+  DN: "#99f6e4", // Pale Mineral Teal (Dadra & Nagar Haveli)
+  DD: "#fecdd3", // Soft Rose (Daman & Diu)
+  PY: "#ddd6fe", // Soft Iris (Puducherry)
 };
 
 export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) {
@@ -94,9 +103,16 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
   const [hoveredState, setHoveredState] = useState<StateStat | null>(null);
   const [selectedState, setSelectedState] = useState<StateStat | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<"ALL" | "STATES" | "UTS">("ALL");
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [zoomLevel, setZoomLevel] = useState(1);
   const [viewMode, setViewMode] = useState<"multicolor" | "mint" | "density">("multicolor");
+
+  // Free 2D Pan & Scroll States
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch state statistics from backend based on scope
   useEffect(() => {
@@ -109,7 +125,7 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
           setStatesData(data.states || []);
           setSummary(data.summary || null);
           if (data.states?.length > 0) {
-            setSelectedState(data.states[0]); // default select top state
+            setSelectedState(data.states[0]);
           } else {
             setSelectedState(null);
           }
@@ -139,56 +155,148 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
     return Math.max(...statesData.map((s) => s.total));
   }, [statesData]);
 
-  // Color generator
+  // Color generator for any region
   const getStateFillColor = (code: string, isHovered: boolean, isSelected: boolean) => {
-    if (isSelected) return "#006d36"; // Deep Avira emerald for selected
-    if (isHovered) return "#10b981"; // Bright glowing emerald on hover
+    if (isSelected) return "#059669"; // Fresh botanical emerald for selected
+    if (isHovered) return "#34d399"; // Bright glowing mint on hover
 
-    // 1. Multicolor mode
+    // 1. Professional Pastel Multicolor mode
     if (viewMode === "multicolor") {
       const stat = statsByCode[code];
-      // If in member scope and state has 0 members, give subtle muted pastel
       if (scope === "member" && (!stat || stat.total === 0)) {
-        return "#e2e8f0"; // Muted clean light gray for states with no team members yet
+        return "#f1f5f9"; // Ultra-clean light slate for 0 member states
       }
-      return STATE_PALETTE[code] || "#a3d9be";
+      return STATE_PALETTE[code] || "#d1fae5";
     }
 
     // 2. Light Mint mode
     if (viewMode === "mint") {
       const stat = statsByCode[code];
       if (stat && stat.total > 0) {
-        return "#9dd6b7";
+        return "#a7f3d0";
       }
-      return "#e2e8f0";
+      return "#f1f5f9";
     }
 
     // 3. Heatmap Density Mode
     const stat = statsByCode[code];
     if (!stat || stat.total === 0) {
-      return "#f1f5f9";
+      return "#f8fafc";
     }
 
     const ratio = stat.total / maxMembers;
-    if (ratio > 0.5) return "#047857";
-    if (ratio > 0.25) return "#059669";
-    if (ratio > 0.1) return "#10b981";
-    if (ratio > 0.03) return "#34d399";
-    if (ratio > 0.01) return "#6ee7b7";
-    return "#a7f3d0";
+    if (ratio > 0.5) return "#059669";
+    if (ratio > 0.25) return "#10b981";
+    if (ratio > 0.1) return "#34d399";
+    if (ratio > 0.03) return "#6ee7b7";
+    if (ratio > 0.01) return "#a7f3d0";
+    return "#d1fae5";
   };
 
-  // Filtered state list for search
-  const filteredStates = useMemo(() => {
-    if (!searchQuery.trim()) return statesData;
-    const q = searchQuery.toLowerCase().trim();
-    return statesData.filter(
-      (st) => st.name.toLowerCase().includes(q) || st.code.toLowerCase().includes(q)
+  // Helper to retrieve or construct default stat for any region code
+  const getRegionStat = (code: string, name: string): StateStat => {
+    return (
+      statsByCode[code] || {
+        code,
+        name,
+        total: 0,
+        active: 0,
+        inactive: 0,
+        totalPv: 0,
+        percentage: 0,
+        activePercentage: 0,
+        rank: 99,
+        topCities: [],
+      }
     );
-  }, [statesData, searchQuery]);
+  };
 
-  const handleMouseMove = (e: React.MouseEvent, stateData: StateStat | null) => {
-    const rect = e.currentTarget.closest(".map-svg-container")?.getBoundingClientRect();
+  // Filtered state list for search & category tabs
+  const filteredStates = useMemo(() => {
+    let list = statesData;
+
+    if (categoryFilter === "STATES") {
+      const stateCodes = new Set(
+        ALL_INDIAN_STATES_AND_UTS.filter((r) => r.type === "STATE").map((r) => r.code)
+      );
+      list = list.filter((st) => stateCodes.has(st.code));
+    } else if (categoryFilter === "UTS") {
+      const utCodes = new Set(
+        ALL_INDIAN_STATES_AND_UTS.filter((r) => r.type === "UT").map((r) => r.code)
+      );
+      list = list.filter((st) => utCodes.has(st.code));
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(
+        (st) => st.name.toLowerCase().includes(q) || st.code.toLowerCase().includes(q)
+      );
+    }
+
+    return list;
+  }, [statesData, categoryFilter, searchQuery]);
+
+  // Mouse pan handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - panOffset.x,
+      y: e.clientY - panOffset.y,
+    });
+  };
+
+  const handleMouseMovePan = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setPanOffset({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Touch pan handlers for mobile/tablets
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      setDragStart({
+        x: e.touches[0].clientX - panOffset.x,
+        y: e.touches[0].clientY - panOffset.y,
+      });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    setPanOffset({
+      x: e.touches[0].clientX - dragStart.x,
+      y: e.touches[0].clientY - dragStart.y,
+    });
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleWheelZoom = (e: React.WheelEvent) => {
+    // Smooth mouse wheel zoom
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 0.15 : -0.15;
+    setZoomLevel((z) => Math.min(3.0, Math.max(0.7, Number((z + delta).toFixed(2)))));
+  };
+
+  const handleReset = () => {
+    setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent, stateData: StateStat) => {
+    const rect = mapContainerRef.current?.getBoundingClientRect();
     if (rect) {
       setTooltipPos({
         x: e.clientX - rect.left,
@@ -201,98 +309,108 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
   const isMember = scope === "member";
 
   return (
-    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-100 shadow-sm space-y-6">
-      {/* 1. Header & Summary Metric Badges */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-emerald-100/80">
+    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-100 shadow-sm space-y-6 font-[Arial,sans-serif]">
+      {/* 1. Header & Quick Summary */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-stone-100">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-[#006d36] text-[11px] font-black uppercase tracking-wider mb-1.5 border border-emerald-200/60">
-            {isMember ? (
-              <Network className="w-3.5 h-3.5 text-[#006d36]" />
-            ) : (
-              <Globe className="w-3.5 h-3.5 text-[#006d36]" />
-            )}
-            <span>{isMember ? "My Downline Team Distribution" : "Pan-India Live Network"}</span>
+          <div className="flex items-center gap-2">
+            <span className="p-2 rounded-xl bg-emerald-50 text-[#059669] border border-emerald-200">
+              <Globe className="w-5 h-5" />
+            </span>
+            <div>
+              <h2 className="text-xl font-bold text-stone-900 tracking-tight flex items-center gap-2">
+                <span>{isMember ? "Your National Network Territory" : "India Direct Selling Footprint"}</span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100/80 text-[#059669] font-bold">
+                  Live Geographic Sync
+                </span>
+              </h2>
+              <p className="text-xs text-stone-500 font-bold mt-0.5">
+                {isMember
+                  ? "Interactive live geographic distribution of your binary associate team across 28 States & 8 Union Territories"
+                  : "All-India associate density, pin-code registrations and statewide BV performance"}
+              </p>
+            </div>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2.5">
-            <span>{isMember ? "My Team Geographic Map" : "India Geographic Network Map"}</span>
-            <Sparkles className="w-5 h-5 text-emerald-500 fill-emerald-400" />
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            {isMember
-              ? "Real-time state-wise distribution of your downline team members across India."
-              : "Real-time live geographic state-wise associate distribution across all Indian States & UTs."}
-          </p>
         </div>
 
-        {/* Metric Badges */}
+        {/* Aggregate KPI Badges */}
         {summary && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-emerald-50/40 border border-emerald-100 p-3 rounded-2xl">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                {isMember ? "Downline Members" : "Total Associates"}
-              </span>
-              <strong className="text-base font-black text-slate-900 font-mono">
-                {summary.totalMembers.toLocaleString("en-IN")}
-              </strong>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="px-3.5 py-2 rounded-2xl bg-[#fafafc] border border-stone-200 flex items-center gap-2.5 shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-emerald-100 text-[#059669] flex items-center justify-center font-bold text-xs">
+                <Users className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase tracking-wider text-stone-400 font-bold block">
+                  Total Associates
+                </span>
+                <span className="text-sm font-bold text-stone-900">
+                  {summary.totalMembers.toLocaleString()}
+                </span>
+              </div>
             </div>
 
-            <div className="bg-emerald-50/80 border border-emerald-200/70 p-3 rounded-2xl">
-              <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">
-                Active (100+ PV)
-              </span>
-              <strong className="text-base font-black text-[#006d36] font-mono">
-                {summary.activeMembers.toLocaleString("en-IN")}
-              </strong>
+            <div className="px-3.5 py-2 rounded-2xl bg-[#fafafc] border border-stone-200 flex items-center gap-2.5 shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">
+                <MapPin className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase tracking-wider text-stone-400 font-bold block">
+                  Active States
+                </span>
+                <span className="text-sm font-bold text-stone-900">
+                  {summary.totalStatesCount} / 36
+                </span>
+              </div>
             </div>
 
-            <div className="bg-teal-50/60 border border-teal-200/60 p-3 rounded-2xl">
-              <span className="text-[10px] font-bold text-teal-700 uppercase tracking-wider block">
-                States Reached
-              </span>
-              <strong className="text-base font-black text-teal-900 font-mono">
-                {summary.totalStatesCount} States
-              </strong>
-            </div>
-
-            <div className="bg-emerald-100/60 border border-emerald-300/70 p-3 rounded-2xl">
-              <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
-                {isMember ? "Top Team State" : "Top State (#1)"}
-              </span>
-              <strong className="text-xs font-black text-emerald-950 truncate block">
-                {summary.topState ? `${summary.topState.name} (${summary.topState.total})` : "—"}
-              </strong>
-            </div>
+            {summary.topState && (
+              <div className="px-3.5 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center gap-2.5 shadow-2xs">
+                <div className="w-8 h-8 rounded-xl bg-[#059669] text-white flex items-center justify-center font-bold text-xs">
+                  <Award className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-emerald-800 font-bold block">
+                    Top Region
+                  </span>
+                  <span className="text-sm font-bold text-[#059669]">
+                    {summary.topState.name} ({summary.topState.total})
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* 2. Main Visual Grid: SVG Interactive Map (Left) + States Leaderboard (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* LEFT COLUMN: AUTHENTIC SVG MAP */}
-        <div className="lg:col-span-7 bg-gradient-to-b from-[#f9fcfb] via-[#ffffff] to-[#f4f9f6] rounded-3xl p-4 sm:p-6 border border-emerald-100/80 relative overflow-hidden flex flex-col items-center shadow-inner">
-          {/* Top Controls: Mode Switcher & Zoom */}
-          <div className="w-full flex items-center justify-between gap-2 mb-2 z-20">
-            {/* View Mode Switcher */}
-            <div className="flex items-center gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-xl border border-emerald-200/80 shadow-2xs text-[11px] font-bold">
+      {/* 2. Main Visual Canvas + Sidebar Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* LEFT / CENTER: Interactive Vector Map with Free Pan & Scroll */}
+        <div className="lg:col-span-7 xl:col-span-8 bg-[#fafafc] rounded-3xl p-4 sm:p-6 border border-stone-200 flex flex-col items-center justify-center relative overflow-hidden shadow-inner min-h-[580px]">
+          
+          {/* Subtle Map Controls Strip */}
+          <div className="w-full flex flex-wrap items-center justify-between gap-2 mb-3 z-20">
+            {/* View Style Switcher */}
+            <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-stone-200 shadow-2xs text-xs font-bold">
               <button
                 type="button"
                 onClick={() => setViewMode("multicolor")}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                   viewMode === "multicolor"
-                    ? "bg-[#006d36] text-white shadow-xs"
-                    : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-800"
+                    ? "bg-[#059669] text-white shadow-xs"
+                    : "text-stone-600 hover:bg-emerald-50 hover:text-[#059669]"
                 }`}
               >
-                <Palette className="w-3 h-3" />
-                <span>State Colors</span>
+                Light Colors
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode("mint")}
                 className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                   viewMode === "mint"
-                    ? "bg-[#006d36] text-white shadow-xs"
-                    : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-800"
+                    ? "bg-[#059669] text-white shadow-xs"
+                    : "text-stone-600 hover:bg-emerald-50 hover:text-[#059669]"
                 }`}
               >
                 Mint Theme
@@ -302,177 +420,280 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
                 onClick={() => setViewMode("density")}
                 className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                   viewMode === "density"
-                    ? "bg-[#006d36] text-white shadow-xs"
-                    : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-800"
+                    ? "bg-[#059669] text-white shadow-xs"
+                    : "text-stone-600 hover:bg-emerald-50 hover:text-[#059669]"
                 }`}
               >
                 Heatmap
               </button>
             </div>
 
-            {/* Zoom Controls */}
-            <div className="flex items-center gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-xl border border-emerald-200/80 shadow-2xs">
+            {/* Free Pan Drag & Zoom Controls */}
+            <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-stone-200 shadow-2xs">
               <button
                 type="button"
-                onClick={() => setZoomLevel((z) => Math.min(1.5, z + 0.12))}
-                className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-600 hover:text-emerald-800 cursor-pointer transition-colors"
-                title="Zoom In"
+                onClick={() => setZoomLevel((z) => Math.min(3.0, z + 0.25))}
+                className="p-1.5 rounded-lg hover:bg-emerald-50 text-stone-600 hover:text-[#059669] cursor-pointer transition-colors"
+                title="Zoom In (or use mouse wheel)"
               >
                 <ZoomIn className="w-4 h-4" />
               </button>
               <button
                 type="button"
-                onClick={() => setZoomLevel((z) => Math.max(0.85, z - 0.12))}
-                className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-600 hover:text-emerald-800 cursor-pointer transition-colors"
-                title="Zoom Out"
+                onClick={() => setZoomLevel((z) => Math.max(0.7, z - 0.25))}
+                className="p-1.5 rounded-lg hover:bg-emerald-50 text-stone-600 hover:text-[#059669] cursor-pointer transition-colors"
+                title="Zoom Out (or use mouse wheel)"
               >
                 <ZoomOut className="w-4 h-4" />
               </button>
               <button
                 type="button"
-                onClick={() => setZoomLevel(1)}
-                className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-600 hover:text-emerald-800 cursor-pointer transition-colors"
-                title="Reset Zoom"
+                onClick={handleReset}
+                className="p-1.5 rounded-lg hover:bg-emerald-50 text-stone-600 hover:text-[#059669] cursor-pointer transition-colors text-xs font-bold px-2 flex items-center gap-1"
+                title="Reset Zoom & Pan"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset ({Math.round(zoomLevel * 100)}%)</span>
               </button>
             </div>
           </div>
 
-          {/* SVG Map Container */}
-          <div
-            className="map-svg-container relative w-full aspect-[612/696] max-w-[560px] flex items-center justify-center transition-transform duration-300 select-none py-2"
-            style={{ transform: `scale(${zoomLevel})` }}
-          >
-            <svg
-              viewBox={INDIA_MAP_VIEWBOX}
-              className="w-full h-full filter drop-shadow-md"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs>
-                <filter id="state-glow" x="-15%" y="-15%" width="130%" height="130%">
-                  <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#006d36" floodOpacity="0.3" />
-                </filter>
-              </defs>
-
-              {/* State Paths */}
-              {INDIA_MAP_PATHS.map((statePath: StatePathData) => {
-                const stat = statsByCode[statePath.code] || {
-                  code: statePath.code,
-                  name: statePath.name,
-                  total: 0,
-                  active: 0,
-                  inactive: 0,
-                  totalPv: 0,
-                  percentage: 0,
-                  activePercentage: 0,
-                  rank: 99,
-                  topCities: [],
-                };
-                const isHovered = hoveredState?.code === statePath.code;
-                const isSelected = selectedState?.code === statePath.code;
-                const fillColor = getStateFillColor(statePath.code, isHovered, isSelected);
-
+          {/* Quick Spotlight & Magnification for Small States & UTs */}
+          <div className="w-full bg-emerald-50/70 border border-emerald-200/70 rounded-2xl p-2.5 mb-2 z-10 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
+                <Compass className="w-3.5 h-3.5 text-[#059669]" />
+                <span>Small States &amp; UTs Spotlight (1-Click Focus):</span>
+              </span>
+              <span className="text-[9px] font-bold text-emerald-700">
+                Click any tag to focus territory
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5 max-h-[68px] overflow-y-auto pr-1">
+              {SMALL_STATES_AND_UTS.map((sm) => {
+                const stat = getRegionStat(sm.code, sm.fullName);
+                const isSelected = selectedState?.code === sm.code;
+                const stateColor = STATE_PALETTE[sm.code] || "#059669";
                 return (
-                  <g key={statePath.code} className="cursor-pointer group">
-                    <path
-                      d={statePath.d}
-                      id={`state-${statePath.code}`}
-                      fill={fillColor}
-                      stroke="#ffffff"
-                      strokeWidth={isSelected ? "2.2" : isHovered ? "1.8" : "1.2"}
-                      strokeLinejoin="round"
-                      strokeLinecap="round"
-                      filter={isSelected || isHovered ? "url(#state-glow)" : undefined}
-                      className="transition-all duration-200 hover:brightness-110 active:scale-[0.99]"
+                  <button
+                    key={sm.code}
+                    type="button"
+                    onClick={() => {
+                      setSelectedState(stat);
+                      if (zoomLevel < 1.3) setZoomLevel(1.35);
+                    }}
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer border ${
+                      isSelected
+                        ? "bg-[#059669] text-white border-[#059669] shadow-xs scale-105"
+                        : "bg-white text-stone-700 border-emerald-200/80 hover:bg-emerald-100/60"
+                    }`}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0 border border-stone-300"
+                      style={{ backgroundColor: stateColor }}
+                    />
+                    <span>{sm.name}</span>
+                    <span
+                      className={`text-[9px] font-bold px-1 rounded-sm ${
+                        isSelected ? "bg-white/20 text-white" : "bg-emerald-50 text-emerald-800"
+                      }`}
+                    >
+                      {stat.total}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Drag & Pan Hint */}
+          <div className="w-full flex items-center justify-between text-[10px] text-stone-400 font-bold px-2 py-0.5 z-10 pointer-events-none">
+            <span className="flex items-center gap-1">
+              <Move className="w-3 h-3 text-[#059669]" />
+              <span>Drag / Scroll anywhere to pan map freely in all directions</span>
+            </span>
+            <span>Zoom: {Math.round(zoomLevel * 100)}%</span>
+          </div>
+
+          {/* SVG Map Container with Smooth Free 2D Drag & Pan */}
+          <div
+            ref={mapContainerRef}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMovePan}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onWheel={handleWheelZoom}
+            className={`map-svg-container relative w-full aspect-[612/696] max-w-[560px] flex items-center justify-center select-none py-2 overflow-hidden ${
+              isDragging ? "cursor-grabbing" : "cursor-grab"
+            }`}
+          >
+            <div
+              className="w-full h-full flex items-center justify-center transition-transform duration-75 ease-out"
+              style={{
+                transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})`,
+                transformOrigin: "center center",
+              }}
+            >
+              <svg
+                viewBox={INDIA_MAP_VIEWBOX}
+                className="w-full h-full filter drop-shadow-sm"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <defs>
+                  <filter id="state-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#059669" floodOpacity="0.35" />
+                  </filter>
+                  <filter id="pin-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#000000" floodOpacity="0.2" />
+                  </filter>
+                </defs>
+
+                {/* 1. Base State Vector Polygons */}
+                {INDIA_MAP_PATHS.map((statePath: StatePathData) => {
+                  const stat = getRegionStat(statePath.code, statePath.name);
+                  const isHovered = hoveredState?.code === statePath.code;
+                  const isSelected = selectedState?.code === statePath.code;
+                  const fillColor = getStateFillColor(statePath.code, isHovered, isSelected);
+
+                  return (
+                    <g key={statePath.code} className="cursor-pointer group">
+                      <path
+                        d={statePath.d}
+                        id={`state-${statePath.code}`}
+                        fill={fillColor}
+                        stroke="#ffffff"
+                        strokeWidth={isSelected ? "2.4" : isHovered ? "2.0" : "1.2"}
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
+                        filter={isSelected || isHovered ? "url(#state-glow)" : undefined}
+                        className="transition-colors duration-150 hover:brightness-105"
+                        onMouseEnter={(e) => handleMouseMove(e, stat)}
+                        onMouseMove={(e) => handleMouseMove(e, stat)}
+                        onMouseLeave={() => setHoveredState(null)}
+                        onClick={() => setSelectedState(stat)}
+                      />
+
+                      {/* Standard Region Label Text */}
+                      {statePath.labelPos && !statePath.isSmallState && (
+                        <text
+                          x={statePath.labelPos.x}
+                          y={statePath.labelPos.y}
+                          textAnchor="middle"
+                          fontSize={statePath.labelPos.fontSize || "11"}
+                          fontWeight="bold"
+                          fill="#1e293b"
+                          stroke="#ffffff"
+                          strokeWidth="0.8"
+                          paintOrder="stroke"
+                          pointerEvents="none"
+                          className="select-none font-sans"
+                        >
+                          {statePath.code}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
+
+                {/* 2. Interactive Hotspot Markers for Small States & UTs */}
+                {INDIA_MAP_PATHS.filter((p) => p.isSmallState && p.hotspotPos).map((statePath) => {
+                  const stat = getRegionStat(statePath.code, statePath.name);
+                  const isHovered = hoveredState?.code === statePath.code;
+                  const isSelected = selectedState?.code === statePath.code;
+                  const stateColor = STATE_PALETTE[statePath.code] || "#059669";
+                  const hx = statePath.hotspotPos!.x;
+                  const hy = statePath.hotspotPos!.y;
+
+                  return (
+                    <g
+                      key={`hotspot-${statePath.code}`}
+                      className="cursor-pointer group select-none"
                       onMouseEnter={(e) => handleMouseMove(e, stat)}
                       onMouseMove={(e) => handleMouseMove(e, stat)}
                       onMouseLeave={() => setHoveredState(null)}
                       onClick={() => setSelectedState(stat)}
-                    />
+                    >
+                      {/* Outer Beacon Ring */}
+                      <circle
+                        cx={hx}
+                        cy={hy}
+                        r={isSelected ? "14" : isHovered ? "12" : "9"}
+                        fill={isSelected ? "#059669" : stateColor}
+                        fillOpacity={isSelected ? "0.35" : "0.25"}
+                        className="animate-pulse"
+                      />
 
-                    {/* State Text Label Abbreviation */}
-                    {statePath.labelPos && (
+                      {/* Core Pin Disc */}
+                      <circle
+                        cx={hx}
+                        cy={hy}
+                        r={isSelected ? "7" : "5.5"}
+                        fill={isSelected ? "#059669" : stateColor}
+                        stroke="#ffffff"
+                        strokeWidth="1.8"
+                        filter="url(#pin-shadow)"
+                      />
+
+                      {/* Code Tag Label Pill */}
+                      <rect
+                        x={hx + 8}
+                        y={hy - 8}
+                        width="24"
+                        height="15"
+                        rx="4"
+                        fill={isSelected ? "#059669" : "#ffffff"}
+                        stroke={isSelected ? "#059669" : "#cbd5e1"}
+                        strokeWidth="1"
+                        filter="url(#pin-shadow)"
+                      />
                       <text
-                        x={statePath.labelPos.x}
-                        y={statePath.labelPos.y}
+                        x={hx + 20}
+                        y={hy + 2.5}
                         textAnchor="middle"
-                        fontSize={statePath.labelPos.fontSize || "11"}
-                        fontWeight="900"
-                        fill="#ffffff"
-                        stroke="#000000"
-                        strokeWidth="0.5"
-                        paintOrder="stroke"
+                        fontSize="9.5"
+                        fontWeight="bold"
+                        fill={isSelected ? "#ffffff" : "#1e293b"}
                         pointerEvents="none"
-                        className="select-none font-sans drop-shadow-xs"
                       >
                         {statePath.code}
                       </text>
-                    )}
-                  </g>
-                );
-              })}
-            </svg>
-
-            {/* Watermark Typography */}
-            <div className="absolute bottom-4 right-4 pointer-events-none text-right select-none space-y-0.5">
-              <div className="font-serif text-base tracking-[0.35em] text-[#006d36]/40 font-bold uppercase">
-                INDIA
-              </div>
-              <div className="text-[9px] font-sans tracking-widest text-[#006d36]/30 uppercase font-medium">
-                {isMember ? "DOWNLINE NETWORK MAP" : "ASSOCIATE NETWORK MAP"}
-              </div>
-              <div className="inline-block px-2 py-0.5 rounded-full bg-[#006d36]/10 text-[8px] font-mono text-[#006d36]/50 uppercase font-bold tracking-wider mt-0.5">
-                GIS VECTOR
-              </div>
+                    </g>
+                  );
+                })}
+              </svg>
             </div>
 
-            {/* Interactive Floating Tooltip */}
+            {/* Hover Tooltip Overlay */}
             {hoveredState && (
               <div
-                className="absolute pointer-events-none z-30 bg-slate-950/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl border border-emerald-500/40 min-w-[220px] animate-fadeIn text-xs space-y-2 -translate-x-1/2 -translate-y-full mb-4"
+                className="absolute pointer-events-none z-30 bg-stone-900/90 text-white text-xs rounded-xl p-3 shadow-xl backdrop-blur-xs border border-white/20 space-y-1 animate-in fade-in zoom-in-95"
                 style={{
-                  left: `${tooltipPos.x}px`,
-                  top: `${tooltipPos.y}px`,
+                  left: Math.min(Math.max(tooltipPos.x + 15, 10), 380),
+                  top: Math.min(Math.max(tooltipPos.y - 45, 10), 480),
                 }}
               >
-                <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-2">
-                  <div className="flex items-center gap-1.5 font-black text-sm text-emerald-400">
-                    <MapPin className="w-4 h-4" />
-                    <span>{hoveredState.name}</span>
-                  </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    {hoveredState.code}
-                  </span>
+                <div className="font-bold flex items-center gap-1.5 text-sm border-b border-white/15 pb-1">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full inline-block border border-white"
+                    style={{ backgroundColor: STATE_PALETTE[hoveredState.code] || "#10b981" }}
+                  />
+                  <span>{hoveredState.name} ({hoveredState.code})</span>
                 </div>
-
-                <div className="space-y-1.5 text-[11px]">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">
-                      {isMember ? "Downline Members:" : "Total Associates:"}
-                    </span>
-                    <strong className="font-mono text-white text-sm font-black">
-                      {hoveredState.total.toLocaleString("en-IN")}
-                    </strong>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Active (100+ PV):</span>
-                    <strong className="font-mono text-emerald-400 font-bold">
-                      {hoveredState.active.toLocaleString("en-IN")} ({hoveredState.activePercentage}%)
-                    </strong>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">{isMember ? "Team Share:" : "National Share:"}</span>
-                    <strong className="font-mono text-amber-300 font-bold">
-                      {hoveredState.percentage}%
-                    </strong>
-                  </div>
+                <div className="flex items-center justify-between gap-4 text-[11px] font-bold">
+                  <span className="text-stone-300">Total Associates:</span>
+                  <span className="font-mono text-emerald-400 font-bold">{hoveredState.total}</span>
                 </div>
-
-                {hoveredState.total > 0 && hoveredState.rank <= 5 && (
-                  <div className="pt-1.5 border-t border-slate-800 text-[10px] text-amber-400 font-bold flex items-center gap-1">
-                    <Award className="w-3.5 h-3.5" />
-                    <span>Rank #{hoveredState.rank} {isMember ? "in Your Team" : "in India"}</span>
+                <div className="flex items-center justify-between gap-4 text-[11px] font-bold">
+                  <span className="text-stone-300">Active (PV &gt; 0):</span>
+                  <span className="font-mono text-emerald-300">{hoveredState.active} ({hoveredState.activePercentage}%)</span>
+                </div>
+                {hoveredState.totalPv > 0 && (
+                  <div className="flex items-center justify-between gap-4 text-[11px] font-bold">
+                    <span className="text-stone-300">Volume (PV):</span>
+                    <span className="font-mono text-amber-300">{hoveredState.totalPv.toLocaleString()} PV</span>
                   </div>
                 )}
               </div>
@@ -480,209 +701,203 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
           </div>
         </div>
 
-        {/* RIGHT COLUMN: STATE DETAILS & LEADERBOARD */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* Selected State Card */}
-          {selectedState && selectedState.total > 0 ? (
-            <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-[#006d36] via-[#055c30] to-[#014723] text-white shadow-xl space-y-5 border border-emerald-400/30">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-white border border-white/30 shadow-md font-mono font-black text-base"
-                    style={{
-                      backgroundColor: STATE_PALETTE[selectedState.code] || "#059669",
-                    }}
-                  >
-                    {selectedState.code}
-                  </div>
-                  <div>
-                    <h3 className="font-black text-lg sm:text-xl">{selectedState.name}</h3>
-                    <span className="text-xs text-emerald-200 font-mono">
-                      State Code: {selectedState.code} • {isMember ? "Team Rank" : "National Rank"} #{selectedState.rank}
+        {/* RIGHT: Detailed State Inspector & Territorial Breakdown */}
+        <div className="lg:col-span-5 xl:col-span-4 space-y-4">
+          
+          {/* Selected State Spotlight Card */}
+          {selectedState ? (
+            <div className="bg-gradient-to-br from-emerald-50 via-white to-[#fafafc] rounded-3xl p-5 border-2 border-emerald-200 shadow-sm space-y-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-[#059669] uppercase tracking-wider block">
+                    Selected Region Inspector
+                  </span>
+                  <h3 className="text-lg font-bold text-stone-900 flex items-center gap-2 mt-0.5">
+                    <span>{selectedState.name}</span>
+                    <span className="text-xs px-2 py-0.5 bg-[#059669] text-white rounded-md font-bold">
+                      {selectedState.code}
                     </span>
-                  </div>
+                  </h3>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-emerald-400 text-gray-950 font-black text-xs shadow-xs">
-                  {selectedState.percentage}% Share
-                </span>
+                <div className="text-right">
+                  <span className="text-[10px] text-stone-400 uppercase tracking-wider block font-bold">
+                    Territory Rank
+                  </span>
+                  <span className="text-base font-bold text-[#059669]">
+                    #{selectedState.rank || "--"}
+                  </span>
+                </div>
               </div>
 
-              {/* Stat Boxes */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3.5 bg-white/10 rounded-2xl border border-white/10">
-                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">
-                    {isMember ? "Downline Members" : "Total Associates"}
+              {/* KPI Grid */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="bg-white p-3 rounded-2xl border border-stone-200 shadow-2xs">
+                  <span className="text-[10px] text-stone-400 font-bold uppercase block">
+                    Team Members
                   </span>
-                  <strong className="text-2xl font-black font-mono text-white">
-                    {selectedState.total.toLocaleString("en-IN")}
-                  </strong>
-                  <span className="text-[10px] text-emerald-300/80 block mt-0.5">
-                    {selectedState.percentage}% of your network
+                  <span className="text-xl font-bold text-stone-900 block mt-0.5">
+                    {selectedState.total.toLocaleString()}
+                  </span>
+                  <span className="text-[10px] text-stone-500 font-bold">
+                    {selectedState.percentage}% of national base
                   </span>
                 </div>
 
-                <div className="p-3.5 bg-white/10 rounded-2xl border border-white/10">
-                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">
-                    Active (100+ PV)
+                <div className="bg-white p-3 rounded-2xl border border-stone-200 shadow-2xs">
+                  <span className="text-[10px] text-stone-400 font-bold uppercase block">
+                    Active (PV &gt; 0)
                   </span>
-                  <strong className="text-2xl font-black font-mono text-emerald-300">
-                    {selectedState.active.toLocaleString("en-IN")}
-                  </strong>
-                  <span className="text-[10px] text-emerald-300/80 block mt-0.5">
+                  <span className="text-xl font-bold text-emerald-700 block mt-0.5">
+                    {selectedState.active.toLocaleString()}
+                  </span>
+                  <span className="text-[10px] text-emerald-700 font-bold">
                     {selectedState.activePercentage}% active ratio
                   </span>
                 </div>
               </div>
 
-              {/* Top Cities in this State */}
-              {selectedState.topCities && selectedState.topCities.length > 0 && (
-                <div className="p-3.5 bg-white/10 rounded-2xl border border-white/10 space-y-2">
-                  <span className="text-[10px] text-emerald-200 uppercase font-bold flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-emerald-300" />
-                    <span>Top Hubs / Districts in {selectedState.name}:</span>
+              {/* Top Cities in Selected State */}
+              <div className="bg-white p-3.5 rounded-2xl border border-stone-200 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-stone-900">
+                  <span className="flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-[#059669]" />
+                    <span>Top Hubs &amp; Cities</span>
                   </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedState.topCities.map((ct) => (
+                  <span className="text-[10px] text-stone-400 font-bold">Pin-code Distribution</span>
+                </div>
+                {selectedState.topCities && selectedState.topCities.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {selectedState.topCities.map((ct, idx) => (
                       <span
-                        key={ct.city}
-                        className="px-2.5 py-1 rounded-xl bg-white/15 text-[11px] font-bold font-mono text-white flex items-center gap-1"
+                        key={idx}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-900 rounded-lg text-xs font-bold border border-emerald-200/80"
                       >
                         <span>{ct.city}</span>
-                        <span className="text-emerald-300 font-normal">({ct.count})</span>
+                        <span className="text-[10px] font-bold text-[#059669] bg-white px-1.5 py-0.2 rounded-sm border border-emerald-200">
+                          {ct.count}
+                        </span>
                       </span>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {/* Progress Bar for Active vs Inactive */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-xs text-emerald-200">
-                  <span>Network Health</span>
-                  <span>
-                    {selectedState.active} Active • {selectedState.inactive} Inactive
-                  </span>
-                </div>
-                <div className="h-2.5 rounded-full bg-white/20 overflow-hidden flex">
-                  <div
-                    className="bg-emerald-400 h-full transition-all duration-500"
-                    style={{ width: `${selectedState.activePercentage || 0}%` }}
-                  />
-                  <div
-                    className="bg-rose-400/80 h-full transition-all duration-500"
-                    style={{ width: `${100 - (selectedState.activePercentage || 0)}%` }}
-                  />
-                </div>
+                ) : (
+                  <p className="text-xs text-stone-400 italic py-1 font-bold">
+                    No city distribution recorded yet for this state.
+                  </p>
+                )}
               </div>
             </div>
           ) : (
-            <div className="p-6 rounded-3xl bg-emerald-50/50 border border-emerald-100 text-center text-emerald-800 text-xs">
-              {isMember && statesData.length === 0
-                ? "No downline members in your team yet. Your team's geographic distribution will appear here as your network expands!"
-                : "Click on any active state in the map to inspect team metrics."}
+            <div className="bg-[#fafafc] rounded-3xl p-6 border border-stone-200 text-center space-y-2">
+              <Compass className="w-8 h-8 mx-auto text-stone-400 animate-spin" />
+              <h4 className="text-sm font-bold text-stone-800">Select any state on the map</h4>
+              <p className="text-xs text-stone-500 font-bold">
+                Click any region or hotspot on the India map to inspect city clusters and member counts.
+              </p>
             </div>
           )}
 
-          {/* State Leaderboard with Search */}
-          <div className="bg-[#fcfdfd] rounded-3xl p-5 border border-emerald-100 space-y-4">
+          {/* Statewide Search & Leaderboard */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200 space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-emerald-600" />
-                <span>{isMember ? "Team States Leaderboard" : "State Rankings Leaderboard"}</span>
+              <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-[#059669]" />
+                <span>State Rankings ({filteredStates.length})</span>
               </h4>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                {filteredStates.length} Active States
-              </span>
+
+              {/* Category Filter Tabs */}
+              <div className="flex items-center gap-1 bg-[#fafafc] p-0.5 rounded-lg border border-stone-200 text-[10px] font-bold">
+                <button
+                  type="button"
+                  onClick={() => setCategoryFilter("ALL")}
+                  className={`px-2 py-0.5 rounded cursor-pointer ${
+                    categoryFilter === "ALL"
+                      ? "bg-[#059669] text-white shadow-2xs"
+                      : "text-stone-600 hover:text-[#059669]"
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCategoryFilter("STATES")}
+                  className={`px-2 py-0.5 rounded cursor-pointer ${
+                    categoryFilter === "STATES"
+                      ? "bg-[#059669] text-white shadow-2xs"
+                      : "text-stone-600 hover:text-[#059669]"
+                  }`}
+                >
+                  28 States
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCategoryFilter("UTS")}
+                  className={`px-2 py-0.5 rounded cursor-pointer ${
+                    categoryFilter === "UTS"
+                      ? "bg-[#059669] text-white shadow-2xs"
+                      : "text-stone-600 hover:text-[#059669]"
+                  }`}
+                >
+                  8 UTs
+                </button>
+              </div>
             </div>
 
-            {/* Search Box */}
+            {/* Search Input */}
             <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search State (e.g. Gujarat, Maharashtra, UP)..."
+                placeholder="Search state name or code..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white border border-emerald-100 text-xs text-slate-900 outline-hidden focus:border-[#006d36] focus:ring-1 focus:ring-[#006d36] shadow-2xs"
+                className="w-full pl-8 pr-3 py-2 bg-[#fafafc] border border-stone-200 rounded-xl text-xs font-bold text-stone-900 placeholder-stone-400 outline-none focus:bg-white focus:border-[#059669]"
               />
             </div>
 
             {/* Scrollable State List */}
-            {filteredStates.length > 0 ? (
-              <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-                {filteredStates.map((st) => {
-                  const isSelected = selectedState?.code === st.code;
-                  const stateColor = STATE_PALETTE[st.code] || "#059669";
-                  return (
-                    <div
-                      key={st.code}
-                      onClick={() => setSelectedState(st)}
-                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                        isSelected
-                          ? "bg-[#006d36] text-white border-[#006d36] shadow-md scale-[1.01]"
-                          : "bg-white text-slate-800 border-emerald-100/70 hover:border-emerald-300 hover:bg-emerald-50/40"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {/* Color indicator pip */}
-                        <span
-                          className="w-3.5 h-3.5 rounded-full shrink-0 border border-white shadow-xs"
-                          style={{ backgroundColor: stateColor }}
-                          title={st.name}
-                        />
-
-                        <span
-                          className={`w-6 h-6 rounded-lg text-[10px] font-mono font-black flex items-center justify-center shrink-0 ${
-                            isSelected
-                              ? "bg-white/20 text-white"
-                              : st.rank === 1
-                              ? "bg-amber-100 text-amber-800"
-                              : st.rank === 2
-                              ? "bg-slate-200 text-slate-800"
-                              : st.rank === 3
-                              ? "bg-orange-100 text-orange-800"
-                              : "bg-emerald-50 text-emerald-800"
-                          }`}
-                        >
-                          {st.rank}
-                        </span>
-                        <div className="truncate">
-                          <strong className="block text-xs truncate">{st.name}</strong>
-                          <span
-                            className={`text-[10px] font-mono ${
-                              isSelected ? "text-emerald-100" : "text-slate-400"
-                            }`}
-                          >
-                            {st.active} Active (100+ PV)
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="text-right shrink-0">
-                        <strong className="font-mono text-xs block">
-                          {st.total.toLocaleString("en-IN")}
-                        </strong>
-                        <span
-                          className={`text-[10px] font-mono ${
-                            isSelected ? "text-emerald-200" : "text-[#006d36] font-bold"
-                          }`}
-                        >
-                          {st.percentage}%
-                        </span>
-                      </div>
+            <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1">
+              {filteredStates.map((st, idx) => {
+                const isSelected = selectedState?.code === st.code;
+                const stateColor = STATE_PALETTE[st.code] || "#059669";
+                return (
+                  <div
+                    key={st.code}
+                    onClick={() => setSelectedState(st)}
+                    className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-emerald-50/90 border-[#059669] shadow-2xs"
+                        : "bg-[#fafafc] border-stone-100 hover:bg-stone-100/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0 border border-stone-300"
+                        style={{ backgroundColor: stateColor }}
+                      />
+                      <span className="text-xs font-bold text-stone-900 truncate">
+                        {st.name}
+                      </span>
+                      <span className="text-[10px] font-bold text-stone-400">
+                        {st.code}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="p-4 text-center text-xs text-slate-400 bg-white rounded-2xl border border-slate-100">
-                {isMember
-                  ? "No downline members enrolled in this state yet."
-                  : "No states matching your search."}
-              </div>
-            )}
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs font-bold text-stone-900">
+                        {st.total}
+                      </span>
+                      <span className="text-[10px] text-stone-400 font-bold w-10 text-right">
+                        {st.percentage}%
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
+
         </div>
+
       </div>
     </div>
   );

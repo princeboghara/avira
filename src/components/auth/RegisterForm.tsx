@@ -15,7 +15,6 @@ import {
   X,
   Phone,
   User as UserIcon,
-  Leaf,
   BadgeCheck,
   Network,
   MapPin,
@@ -32,11 +31,11 @@ export default function RegisterForm() {
   const isSponsorLocked = Boolean(urlSponsor);
   const isPositionLocked = Boolean(urlPos);
 
-  // 1. Sponsor Details (Top Field)
-  const [sponsorId, setSponsorId] = useState(urlSponsor ? urlSponsor.toUpperCase() : "AV0001");
-  const [sponsorName, setSponsorName] = useState("Avira Lifecare Global Private Limited");
+  // 1. Sponsor Details (Blank by default)
+  const [sponsorId, setSponsorId] = useState(urlSponsor ? urlSponsor.toUpperCase() : "");
+  const [sponsorName, setSponsorName] = useState("");
   const [isVerifyingSponsor, setIsVerifyingSponsor] = useState(false);
-  const [sponsorVerified, setSponsorVerified] = useState(true);
+  const [sponsorVerified, setSponsorVerified] = useState(false);
 
   // 2. Associate Details
   const [firstName, setFirstName] = useState("");
@@ -57,7 +56,6 @@ export default function RegisterForm() {
 
   // 5. Password & Terms
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(true);
 
@@ -65,7 +63,7 @@ export default function RegisterForm() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Compact Success Modal State with Credentials
+  // 3D Registration Success Modal State
   const [registeredMember, setRegisteredMember] = useState<{
     memberId: string;
     fullName: string;
@@ -75,7 +73,7 @@ export default function RegisterForm() {
   // 1. Live Sponsor ID Verification Debounced
   useEffect(() => {
     const cleanId = sponsorId.trim().toUpperCase();
-    if (!cleanId || cleanId.length < 4) {
+    if (!cleanId || cleanId.length < 3) {
       const resetTimer = setTimeout(() => {
         setSponsorVerified(false);
         setSponsorName("");
@@ -102,48 +100,41 @@ export default function RegisterForm() {
       } finally {
         setIsVerifyingSponsor(false);
       }
-    }, 350);
+    }, 250);
 
     return () => clearTimeout(timer);
   }, [sponsorId]);
 
-  // 2. Auto-fetch Pincode City & State on 6 digits - DISAPPEARS ON BACKSPACE
+  // 2. Immediate Fast Pincode City & State on 6 digits
   useEffect(() => {
     const cleanPincode = pincode.trim().replace(/\D/g, "");
     if (cleanPincode.length === 6) {
-      const fetchTimer = setTimeout(() => {
-        setIsFetchingPincode(true);
-        fetch(`/api/pincode/${cleanPincode}`)
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.success && data.city && data.state) {
-              setCity(data.city);
-              setStateName(data.state);
-              setPincodeAutofilled(true);
-            } else {
-              setCity("");
-              setStateName("");
-              setPincodeAutofilled(false);
-            }
-          })
-          .catch(() => {
+      setIsFetchingPincode(true);
+      fetch(`/api/pincode/${cleanPincode}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.city && data.state) {
+            setCity(data.city);
+            setStateName(data.state);
+            setPincodeAutofilled(true);
+          } else {
             setCity("");
             setStateName("");
             setPincodeAutofilled(false);
-          })
-          .finally(() => {
-            setIsFetchingPincode(false);
-          });
-      }, 0);
-      return () => clearTimeout(fetchTimer);
+          }
+        })
+        .catch(() => {
+          setCity("");
+          setStateName("");
+          setPincodeAutofilled(false);
+        })
+        .finally(() => {
+          setIsFetchingPincode(false);
+        });
     } else {
-      // If pincode is erased or less than 6 digits: IMMEDIATELY REMOVE CITY & STATE
-      const clearTimer = setTimeout(() => {
-        setCity("");
-        setStateName("");
-        setPincodeAutofilled(false);
-      }, 0);
-      return () => clearTimeout(clearTimer);
+      setCity("");
+      setStateName("");
+      setPincodeAutofilled(false);
     }
   }, [pincode]);
 
@@ -153,10 +144,10 @@ export default function RegisterForm() {
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ["#50c878", "#006d36", "#ffffff", "#83fba5"],
+        colors: ["#1b3b32", "#059669", "#ffffff", "#34d399"],
       });
     } catch {
-      // Confetti fallback
+      // Fallback
     }
   };
 
@@ -170,18 +161,17 @@ export default function RegisterForm() {
     }
 
     if (!firstName.trim()) {
-      setErrorMessage("Please enter your Name");
+      setErrorMessage("Please enter your First Name");
       return;
     }
 
-    // 10-digit mobile check (any duplicate is allowed!)
-    if (!/^\d{10}$/.test(mobile.trim())) {
-      setErrorMessage("Please enter a valid 10-digit mobile number");
+    if (mobile.trim().length !== 10) {
+      setErrorMessage("Please enter a 10-digit mobile number");
       return;
     }
 
     if (pincode.trim().length !== 6 || !city.trim() || !stateName.trim()) {
-      setErrorMessage("Please enter a valid 6-digit Pincode to auto-detect City and State");
+      setErrorMessage("Please enter a valid 6-digit Pincode");
       return;
     }
 
@@ -240,295 +230,275 @@ export default function RegisterForm() {
   };
 
   return (
-    <>
-      <div className="w-full max-w-xl mx-auto bg-white rounded-3xl p-6 sm:p-8 lg:p-10 border border-[#e2e2e2] neo-shadow relative">
-        {/* Header */}
-        <div className="text-center mb-6 flex flex-col items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/images/avira-logo.png"
-            alt="Avira Lifecare Global Private Limited"
-            className="h-16 w-auto object-contain mb-3"
-          />
-          <h2 className="text-xl sm:text-2xl font-black text-[#1a1c1c] tracking-tight">
-            Create Associate Account
-          </h2>
-          <p className="text-xs text-[#5f5e5e] mt-1">
-            Avira Lifecare Global Private Limited
-          </p>
-        </div>
+    <div className="w-full flex items-center justify-center py-2 sm:py-4 font-[Arial,sans-serif]">
+      
+      {/* 3D Matte White Squircle Box with Depth Grey Border */}
+      <div className="relative w-full max-w-[94vw] sm:max-w-[500px] lg:max-w-[540px] rounded-[36px] sm:rounded-[44px] bg-[#fafafc] border-[6px] sm:border-[8px] lg:border-[10px] border-[#c8d0d9] p-7 sm:p-10 lg:p-12 flex flex-col items-center justify-center text-center shadow-[20px_32px_60px_rgba(20,30,45,0.22),-10px_-10px_28px_rgba(255,255,255,0.95),inset_0_2px_5px_rgba(255,255,255,1),inset_0_-3px_6px_rgba(0,0,0,0.07)] transition-all duration-300">
+        
+        {/* Inner White Bevel Rim */}
+        <div className="absolute inset-1 sm:inset-1.5 rounded-[32px] sm:rounded-[38px] border border-white pointer-events-none" />
 
-        {errorMessage && (
-          <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-500" />
-            <span>{errorMessage}</span>
+        {/* Content Container */}
+        <div className="relative z-10 w-full flex flex-col items-center justify-center space-y-3.5 my-auto">
+          
+          {/* Bigger Logo & Header */}
+          <div className="flex flex-col items-center -mt-1 sm:-mt-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/avira-logo.png"
+              alt="Avira Life Care"
+              className="h-16 sm:h-20 lg:h-22 w-auto object-contain mb-2.5 drop-shadow-md transition-transform hover:scale-105"
+            />
+            <h1 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight leading-tight">
+              Associate Registration
+            </h1>
+            <p className="text-[11px] sm:text-xs text-stone-600 font-bold mt-0.5">
+              Avira Life Care Global Private Limited
+            </p>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Sponsor ID Verification */}
-          <div className="p-3.5 rounded-2xl bg-[#f9f9f9] border border-[#e2e2e2] space-y-1.5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#1a1c1c] uppercase tracking-wider flex items-center gap-1">
-                <BadgeCheck className="w-4 h-4 text-[#006d36]" />
-                <span>Sponsor ID *</span>
-              </label>
-              {isSponsorLocked ? (
-                <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
-                  <Lock className="w-3 h-3" />
-                  <span>Locked from Tree</span>
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setSponsorId("AV0001")}
-                  className="text-[10px] font-bold text-[#006d36] hover:underline cursor-pointer"
-                >
-                  Use Root (AV0001)
-                </button>
-              )}
+          {errorMessage && (
+            <div className="w-full p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2 text-left font-bold">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+              <span>{errorMessage}</span>
             </div>
-            <div className="relative">
-              <input
-                type="text"
-                required
-                readOnly={isSponsorLocked}
-                placeholder="e.g. AV0001"
-                value={sponsorId}
-                onChange={(e) => !isSponsorLocked && setSponsorId(e.target.value.toUpperCase())}
-                className={`w-full border-none rounded-xl py-3 px-4 focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm font-mono font-bold tracking-wider ${
-                  isSponsorLocked
-                    ? "bg-[#eef2ee] text-[#006d36] cursor-not-allowed select-none"
-                    : "bg-white text-[#1a1c1c]"
-                }`}
-              />
-              <div className="absolute right-3.5 top-3">
-                {isVerifyingSponsor && <Loader2 className="w-4 h-4 text-[#006d36] animate-spin" />}
-                {!isVerifyingSponsor && sponsorVerified && (
-                  <CheckCircle2 className="w-5 h-5 text-[#006d36]" />
+          )}
+
+          {/* Form Fields */}
+          <form onSubmit={handleSubmit} className="w-full space-y-3 pt-1">
+            
+            {/* 1. Sponsor ID (Without 'AV0001' in placeholder) */}
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-white border-2 border-stone-200 space-y-1 text-left shadow-xs">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1">
+                  <BadgeCheck className="w-3.5 h-3.5 text-[#1b3b32]" />
+                  <span>Sponsor ID *</span>
+                </label>
+                {isSponsorLocked && (
+                  <span className="text-[9.5px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                    <Lock className="w-3 h-3" />
+                    <span>Locked</span>
+                  </span>
                 )}
               </div>
-            </div>
-            {/* Direct Sponsor Name (NO "VERIFIED SPONSOR" TEXT) */}
-            {sponsorVerified && sponsorName && (
-              <div className="text-xs text-[#006d36] font-bold flex items-center gap-1.5 pt-1 px-1">
-                <UserIcon className="w-4 h-4 text-[#006d36]" />
-                <span>{sponsorName}</span>
-              </div>
-            )}
-          </div>
 
-          {/* 2. ASSOCIATE NAME */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-[#1a1c1c] mb-1 uppercase tracking-wider">
-                First Name *
-              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  readOnly={isSponsorLocked}
+                  placeholder="Enter Sponsor ID"
+                  value={sponsorId}
+                  onChange={(e) => !isSponsorLocked && setSponsorId(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                  className={`w-full rounded-xl py-2.5 px-3.5 outline-none text-xs sm:text-sm font-bold tracking-wider border ${
+                    isSponsorLocked
+                      ? "bg-[#eef2ee] text-[#1b3b32] border-emerald-200 cursor-not-allowed select-none"
+                      : "bg-[#f7f5f0] text-stone-900 border-stone-200 focus:bg-white focus:border-[#1b3b32]"
+                  }`}
+                />
+                <div className="absolute right-3.5 top-2.5">
+                  {isVerifyingSponsor && <Loader2 className="w-4 h-4 text-[#1b3b32] animate-spin" />}
+                  {!isVerifyingSponsor && sponsorVerified && (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  )}
+                </div>
+              </div>
+
+              {sponsorVerified && sponsorName && (
+                <div className="text-[11px] text-[#1b3b32] font-bold flex items-center gap-1 pt-0.5">
+                  <UserIcon className="w-3 h-3 text-[#1b3b32]" />
+                  <span className="truncate">{sponsorName}</span>
+                </div>
+              )}
+            </div>
+
+            {/* 2. Associate First & Last Name */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <input
                 type="text"
                 required
-                placeholder="First Name"
+                placeholder="First Name *"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full bg-[#f9f9f9] border-none rounded-xl py-3 px-4 text-[#1a1c1c] focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm"
+                className="w-full bg-white border-2 border-stone-200 focus:border-[#1b3b32] rounded-full py-2.5 px-4 text-stone-900 focus:ring-4 focus:ring-[#1b3b32]/10 outline-none text-xs sm:text-sm font-bold shadow-xs text-left"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-[#1a1c1c] mb-1 uppercase tracking-wider">
-                Last Name *
-              </label>
               <input
                 type="text"
                 required
-                placeholder="Last Name"
+                placeholder="Last Name *"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full bg-[#f9f9f9] border-none rounded-xl py-3 px-4 text-[#1a1c1c] focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm"
+                className="w-full bg-white border-2 border-stone-200 focus:border-[#1b3b32] rounded-full py-2.5 px-4 text-stone-900 focus:ring-4 focus:ring-[#1b3b32]/10 outline-none text-xs sm:text-sm font-bold shadow-xs text-left"
               />
             </div>
-          </div>
 
-          {/* 3. MOBILE NUMBER (10 DIGITS - DUPLICATE ALLOWED) */}
-          <div>
-            <label className="block text-xs font-bold text-[#1a1c1c] mb-1 uppercase tracking-wider">
-              Mobile Number (10 Digits) *
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-[#5f5e5e]">
-                <Phone className="w-4 h-4" />
-              </span>
+            {/* 3. Mobile Number */}
+            <div className="relative w-full">
+              <Phone className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
               <input
                 type="tel"
                 required
                 maxLength={10}
-                placeholder="9876543210"
+                placeholder="Mobile Number (10 Digits) *"
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
-                className="w-full bg-[#f9f9f9] border-none rounded-xl py-3 pl-11 pr-4 text-[#1a1c1c] focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm font-mono font-bold"
+                className="w-full pl-11 pr-4 py-2.5 sm:py-3 bg-white border-2 border-stone-200 focus:border-[#1b3b32] rounded-full text-stone-900 focus:ring-4 focus:ring-[#1b3b32]/10 text-xs sm:text-sm font-bold tracking-wider placeholder-stone-400 outline-none shadow-xs text-left transition-all"
               />
             </div>
-          </div>
 
-          {/* 4. BINARY PLACEMENT LEG */}
-          <div className="p-3.5 rounded-2xl bg-[#f9f9f9] border border-[#e2e2e2] space-y-2 shadow-xs">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#1a1c1c] uppercase tracking-wider flex items-center gap-1">
-                <Network className="w-4 h-4 text-[#006d36]" />
-                <span>Placement Leg *</span>
-              </label>
-              {isPositionLocked && (
-                <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
-                  <Lock className="w-3 h-3" />
-                  <span>Locked</span>
-                </span>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                disabled={isPositionLocked && binaryPosition !== "LEFT"}
-                onClick={() => !isPositionLocked && setBinaryPosition("LEFT")}
-                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  binaryPosition === "LEFT"
-                    ? "bg-blue-600 border-blue-600 text-white shadow-sm"
-                    : "bg-white border-[#e2e2e2] text-[#5f5e5e] hover:bg-[#f0f3ff]"
-                }`}
-              >
-                <span>Left Leg</span>
-              </button>
-              <button
-                type="button"
-                disabled={isPositionLocked && binaryPosition !== "RIGHT"}
-                onClick={() => !isPositionLocked && setBinaryPosition("RIGHT")}
-                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  binaryPosition === "RIGHT"
-                    ? "bg-purple-600 border-purple-600 text-white shadow-sm"
-                    : "bg-white border-[#e2e2e2] text-[#5f5e5e] hover:bg-[#f5f0ff]"
-                }`}
-              >
-                <span>Right Leg</span>
-              </button>
-            </div>
-          </div>
-
-          {/* 5. PINCODE (ONLY SHOWS CITY & STATE WHEN 6 DIGITS ARE ENTERED; DISAPPEARS ON BACKSPACE) */}
-          <div className="p-3.5 rounded-2xl bg-[#f9f9f9] border border-[#e2e2e2] space-y-2 shadow-xs">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#1a1c1c] uppercase tracking-wider flex items-center gap-1">
-                <MapPin className="w-4 h-4 text-[#006d36]" />
-                <span>Pincode *</span>
-              </label>
-              <span className="text-[10px] text-[#5f5e5e]">6 Digits</span>
-            </div>
-            <div className="relative">
-              <input
-                type="text"
-                maxLength={6}
-                required
-                placeholder="e.g. 380001"
-                value={pincode}
-                onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))}
-                className="w-full bg-white border-none rounded-xl py-3 px-4 text-[#1a1c1c] focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm font-mono font-bold"
-              />
-              <div className="absolute right-3.5 top-3">
-                {isFetchingPincode && <Loader2 className="w-4 h-4 text-[#006d36] animate-spin" />}
-                {!isFetchingPincode && pincodeAutofilled && (
-                  <CheckCircle2 className="w-5 h-5 text-[#006d36]" />
+            {/* 4. Placement Leg */}
+            <div className="p-3 rounded-2xl bg-white border-2 border-stone-200 space-y-1.5 text-left shadow-xs">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1">
+                  <Network className="w-3.5 h-3.5 text-[#1b3b32]" />
+                  <span>Placement Leg *</span>
+                </label>
+                {isPositionLocked && (
+                  <span className="text-[9.5px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                    <Lock className="w-3 h-3" />
+                    <span>Locked</span>
+                  </span>
                 )}
               </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled={isPositionLocked && binaryPosition !== "LEFT"}
+                  onClick={() => !isPositionLocked && setBinaryPosition("LEFT")}
+                  className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    binaryPosition === "LEFT"
+                      ? "bg-[#1b3b32] border-[#1b3b32] text-white shadow-xs"
+                      : "bg-[#f7f5f0] border-stone-200 text-stone-700 hover:bg-stone-100"
+                  }`}
+                >
+                  <span>Left Leg</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={isPositionLocked && binaryPosition !== "RIGHT"}
+                  onClick={() => !isPositionLocked && setBinaryPosition("RIGHT")}
+                  className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    binaryPosition === "RIGHT"
+                      ? "bg-[#1b3b32] border-[#1b3b32] text-white shadow-xs"
+                      : "bg-[#f7f5f0] border-stone-200 text-stone-700 hover:bg-stone-100"
+                  }`}
+                >
+                  <span>Right Leg</span>
+                </button>
+              </div>
             </div>
 
-            {/* CONDITIONAL CITY & STATE: ONLY APPEARS IF PINCODE IS EXACTLY 6 DIGITS AND MATCHED */}
-            {pincodeAutofilled && city && stateName && (
-              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between animate-fadeIn">
-                <div>
-                  <span className="text-[10px] text-[#006d36] font-bold uppercase tracking-wider block">
-                    Detected Location
+            {/* 5. Pincode (Without '395006' in placeholder) */}
+            <div className="p-3 rounded-2xl bg-white border-2 border-stone-200 space-y-1.5 text-left shadow-xs">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-[#1b3b32]" />
+                  <span>Pincode *</span>
+                </label>
+                {pincodeAutofilled && city && stateName ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1b3b32] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 animate-in fade-in">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span>{city}, {stateName}</span>
                   </span>
-                  <span className="text-xs font-black text-[#1a1c1c]">
-                    {city}, {stateName}
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-[#006d36] bg-white px-2 py-0.5 rounded-md border border-emerald-200">
-                  Verified
-                </span>
+                ) : (
+                  <span className="text-[10px] text-stone-500 font-bold">6 Digits</span>
+                )}
               </div>
-            )}
-          </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  maxLength={6}
+                  required
+                  placeholder="Enter 6-Digit Pincode"
+                  value={pincode}
+                  onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))}
+                  className="w-full bg-[#f7f5f0] border border-stone-200 focus:bg-white focus:border-[#1b3b32] rounded-xl py-2 px-3 text-stone-900 outline-none text-xs sm:text-sm font-bold tracking-wide"
+                />
+                <div className="absolute right-3 top-2">
+                  {isFetchingPincode && <Loader2 className="w-4 h-4 text-[#1b3b32] animate-spin" />}
+                </div>
+              </div>
+            </div>
 
-          {/* 6. PASSWORD */}
-          <div>
-            <label className="block text-xs font-bold text-[#1a1c1c] mb-1 uppercase tracking-wider">
-              Password *
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-[#5f5e5e]">
-                <Lock className="w-4 h-4 text-[#5f5e5e]" />
-              </span>
+            {/* 6. Password Input with Eye Toggle */}
+            <div className="relative w-full">
+              <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none z-10" />
               <input
+                id="password"
+                name="password"
                 type={showPassword ? "text" : "password"}
-                required
-                placeholder="••••••••"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#f9f9f9] border-none rounded-xl py-3 pl-11 pr-11 text-[#1a1c1c] focus:ring-2 focus:ring-[#006d36] neo-inset outline-none text-sm"
+                placeholder="Create Password *"
+                required
+                className="w-full pl-11 pr-12 py-2.5 sm:py-3 bg-white border-2 border-stone-200 focus:border-[#1b3b32] rounded-full text-stone-900 focus:ring-4 focus:ring-[#1b3b32]/10 text-xs sm:text-sm font-bold placeholder-stone-400 outline-none shadow-xs text-left transition-all relative z-0"
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 flex items-center pr-4 text-[#5f5e5e] hover:text-[#006d36] cursor-pointer"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition-colors focus:outline-none cursor-pointer z-20 p-1"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+
+            {/* Terms */}
+            <div className="flex items-center gap-2 pt-0.5 px-2 text-left">
+              <input
+                id="terms"
+                type="checkbox"
+                checked={termsAgreed}
+                onChange={(e) => setTermsAgreed(e.target.checked)}
+                className="w-4 h-4 text-[#1b3b32] rounded border-stone-300 focus:ring-[#1b3b32]"
+              />
+              <label htmlFor="terms" className="text-xs text-stone-700 font-bold cursor-pointer">
+                I agree to the Avira Life Care Global Terms of Association.
+              </label>
+            </div>
+
+            {/* 3D Submit Button */}
+            <div className="pt-1">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3.5 px-6 bg-[#1b3b32] hover:bg-[#234e40] text-white rounded-full font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#1b3b32]/25 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Creating Account...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Complete Registration</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+
+          {/* Login Link */}
+          <div className="pt-1 text-center text-xs text-stone-600 font-bold">
+            Already have an associate account?{" "}
+            <Link href="/login" className="font-bold text-[#1b3b32] hover:underline ml-1">
+              Sign In here
+            </Link>
           </div>
 
-          {/* 7. TERMS & SUBMIT BUTTON */}
-          <div className="flex items-center gap-2 pt-1">
-            <input
-              id="terms"
-              type="checkbox"
-              checked={termsAgreed}
-              onChange={(e) => setTermsAgreed(e.target.checked)}
-              className="w-4 h-4 text-[#006d36] rounded border-[#e2e2e2] focus:ring-[#006d36]"
-            />
-            <label htmlFor="terms" className="text-xs text-[#5f5e5e]">
-              I agree to the Avira Life Care Global Terms of Association.
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-3.5 bg-[#006d36] hover:bg-[#005025] text-white font-extrabold rounded-2xl shadow-md hover:shadow-lg transition-all text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Creating Account...</span>
-              </>
-            ) : (
-              <>
-                <span>Complete Registration</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center text-xs text-[#5f5e5e]">
-          Already have an associate account?{" "}
-          <Link href="/login" className="font-bold text-[#006d36] hover:underline">
-            Log In here
-          </Link>
         </div>
+
       </div>
 
-      {/* COMPACT CREDENTIALS POPUP WITH CLOSE (X) BUTTON */}
+      {/* COMPACT CREDENTIALS POPUP */}
       {registeredMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white max-w-sm w-full rounded-3xl p-6 border border-[#50c878] shadow-2xl relative animate-scaleIn">
-            {/* Close (X) button at top-right */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="relative w-full max-w-md rounded-[38px] sm:rounded-[44px] bg-[#fafafc] border-[6px] sm:border-[8px] border-[#c8d0d9] p-7 sm:p-9 text-center shadow-[20px_32px_60px_rgba(20,30,45,0.3),inset_0_2px_5px_rgba(255,255,255,1)] animate-in zoom-in-95 font-[Arial,sans-serif]">
+            
+            <div className="absolute inset-1 sm:inset-1.5 rounded-[32px] sm:rounded-[36px] border border-white pointer-events-none" />
+
             <button
               type="button"
               onClick={() => {
@@ -541,39 +511,40 @@ export default function RegisterForm() {
                 setCity("");
                 setStateName("");
               }}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
+              className="absolute top-5 right-5 p-1.5 rounded-full bg-white border border-stone-200 hover:bg-stone-100 text-stone-400 hover:text-stone-700 transition-colors cursor-pointer z-20"
               title="Close"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            <div className="text-center mb-4">
-              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-emerald-50 border border-emerald-300 flex items-center justify-center shadow-xs">
-                <CheckCircle2 className="w-6 h-6 text-[#006d36]" />
+            <div className="text-center mb-5 relative z-10 flex flex-col items-center">
+              <div className="w-14 h-14 mb-2.5 rounded-full bg-emerald-50 border-2 border-emerald-300 flex items-center justify-center shadow-xs">
+                <CheckCircle2 className="w-8 h-8 text-[#1b3b32]" />
               </div>
-              <h3 className="text-lg font-black text-[#1a1c1c]">Registration Successful</h3>
-              <p className="text-[11px] text-[#5f5e5e] mt-0.5">
-                New associate profile created in Supabase PostgreSQL
+              <h3 className="text-xl font-bold text-stone-900 tracking-tight">
+                Registration Successful!
+              </h3>
+              <p className="text-xs text-stone-600 mt-0.5 font-bold">
+                Welcome to Avira Life Care Global Network
               </p>
             </div>
 
-            {/* ONLY Name, ID Number, and Password */}
-            <div className="bg-[#f9f9f9] rounded-2xl p-4 border border-[#e2e2e2] space-y-3 mb-5">
+            <div className="bg-white rounded-2xl p-4 border-2 border-stone-200 space-y-3 mb-5 relative z-10 text-left shadow-xs">
               <div>
-                <span className="text-[10px] text-[#5f5e5e] font-bold uppercase tracking-wider block">
+                <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider block">
                   Associate Name
                 </span>
-                <span className="text-sm font-extrabold text-[#1a1c1c]">
+                <span className="text-sm font-bold text-stone-900">
                   {registeredMember.fullName}
                 </span>
               </div>
 
-              <div className="pt-2 border-t border-[#e2e2e2]/60 flex items-center justify-between">
+              <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-[#5f5e5e] font-bold uppercase tracking-wider block">
-                    Member ID
+                  <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider block">
+                    Your 5-Digit Member ID
                   </span>
-                  <span className="text-xl font-mono font-black text-[#006d36] tracking-wider">
+                  <span className="text-xl font-bold text-[#1b3b32] tracking-wider">
                     {registeredMember.memberId}
                   </span>
                 </div>
@@ -581,21 +552,22 @@ export default function RegisterForm() {
                   type="button"
                   onClick={() => {
                     navigator.clipboard.writeText(registeredMember.memberId);
-                    alert(`Copied ID: ${registeredMember.memberId}`);
+                    alert(`Copied Member ID: ${registeredMember.memberId}`);
                   }}
-                  className="p-1.5 hover:bg-emerald-100 text-[#006d36] rounded-lg transition-colors cursor-pointer"
+                  className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#1b3b32] border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
                   title="Copy ID"
                 >
-                  <Copy className="w-4 h-4" />
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy</span>
                 </button>
               </div>
 
-              <div className="pt-2 border-t border-[#e2e2e2]/60 flex items-center justify-between">
+              <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-[#5f5e5e] font-bold uppercase tracking-wider block">
+                  <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider block">
                     Password
                   </span>
-                  <span className="text-sm font-mono font-black text-[#1a1c1c] tracking-wide">
+                  <span className="text-sm font-bold text-stone-900 tracking-wide">
                     {registeredMember.passwordText}
                   </span>
                 </div>
@@ -605,16 +577,16 @@ export default function RegisterForm() {
                     navigator.clipboard.writeText(registeredMember.passwordText);
                     alert(`Copied Password!`);
                   }}
-                  className="p-1.5 hover:bg-emerald-100 text-[#006d36] rounded-lg transition-colors cursor-pointer"
+                  className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#1b3b32] border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
                   title="Copy Password"
                 >
-                  <Copy className="w-4 h-4" />
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy</span>
                 </button>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 relative z-10">
               <button
                 type="button"
                 onClick={() => {
@@ -622,32 +594,24 @@ export default function RegisterForm() {
                   navigator.clipboard.writeText(details);
                   alert("Copied all details to clipboard!");
                 }}
-                className="flex-1 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-[#006d36] font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="flex-1 py-3 bg-white hover:bg-stone-50 text-stone-800 border-2 border-stone-300 font-bold rounded-full text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5" />
-                <span>Copy Details</span>
+                <Copy className="w-3.5 h-3.5 text-[#1b3b32]" />
+                <span>Copy All Details</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setRegisteredMember(null);
-                  setFirstName("");
-                  setLastName("");
-                  setMobile("");
-                  setPassword("");
-                  setPincode("");
-                  setCity("");
-                  setStateName("");
-                }}
-                className="flex-1 py-2.5 bg-[#006d36] hover:bg-[#005025] text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              <Link
+                href="/login"
+                className="flex-1 py-3 bg-[#1b3b32] hover:bg-[#234e40] text-white font-bold rounded-full text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md transition-all"
               >
-                Done / Close
-              </button>
+                <span>Go to Login</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
+
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

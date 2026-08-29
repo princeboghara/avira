@@ -62,66 +62,69 @@ export default function DashboardPage() {
 
     async function loadDashboardData() {
       try {
-        const [meRes, teamRes, earnRes, stateRes, leadRes, royRes] = await Promise.allSettled([
-          fetch("/api/auth/me", { cache: "no-store" }),
-          fetch("/api/member/team", { cache: "no-store" }),
-          fetch("/api/member/earnings/binary", { cache: "no-store" }),
-          fetch("/api/member/statement", { cache: "no-store" }),
-          fetch("/api/member/earnings/leadership", { cache: "no-store" }),
-          fetch("/api/member/earnings/royalty", { cache: "no-store" }),
-        ]);
-
-        if (meRes.status === "fulfilled") {
-          const meData = await meRes.value.json();
+        // 1. Fetch authenticated user profile first for instant screen render
+        const meRes = await fetch("/api/auth/me", { cache: "no-store" });
+        if (meRes.ok) {
+          const meData = await meRes.json();
           if (meData.success && meData.user) {
             setUser(meData.user);
             setTransactions(meData.transactions || []);
             setTotalTeamCount(meData.user.totalTeamCount || 0);
           }
         }
+        // Immediately reveal dashboard
+        setLoading(false);
 
-        if (teamRes.status === "fulfilled") {
-          const teamData = await teamRes.value.json();
-          if (teamData.success) {
-            setLeftTeamCount(teamData.leftCount || 0);
-            setRightTeamCount(teamData.rightCount || 0);
-            setTotalTeamCount(teamData.totalTeam || 0);
+        // 2. Fetch secondary team, earnings & statements in parallel in background
+        Promise.allSettled([
+          fetch("/api/member/team", { cache: "no-store" }),
+          fetch("/api/member/earnings/binary", { cache: "no-store" }),
+          fetch("/api/member/statement", { cache: "no-store" }),
+          fetch("/api/member/earnings/leadership", { cache: "no-store" }),
+          fetch("/api/member/earnings/royalty", { cache: "no-store" }),
+        ]).then(async ([teamRes, earnRes, stateRes, leadRes, royRes]) => {
+          if (teamRes.status === "fulfilled" && teamRes.value.ok) {
+            const teamData = await teamRes.value.json();
+            if (teamData.success) {
+              setLeftTeamCount(teamData.leftCount || 0);
+              setRightTeamCount(teamData.rightCount || 0);
+              setTotalTeamCount(teamData.totalTeam || 0);
+            }
           }
-        }
 
-        if (earnRes.status === "fulfilled") {
-          const earnData = await earnRes.value.json();
-          if (earnData.success && earnData.summary) {
-            setNetBinaryIncome(earnData.summary.totalNet || 0);
-            setRpWalletAmount(earnData.summary.rpWalletBalance || 0);
+          if (earnRes.status === "fulfilled" && earnRes.value.ok) {
+            const earnData = await earnRes.value.json();
+            if (earnData.success && earnData.summary) {
+              setNetBinaryIncome(earnData.summary.totalNet || 0);
+              setRpWalletAmount(earnData.summary.rpWalletBalance || 0);
+            }
           }
-        }
 
-        if (leadRes.status === "fulfilled") {
-          const leadData = await leadRes.value.json();
-          if (leadData.success && leadData.summary) {
-            setLeadershipBonusAmount(leadData.summary.totalGross || 0);
+          if (leadRes.status === "fulfilled" && leadRes.value.ok) {
+            const leadData = await leadRes.value.json();
+            if (leadData.success && leadData.summary) {
+              setLeadershipBonusAmount(leadData.summary.totalGross || 0);
+            }
           }
-        }
 
-        if (royRes.status === "fulfilled") {
-          const royData = await royRes.value.json();
-          if (royData.success) {
-            setRoyaltyIncomeAmount(royData.summary?.totalGross || 0);
-            setIsRoyaltyQualified(royData.qualification?.isQualified || false);
+          if (royRes.status === "fulfilled" && royRes.value.ok) {
+            const royData = await royRes.value.json();
+            if (royData.success) {
+              setRoyaltyIncomeAmount(royData.summary?.totalGross || 0);
+              setIsRoyaltyQualified(royData.qualification?.isQualified || false);
+            }
           }
-        }
 
-        if (stateRes.status === "fulfilled") {
-          const stateData = await stateRes.value.json();
-          if (stateData.success && stateData.summary) {
-            setTotalPaidIncome(stateData.summary.totalPaid || 0);
-            setPendingPayoutIncome(stateData.summary.totalPending || 0);
+          if (stateRes.status === "fulfilled" && stateRes.value.ok) {
+            const stateData = await stateRes.value.json();
+            if (stateData.success && stateData.summary) {
+              setTotalPaidIncome(stateData.summary.totalPaid || 0);
+              setPendingPayoutIncome(stateData.summary.totalPending || 0);
+            }
           }
-        }
+        });
       } catch (err) {
         console.error("Dashboard fetch error:", err);
-      } finally {
         setLoading(false);
       }
     }
@@ -151,24 +154,24 @@ export default function DashboardPage() {
   const personalPv = user?.personalPv || 0;
   const isUserActive = personalPv >= 100;
 
-  let rankName = "Non-Active (<100 PV)";
+  let rankName = "Non-Active";
   let rankBadgeColor = "bg-rose-50 text-rose-700 border-rose-200";
   let rankIcon = AlertCircle;
 
   if (personalPv >= 1000) {
-    rankName = "Diamond Rank";
+    rankName = "Diamond";
     rankBadgeColor = "bg-cyan-50 text-cyan-800 border-cyan-300";
     rankIcon = Sparkles;
   } else if (personalPv >= 500) {
-    rankName = "Platinum Rank";
+    rankName = "Platinum";
     rankBadgeColor = "bg-purple-50 text-purple-800 border-purple-300";
     rankIcon = Award;
   } else if (personalPv >= 250) {
-    rankName = "Gold Rank";
+    rankName = "Gold";
     rankBadgeColor = "bg-amber-50 text-amber-900 border-amber-300";
     rankIcon = Award;
   } else if (personalPv >= 100) {
-    rankName = "Silver Rank";
+    rankName = "Silver";
     rankBadgeColor = "bg-emerald-50 text-emerald-800 border-emerald-300";
     rankIcon = CheckCircle2;
   }
@@ -207,7 +210,7 @@ export default function DashboardPage() {
 
   return (
     <MemberLayout user={user}>
-      <div className="space-y-8 max-w-7xl mx-auto pb-20 animate-fadeIn">
+      <div className="space-y-8 max-w-7xl mx-auto pb-20 animate-fadeIn font-[Arial,sans-serif]">
         {/* ========================================================
             1. EXECUTIVE WELCOME BANNER (Luxury Dark Obsidian & Emerald)
            ======================================================== */}
@@ -255,7 +258,7 @@ export default function DashboardPage() {
                     <span>{isUserActive ? "Active Member" : "Non-Active (<100 PV)"}</span>
                   </span>
 
-                  {/* Rank Badge */}
+                  {/* Rank Badge without 'Rank' text */}
                   <span
                     className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider border backdrop-blur-md ${
                       personalPv >= 1000
@@ -327,9 +330,6 @@ export default function DashboardPage() {
                   <span className="text-[11px] text-slate-500">Auto places new associate in your Left Leg</span>
                 </div>
               </div>
-              <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-[#006d36] text-[10px] font-mono font-bold border border-emerald-200">
-                POWER LEG
-              </span>
             </div>
 
             <div className="flex items-center gap-2 mt-2 p-2 bg-slate-50 rounded-2xl border border-slate-200">
@@ -371,9 +371,6 @@ export default function DashboardPage() {
                   <span className="text-[11px] text-slate-500">Auto places new associate in your Right Leg</span>
                 </div>
               </div>
-              <span className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-mono font-bold border border-indigo-200">
-                MATCHING LEG
-              </span>
             </div>
 
             <div className="flex items-center gap-2 mt-2 p-2 bg-slate-50 rounded-2xl border border-slate-200">

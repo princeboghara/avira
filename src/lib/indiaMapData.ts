@@ -1,17 +1,85 @@
 /**
- * High-Precision SVG Vector Coordinates for Indian States & Union Territories
+ * High-Precision SVG Vector Coordinates for All 28 Indian States & 8 Union Territories
  * Standard GIS projection (viewBox: 0 0 612 696)
- * Styled with soft mint green (#a3d9be) & crisp white borders matching the reference design.
+ * Features distinct vector boundaries, optimized labels, and interactive hotspot markers for small states.
  */
 
 export interface StatePathData {
   code: string;
   name: string;
   d: string;
+  type?: "STATE" | "UT";
+  isSmallState?: boolean;
   labelPos?: { x: number; y: number; fontSize?: string };
+  hotspotPos?: { x: number; y: number };
+  leaderLine?: { x1: number; y1: number; x2: number; y2: number };
 }
 
 export const INDIA_MAP_VIEWBOX = "0 0 612 696";
+
+export interface IndianRegionInfo {
+  code: string;
+  name: string;
+  type: "STATE" | "UT";
+  capital: string;
+  isSmallState?: boolean;
+}
+
+export const ALL_INDIAN_STATES_AND_UTS: IndianRegionInfo[] = [
+  // 28 States of India
+  { code: "AP", name: "Andhra Pradesh", type: "STATE", capital: "Amaravati" },
+  { code: "AR", name: "Arunachal Pradesh", type: "STATE", capital: "Itanagar" },
+  { code: "AS", name: "Assam", type: "STATE", capital: "Dispur" },
+  { code: "BR", name: "Bihar", type: "STATE", capital: "Patna" },
+  { code: "CT", name: "Chhattisgarh", type: "STATE", capital: "Raipur" },
+  { code: "GA", name: "Goa", type: "STATE", capital: "Panaji", isSmallState: true },
+  { code: "GJ", name: "Gujarat", type: "STATE", capital: "Gandhinagar" },
+  { code: "HR", name: "Haryana", type: "STATE", capital: "Chandigarh" },
+  { code: "HP", name: "Himachal Pradesh", type: "STATE", capital: "Shimla" },
+  { code: "JH", name: "Jharkhand", type: "STATE", capital: "Ranchi" },
+  { code: "KA", name: "Karnataka", type: "STATE", capital: "Bengaluru" },
+  { code: "KL", name: "Kerala", type: "STATE", capital: "Thiruvananthapuram" },
+  { code: "MP", name: "Madhya Pradesh", type: "STATE", capital: "Bhopal" },
+  { code: "MH", name: "Maharashtra", type: "STATE", capital: "Mumbai" },
+  { code: "MN", name: "Manipur", type: "STATE", capital: "Imphal" },
+  { code: "ML", name: "Meghalaya", type: "STATE", capital: "Shillong" },
+  { code: "MZ", name: "Mizoram", type: "STATE", capital: "Aizawl" },
+  { code: "NL", name: "Nagaland", type: "STATE", capital: "Kohima" },
+  { code: "OR", name: "Odisha", type: "STATE", capital: "Bhubaneswar" },
+  { code: "PB", name: "Punjab", type: "STATE", capital: "Chandigarh" },
+  { code: "RJ", name: "Rajasthan", type: "STATE", capital: "Jaipur" },
+  { code: "SK", name: "Sikkim", type: "STATE", capital: "Gangtok", isSmallState: true },
+  { code: "TN", name: "Tamil Nadu", type: "STATE", capital: "Chennai" },
+  { code: "TG", name: "Telangana", type: "STATE", capital: "Hyderabad" },
+  { code: "TR", name: "Tripura", type: "STATE", capital: "Agartala", isSmallState: true },
+  { code: "UP", name: "Uttar Pradesh", type: "STATE", capital: "Lucknow" },
+  { code: "UT", name: "Uttarakhand", type: "STATE", capital: "Dehradun" },
+  { code: "WB", name: "West Bengal", type: "STATE", capital: "Kolkata" },
+
+  // 8 Union Territories of India
+  { code: "AN", name: "Andaman and Nicobar Islands", type: "UT", capital: "Port Blair", isSmallState: true },
+  { code: "CH", name: "Chandigarh", type: "UT", capital: "Chandigarh", isSmallState: true },
+  { code: "DN", name: "Dadra and Nagar Haveli and Daman and Diu", type: "UT", capital: "Daman", isSmallState: true },
+  { code: "DD", name: "Daman and Diu", type: "UT", capital: "Daman", isSmallState: true },
+  { code: "DL", name: "Delhi (National Capital Territory)", type: "UT", capital: "New Delhi", isSmallState: true },
+  { code: "JK", name: "Jammu and Kashmir", type: "UT", capital: "Srinagar / Jammu" },
+  { code: "LA", name: "Ladakh", type: "UT", capital: "Leh" },
+  { code: "LD", name: "Lakshadweep", type: "UT", capital: "Kavaratti", isSmallState: true },
+  { code: "PY", name: "Puducherry", type: "UT", capital: "Puducherry", isSmallState: true },
+];
+
+export const SMALL_STATES_AND_UTS = [
+  { code: "DL", name: "Delhi", fullName: "Delhi (NCT)", badge: "NCT" },
+  { code: "GA", name: "Goa", fullName: "Goa", badge: "State" },
+  { code: "CH", name: "Chandigarh", fullName: "Chandigarh", badge: "UT" },
+  { code: "PY", name: "Puducherry", fullName: "Puducherry", badge: "UT" },
+  { code: "DN", name: "Dadra & Nagar Haveli", fullName: "D&NH and D&D", badge: "UT" },
+  { code: "DD", name: "Daman & Diu", fullName: "Daman & Diu", badge: "UT" },
+  { code: "LD", name: "Lakshadweep", fullName: "Lakshadweep", badge: "UT" },
+  { code: "SK", name: "Sikkim", fullName: "Sikkim", badge: "State" },
+  { code: "TR", name: "Tripura", fullName: "Tripura", badge: "State" },
+  { code: "AN", name: "Andaman & Nicobar", fullName: "Andaman & Nicobar", badge: "UT" },
+];
 
 export const INDIA_MAP_PATHS: StatePathData[] = [
   {
@@ -22,6 +90,18 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 535,
       "y": 590,
       "fontSize": "8"
+    },
+    "type": "UT",
+    "isSmallState": true,
+    "hotspotPos": {
+      "x": 535,
+      "y": 590
+    },
+    "leaderLine": {
+      "x1": 535,
+      "y1": 590,
+      "x2": 585,
+      "y2": 590
     }
   },
   {
@@ -32,7 +112,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 250,
       "y": 530,
       "fontSize": "13"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "AR",
@@ -42,7 +124,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 550,
       "y": 224,
       "fontSize": "10"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "AS",
@@ -52,7 +136,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 515,
       "y": 265,
       "fontSize": "11"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "BR",
@@ -62,7 +148,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 365,
       "y": 275,
       "fontSize": "12"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "CH",
@@ -72,6 +160,18 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 179,
       "y": 160,
       "fontSize": "6"
+    },
+    "type": "UT",
+    "isSmallState": true,
+    "hotspotPos": {
+      "x": 179,
+      "y": 160
+    },
+    "leaderLine": {
+      "x1": 179,
+      "y1": 160,
+      "x2": 125,
+      "y2": 145
     }
   },
   {
@@ -82,7 +182,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 295,
       "y": 390,
       "fontSize": "11"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "DN",
@@ -92,6 +194,18 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 102,
       "y": 405,
       "fontSize": "6"
+    },
+    "type": "UT",
+    "isSmallState": true,
+    "hotspotPos": {
+      "x": 104,
+      "y": 406
+    },
+    "leaderLine": {
+      "x1": 104,
+      "y1": 406,
+      "x2": 40,
+      "y2": 435
     }
   },
   {
@@ -102,6 +216,18 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 54,
       "y": 391,
       "fontSize": "6"
+    },
+    "type": "UT",
+    "isSmallState": true,
+    "hotspotPos": {
+      "x": 54,
+      "y": 391
+    },
+    "leaderLine": {
+      "x1": 54,
+      "y1": 391,
+      "x2": 25,
+      "y2": 375
     }
   },
   {
@@ -112,6 +238,18 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 186,
       "y": 210,
       "fontSize": "7"
+    },
+    "type": "UT",
+    "isSmallState": true,
+    "hotspotPos": {
+      "x": 188,
+      "y": 210
+    },
+    "leaderLine": {
+      "x1": 188,
+      "y1": 210,
+      "x2": 245,
+      "y2": 195
     }
   },
   {
@@ -122,6 +260,18 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 122,
       "y": 512,
       "fontSize": "7"
+    },
+    "type": "STATE",
+    "isSmallState": true,
+    "hotspotPos": {
+      "x": 122,
+      "y": 512
+    },
+    "leaderLine": {
+      "x1": 122,
+      "y1": 512,
+      "x2": 60,
+      "y2": 512
     }
   },
   {
@@ -132,7 +282,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 65,
       "y": 355,
       "fontSize": "13"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "HR",
@@ -142,7 +294,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 165,
       "y": 198,
       "fontSize": "9"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "HP",
@@ -152,17 +306,21 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 195,
       "y": 135,
       "fontSize": "9"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "JK",
     "name": "Jammu and Kashmir",
-    "d": "m 139.801,1.2029514 1.195,1.4034432 2.388,-0.099742 1.692,-0.1007497 1.492,-1.2029513 1.592,-0.60147572 1.593,0.80196762 1.691,2.5066524 1.99,2.9076362 2.588,3.0073783 1.124,2.2457106 3.383,2.205411 3.284,1.603935 2.786,2.607402 3.284,1.102202 2.587,2.707144 1.593,1.403443 2.686,0.300234 2.289,2.506653 0.099,1.804427 -0.497,1.504193 0.697,1.905176 1.194,1.804427 2.686,0.801968 3.284,0 3.682,1.103209 2.189,2.004919 0.896,2.606395 0.995,1.804427 3.483,0.400984 4.002,-1.842712 3.461,-0.864433 2.786,0 2.02,-3.20787 2.289,-2.004919 2.687,-0.601476 2.189,-0.902717 1.99,-1.503185 3.483,-0.301242 2.886,0.902717 1.791,1.00246 1.194,-0.702226 0,-2.606394 1.094,-1.303701 1.792,-0.500726 2.487,2.004919 1.294,1.504193 1.592,0.400983 3.085,0.701218 2.388,0.702226 1.99,-0.902718 1.393,-0.500726 1.294,2.104662 1.194,2.005926 1.692,0.90171 2.089,1.504193 0.597,1.603935 -0.497,1.704685 0.298,1.804427 -0.099,1.302693 -0.895,1.704685 -0.1,1.202951 -0.995,1.403444 -0.199,1.504193 0.099,2.606394 -0.796,2.004919 -0.796,1.905177 -0.597,1.403443 -0.398,2.205411 -1.493,0.802975 -1.632,0.721368 -2.089,1.002459 0,2.004919 -0.796,1.303701 -1.891,-0.100749 -2.09,0.100749 -0.995,0.90171 0.199,1.103209 0.896,1.603935 0.51,2.101639 -0.871,3.758971 -2.052,2.255786 -1.244,0.500726 -1.99,-0.500726 -2.239,-0.751593 -1.369,0.626663 -1.99,0.375797 -1.181,0.375796 -0.498,1.190861 0.435,1.754053 0.747,1.566657 0.871,1.441728 1.368,2.254779 -0.373,1.379263 -1.058,0.939995 -1.492,0.625655 -0.249,1.379263 0.186,1.629123 -0.478,0.721368 3.089,2.860284 0.176,1.689572 2.313,0.93798 4.697,0.312324 0.118,0.779801 -1.268,2.93283 -0.051,1.29161 2.012,2.24571 0.474,2.15806 1.3,1.07298 0.648,2.22355 -0.396,1.57975 -2.038,0.52994 -2.843,2.46535 -1.127,-0.90373 -1.16,0.31233 -1.6,1.15761 -0.462,2.30213 -1.156,-0.28915 -1.508,1.00851 -1.308,-0.6045 -2.795,-2.69002 -0.366,-2.30314 0.348,-0.75965 -0.72,-2.43714 -1.916,1.16769 -0.601,1.05082 -1.691,-0.13097 -1.241,0.97425 -0.689,-0.15616 -0.847,0.58334 -0.031,1.10421 -0.593,-0.44632 -1.508,1.33796 -0.668,-0.79693 0.433,-0.53095 -0.053,-1.20195 1.929,-1.13948 -0.537,-1.21504 0.172,-2.24168 -1.752,0.59946 0.169,0.62364 -1.733,1.0881 -1.265,-0.24482 -0.65,0.9138 -0.588,-0.49267 -0.587,0.94403 -0.658,-0.28311 0.039,1.0881 -1.114,0.135 -1.66,-2.65677 0.248,-1.81954 -0.716,-0.23374 -0.697,-1.32385 -1.804,-0.90977 0.602,-1.01455 -1.627,-1.66035 -0.989,-0.35565 -0.249,0.66596 -1.453,0.39091 -1.347,1.41049 -0.733,0.0212 -0.614,0.61961 -1.418,-0.59543 -0.649,1.50621 -0.599,0.135 -0.475,-0.85335 -0.981,-0.55815 -0.407,0.28008 -0.222,-0.76066 -1.139,-0.88861 -0.579,0.42819 -0.205,-1.66237 -1.287,0.17732 -0.829,-0.6579 -0.772,0.25288 -1.694,-1.10421 -0.844,-2.01802 -0.686,0.0484 -0.858,-1.08709 0.521,-2.275936 -0.535,0.243814 -0.513,-0.477553 -0.48,0.156162 -0.533,1.758082 -2.154,0.424156 -0.944,-1.113284 -0.72,-0.0665 -1.642,0.743533 -1.62,-0.170267 -2.442,2.073433 -0.789,1.78831 -3.007,0.69517 -0.24,0.90171 -2.856,2.09156 -1.647,-1.12638 -1.238,0.0101 -0.278,1.49009 1.656,1.4115 0.81,1.41251 -0.333,1.64826 0.566,1.18079 -1.069,1.68252 -1.428,2.21952 -1.222,0.26598 -0.72,1.44676 -3.817,1.72181 -0.585,1.80947 -0.231,-0.84831 -0.471,-0.18236 0.094,-0.55916 -1.198,0.39191 -1.94,-0.32441 -2.655,-1.68856 -0.146,-0.47655 -1.027,0.24482 -1.19,-1.62711 -0.963,-0.29922 -1.199,1.10119 -3.014,-1.20497 -2.866,0.2811 -1.177,-3.14037 0.712,-1.16971 -0.546,-1.50721 0.982,-3.02854 -1.153,0.42013 -0.581,1.62711 -1.731,0.42415 -1.185,0.74051 -2.886,-0.30124 -1.393,-1.00246 -2.09,-1.00246 -1.592,-1.50419 -2.488,-0.90171 -2.089,-1.50419 -3.184,0 -0.697,-1.50319 -1.095,-1.00347 -1.393,-1.20295 0.597,-2.505646 -0.895,-1.805435 -0.299,-3.107121 1.095,-1.303701 -0.796,-3.20787 0.497,-1.203959 0.1,-1.503185 -1.493,-1.504193 0.1,-1.403443 0.995,-1.202952 -0.797,-3.108128 -1.492,-1.503185 0.099,-2.907637 -0.298,-2.34646 -0.995,-2.505645 0.398,-2.506652 0,-1.704685 1.293,-1.403443 2.19,-0.601476 1.691,-0.701218 0.1,-1.905177 1.293,-2.30616 1.393,-0.200492 3.384,-0.09974 1.194,-0.902717 0.796,-3.007379 0.896,-1.905177 0,-2.004919 -1.792,-1.804427 -2.487,-1.103209 -1.991,-0.601475 -1.194,-0.902718 -0.696,-1.503185 0.398,-1.603935 1.393,-0.902718 0.597,-1.202951 -0.995,-2.205411 -2.09,0.09974 -2.388,-0.300234 -1.99,-0.601475 -3.483,-0.301242 -1.891,-1.743977 -0.895,-1.804427 -0.697,-2.606395 -2.686,-1.303701 -3.085,-0.702225 -1.991,1.303701 -2.188,0.09974 -0.797,-1.202951 -0.099,-2.205411 0.498,-1.103209 -0.498,-1.603935 0.398,-1.603936 0.995,-2.30616 2.388,-1.703677 2.488,-2.105669 2.289,-2.506652 2.189,-2.806887 0.896,-2.8068862 1.989,-1.3026936 3.085,0.3002341 3.881,0.4009838 4.379,0.2004919 2.089,-0.5017335 -1.89,-2.1046611 -1.668,-0.9268972 0.829,-1.1989214 2.033,-0.2810916 1.791,1.6049426 2.587,0.6004682 1.293,-1.6029277 1.792,-0.4009837 1.691,-0.8029751 1.393,-0.7012179 2.19,-1.1032091 1.493,-1.20295141 L 135.523,0 l 1.691,0.30124159 z",
+    "d": "m 139.801,1.2029514 1.195,1.4034432 2.388,-0.099742 1.692,-0.1007497 1.492,-1.2029513 1.592,-0.60147572 1.593,0.80196762 1.691,2.5066524 1.99,2.9076362 2.588,3.0073783 1.124,2.2457106 3.383,2.205411 3.284,1.603935 2.786,2.607402 3.284,1.102202 2.587,2.707144 1.593,1.403443 2.686,0.300234 2.289,2.506653 0.099,1.804427 -0.497,1.504193 0.697,1.905176 1.194,1.804427 2.686,0.801968 3.284,0 3.682,1.103209 2.189,2.004919 0.896,2.606395 0.995,1.804427 3.483,0.400984 4.002,-1.842712 3.461,-0.864433 2.786,0 2.02,-3.20787 2.289,-2.004919 2.687,-0.601476 2.189,-0.902717 1.99,-1.503185 3.483,-0.301242 2.886,0.902717 1.791,1.00246 1.194,-0.702226 0,-2.606394 1.094,-1.303701 1.792,-0.500726 2.487,2.004919 1.294,1.504193 1.592,0.400983 3.085,0.701218 2.388,0.702226 1.99,-0.902718 1.393,-0.500726 1.294,2.104662 1.194,2.005926 1.692,0.90171 2.089,1.504193 0.597,1.603935 -0.497,1.704685 0.298,1.804427 -0.099,1.302693 -0.895,1.704685 -0.1,1.202951 -0.995,1.403444 -0.199,1.504193 0.099,2.606394 -0.796,2.004919 -0.796,1.905177 -0.597,1.403443 -0.398,2.205411 -1.493,0.802975 -1.632,0.721368 -2.089,1.002459 0,2.004919 -0.796,1.303701 -1.891,-0.100749 -2.09,0.100749 -0.995,0.90171 0.199,1.103209 0.896,1.603935 0.51,2.101639 -0.871,3.758971 -2.052,2.255786 -1.244,0.500726 -1.99,-0.500726 -2.239,-0.751593 -1.369,0.626663 -1.99,0.375797 -1.181,0.375796 -0.498,1.190861 0.435,1.754053 0.747,1.566657 0.871,1.441728 1.368,2.254779 -0.373,1.379263 -1.058,0.939995 -1.492,0.625655 -0.249,1.379263 0.186,1.629123 -0.478,0.721368 -5.5,-2.2 -6.8,1.5 -4.2,4.8 -3.1,8.5 -1.5,12.2 -0.8,9.4 -2.1,8.1 -4.8,3.2 -5.2,-1.5 -3.4,4.2 -1.428,2.21952 -1.222,0.26598 -0.72,1.44676 -3.817,1.72181 -0.585,1.80947 -0.231,-0.84831 -0.471,-0.18236 0.094,-0.55916 -1.198,0.39191 -1.94,-0.32441 -2.655,-1.68856 -0.146,-0.47655 -1.027,0.24482 -1.19,-1.62711 -0.963,-0.29922 -1.199,1.10119 -3.014,-1.20497 -2.866,0.2811 -1.177,-3.14037 0.712,-1.16971 -0.546,-1.50721 0.982,-3.02854 -1.153,0.42013 -0.581,1.62711 -1.731,0.42415 -1.185,0.74051 -2.886,-0.30124 -1.393,-1.00246 -2.09,-1.00246 -1.592,-1.50419 -2.488,-0.90171 -2.089,-1.50419 -3.184,0 -0.697,-1.50319 -1.095,-1.00347 -1.393,-1.20295 0.597,-2.505646 -0.895,-1.805435 -0.299,-3.107121 1.095,-1.303701 -0.796,-3.20787 0.497,-1.203959 0.1,-1.503185 -1.493,-1.504193 0.1,-1.403443 0.995,-1.202952 -0.797,-3.108128 -1.492,-1.503185 0.099,-2.907637 -0.298,-2.34646 -0.995,-2.505645 0.398,-2.506652 0,-1.704685 1.293,-1.403443 2.19,-0.601476 1.691,-0.701218 0.1,-1.905177 1.293,-2.30616 1.393,-0.200492 3.384,-0.09974 1.194,-0.902717 0.796,-3.007379 0.896,-1.905177 0,-2.004919 -1.792,-1.804427 -2.487,-1.103209 -1.991,-0.601475 -1.194,-0.902718 -0.696,-1.503185 0.398,-1.603935 1.393,-0.902718 0.597,-1.202951 -0.995,-2.205411 -2.09,0.09974 -2.388,-0.300234 -1.99,-0.601475 -3.483,-0.301242 -1.891,-1.743977 -0.895,-1.804427 -0.697,-2.606395 -2.686,-1.303701 -3.085,-0.702225 -1.991,1.303701 -2.188,0.09974 -0.797,-1.202951 -0.099,-2.205411 0.498,-1.103209 -0.498,-1.603935 0.398,-1.603936 0.995,-2.30616 2.388,-1.703677 2.488,-2.105669 2.289,-2.506652 2.189,-2.806887 0.896,-2.8068862 1.989,-1.3026936 3.085,0.3002341 3.881,0.4009838 4.379,0.2004919 2.089,-0.5017335 -1.89,-2.1046611 -1.668,-0.9268972 0.829,-1.1989214 2.033,-0.2810916 1.791,1.6049426 2.587,0.6004682 1.293,-1.6029277 1.792,-0.4009837 1.691,-0.8029751 1.393,-0.7012179 2.19,-1.1032091 1.493,-1.20295141 L 135.523,0 l 1.691,0.30124159 z",
     "labelPos": {
-      "x": 175,
-      "y": 70,
-      "fontSize": "11"
-    }
+      "x": 135,
+      "y": 72,
+      "fontSize": "10"
+    },
+    "type": "UT",
+    "isSmallState": false
   },
   {
     "code": "JH",
@@ -172,7 +330,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 365,
       "y": 325,
       "fontSize": "11"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "KA",
@@ -182,7 +342,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 170,
       "y": 520,
       "fontSize": "13"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "KL",
@@ -192,7 +354,21 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 168,
       "y": 615,
       "fontSize": "10"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
+  },
+  {
+    "code": "LA",
+    "name": "Ladakh",
+    "d": "m 166.5,70.5 3.089,2.860284 0.176,1.689572 2.313,0.93798 4.697,0.312324 0.118,0.779801 -1.268,2.93283 -0.051,1.29161 2.012,2.24571 0.474,2.15806 1.3,1.07298 0.648,2.22355 -0.396,1.57975 -2.038,0.52994 -2.843,2.46535 -1.127,-0.90373 -1.16,0.31233 -1.6,1.15761 -0.462,2.30213 -1.156,-0.28915 -1.508,1.00851 -1.308,-0.6045 -2.795,-2.69002 -0.366,-2.30314 0.348,-0.75965 -0.72,-2.43714 -1.916,1.16769 -0.601,1.05082 -1.691,-0.13097 -1.241,0.97425 -0.689,-0.15616 -0.847,0.58334 -0.031,1.10421 -0.593,-0.44632 -1.508,1.33796 -0.668,-0.79693 0.433,-0.53095 -0.053,-1.20195 1.929,-1.13948 -0.537,-1.21504 0.172,-2.24168 -1.752,0.59946 0.169,0.62364 -1.733,1.0881 -1.265,-0.24482 -0.65,0.9138 -0.588,-0.49267 -0.587,0.94403 -0.658,-0.28311 0.039,1.0881 -1.114,0.135 -1.66,-2.65677 0.248,-1.81954 -0.716,-0.23374 -0.697,-1.32385 -1.804,-0.90977 0.602,-1.01455 -1.627,-1.66035 -0.989,-0.35565 -0.249,0.66596 -1.453,0.39091 -1.347,1.41049 -0.733,0.0212 -0.614,0.61961 -1.418,-0.59543 -0.649,1.50621 -0.599,0.135 -0.475,-0.85335 -0.981,-0.55815 -0.407,0.28008 -0.222,-0.76066 -1.139,-0.88861 -0.579,0.42819 -0.205,-1.66237 -1.287,0.17732 -0.829,-0.6579 -0.772,0.25288 -1.694,-1.10421 -0.844,-2.01802 -0.686,0.0484 -0.858,-1.08709 0.521,-2.275936 -0.535,0.243814 -0.513,-0.477553 -0.48,0.156162 -0.533,1.758082 -2.154,0.424156 -0.944,-1.113284 -0.72,-0.0665 -1.642,0.743533 -1.62,-0.170267 -2.442,2.073433 -0.789,1.78831 -3.007,0.69517 -0.24,0.90171 -2.856,2.09156 -1.647,-1.12638 -1.238,0.0101 -0.278,1.49009 1.656,1.4115 0.81,1.41251 -0.333,1.64826 0.566,1.18079 -1.069,1.68252 3.4,-4.2 5.2,1.5 4.8,-3.2 2.1,-8.1 0.8,-9.4 1.5,-12.2 3.1,-8.5 4.2,-4.8 6.8,-1.5 5.5,2.2 0.478,-0.721368 z",
+    "labelPos": {
+      "x": 202,
+      "y": 55,
+      "fontSize": "11"
+    },
+    "type": "UT",
+    "isSmallState": false
   },
   {
     "code": "LD",
@@ -202,6 +378,18 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 99,
       "y": 627,
       "fontSize": "8"
+    },
+    "type": "UT",
+    "isSmallState": true,
+    "hotspotPos": {
+      "x": 100,
+      "y": 630
+    },
+    "leaderLine": {
+      "x1": 100,
+      "y1": 630,
+      "x2": 50,
+      "y2": 640
     }
   },
   {
@@ -212,7 +400,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 215,
       "y": 320,
       "fontSize": "14"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "MH",
@@ -222,7 +412,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 175,
       "y": 435,
       "fontSize": "14"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "MN",
@@ -232,7 +424,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 538,
       "y": 300,
       "fontSize": "8"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "ML",
@@ -242,7 +436,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 484,
       "y": 283,
       "fontSize": "8"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "MZ",
@@ -252,7 +448,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 518,
       "y": 338,
       "fontSize": "8"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "NL",
@@ -262,7 +460,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 548,
       "y": 268,
       "fontSize": "8"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "OR",
@@ -272,7 +472,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 340,
       "y": 405,
       "fontSize": "13"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "PY",
@@ -282,6 +484,18 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 268,
       "y": 546,
       "fontSize": "7"
+    },
+    "type": "UT",
+    "isSmallState": true,
+    "hotspotPos": {
+      "x": 244,
+      "y": 609
+    },
+    "leaderLine": {
+      "x1": 244,
+      "y1": 609,
+      "x2": 300,
+      "y2": 620
     }
   },
   {
@@ -292,7 +506,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 150,
       "y": 155,
       "fontSize": "9"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "RJ",
@@ -302,7 +518,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 115,
       "y": 255,
       "fontSize": "14"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "SK",
@@ -312,6 +530,18 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 425,
       "y": 235,
       "fontSize": "7"
+    },
+    "type": "STATE",
+    "isSmallState": true,
+    "hotspotPos": {
+      "x": 425,
+      "y": 235
+    },
+    "leaderLine": {
+      "x1": 425,
+      "y1": 235,
+      "x2": 425,
+      "y2": 185
     }
   },
   {
@@ -322,7 +552,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 210,
       "y": 610,
       "fontSize": "13"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "TG",
@@ -332,7 +564,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 238,
       "y": 458,
       "fontSize": "12"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "TR",
@@ -342,6 +576,18 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 493,
       "y": 325,
       "fontSize": "8"
+    },
+    "type": "STATE",
+    "isSmallState": true,
+    "hotspotPos": {
+      "x": 493,
+      "y": 325
+    },
+    "leaderLine": {
+      "x1": 493,
+      "y1": 325,
+      "x2": 460,
+      "y2": 370
     }
   },
   {
@@ -352,7 +598,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 265,
       "y": 245,
       "fontSize": "14"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "UT",
@@ -362,7 +610,9 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 232,
       "y": 175,
       "fontSize": "9"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   },
   {
     "code": "WB",
@@ -372,6 +622,8 @@ export const INDIA_MAP_PATHS: StatePathData[] = [
       "x": 412,
       "y": 310,
       "fontSize": "11"
-    }
+    },
+    "type": "STATE",
+    "isSmallState": false
   }
 ];

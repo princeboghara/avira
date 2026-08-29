@@ -4,30 +4,21 @@ import { pool } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-// Comprehensive Mapping of State Names, Codes, and Variants
+// Comprehensive Mapping of 28 States & 8 Union Territories with all aliases and variants
 const STATE_MAP: Record<string, { code: string; name: string }> = {
-  "andaman and nicobar": { code: "AN", name: "Andaman & Nicobar" },
-  "andaman and nicobar islands": { code: "AN", name: "Andaman & Nicobar" },
+  // 28 States of India
   "andhra pradesh": { code: "AP", name: "Andhra Pradesh" },
   "arunachal pradesh": { code: "AR", name: "Arunachal Pradesh" },
   "assam": { code: "AS", name: "Assam" },
   "bihar": { code: "BR", name: "Bihar" },
-  "chandigarh": { code: "CH", name: "Chandigarh" },
   "chhattisgarh": { code: "CT", name: "Chhattisgarh" },
-  "dadra and nagar haveli": { code: "DN", name: "Dadra & Nagar Haveli" },
-  "daman and diu": { code: "DD", name: "Daman & Diu" },
-  "delhi": { code: "DL", name: "Delhi" },
   "goa": { code: "GA", name: "Goa" },
   "gujarat": { code: "GJ", name: "Gujarat" },
   "haryana": { code: "HR", name: "Haryana" },
   "himachal pradesh": { code: "HP", name: "Himachal Pradesh" },
-  "jammu and kashmir": { code: "JK", name: "Jammu and Kashmir" },
-  "jammu & kashmir": { code: "JK", name: "Jammu and Kashmir" },
   "jharkhand": { code: "JH", name: "Jharkhand" },
   "karnataka": { code: "KA", name: "Karnataka" },
   "kerala": { code: "KL", name: "Kerala" },
-  "ladakh": { code: "LA", name: "Ladakh" },
-  "lakshadweep": { code: "LD", name: "Lakshadweep" },
   "madhya pradesh": { code: "MP", name: "Madhya Pradesh" },
   "maharashtra": { code: "MH", name: "Maharashtra" },
   "manipur": { code: "MN", name: "Manipur" },
@@ -36,8 +27,6 @@ const STATE_MAP: Record<string, { code: string; name: string }> = {
   "nagaland": { code: "NL", name: "Nagaland" },
   "odisha": { code: "OR", name: "Odisha" },
   "orissa": { code: "OR", name: "Odisha" },
-  "puducherry": { code: "PY", name: "Puducherry" },
-  "pondicherry": { code: "PY", name: "Puducherry" },
   "punjab": { code: "PB", name: "Punjab" },
   "rajasthan": { code: "RJ", name: "Rajasthan" },
   "sikkim": { code: "SK", name: "Sikkim" },
@@ -46,7 +35,34 @@ const STATE_MAP: Record<string, { code: string; name: string }> = {
   "tripura": { code: "TR", name: "Tripura" },
   "uttar pradesh": { code: "UP", name: "Uttar Pradesh" },
   "uttarakhand": { code: "UT", name: "Uttarakhand" },
+  "uttaranchal": { code: "UT", name: "Uttarakhand" },
   "west bengal": { code: "WB", name: "West Bengal" },
+
+  // 8 Union Territories of India
+  "andaman and nicobar": { code: "AN", name: "Andaman and Nicobar Islands" },
+  "andaman and nicobar islands": { code: "AN", name: "Andaman and Nicobar Islands" },
+  "andaman & nicobar": { code: "AN", name: "Andaman and Nicobar Islands" },
+  "andaman & nicobar islands": { code: "AN", name: "Andaman and Nicobar Islands" },
+  "chandigarh": { code: "CH", name: "Chandigarh" },
+  "dadra and nagar haveli and daman and diu": { code: "DN", name: "Dadra and Nagar Haveli and Daman and Diu" },
+  "dadra & nagar haveli and daman & diu": { code: "DN", name: "Dadra and Nagar Haveli and Daman and Diu" },
+  "dadra and nagar haveli": { code: "DN", name: "Dadra and Nagar Haveli" },
+  "dadra & nagar haveli": { code: "DN", name: "Dadra and Nagar Haveli" },
+  "daman and diu": { code: "DD", name: "Daman and Diu" },
+  "daman & diu": { code: "DD", name: "Daman and Diu" },
+  "delhi": { code: "DL", name: "Delhi" },
+  "delhi (national capital territory)": { code: "DL", name: "Delhi" },
+  "national capital territory of delhi": { code: "DL", name: "Delhi" },
+  "nct of delhi": { code: "DL", name: "Delhi" },
+  "nct delhi": { code: "DL", name: "Delhi" },
+  "new delhi": { code: "DL", name: "Delhi" },
+  "jammu and kashmir": { code: "JK", name: "Jammu and Kashmir" },
+  "jammu & kashmir": { code: "JK", name: "Jammu and Kashmir" },
+  "ladakh": { code: "LA", name: "Ladakh" },
+  "leh ladakh": { code: "LA", name: "Ladakh" },
+  "lakshadweep": { code: "LD", name: "Lakshadweep" },
+  "puducherry": { code: "PY", name: "Puducherry" },
+  "pondicherry": { code: "PY", name: "Puducherry" },
 };
 
 export async function GET(req: NextRequest) {
