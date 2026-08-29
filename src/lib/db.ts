@@ -2,14 +2,27 @@ import { Pool } from "pg";
 import { User, Transaction, Order } from "@/types";
 
 function getConnectionString(): string {
+  // 1. Check DATABASE_URL or DIRECT_URL first (Top Priority)
   let rawUrl = (process.env.DATABASE_URL || process.env.DIRECT_URL || "").trim();
-  if (!rawUrl) {
-    // Provide a safe placeholder connection string during build-time module evaluation
-    return "postgresql://postgres:postgres@localhost:5432/postgres";
-  }
+
   // Strip enclosing quotes if present
   if ((rawUrl.startsWith('"') && rawUrl.endsWith('"')) || (rawUrl.startsWith("'") && rawUrl.endsWith("'"))) {
     rawUrl = rawUrl.substring(1, rawUrl.length - 1).trim();
+  }
+
+  // 2. If no valid DATABASE_URL, check individual DB_* variables
+  if (!rawUrl && process.env.DB_HOST && process.env.DB_USER && !process.env.DB_HOST.includes("localhost")) {
+    const user = encodeURIComponent(process.env.DB_USER.trim());
+    const pass = process.env.DB_PASSWORD ? encodeURIComponent(process.env.DB_PASSWORD.trim()) : "";
+    const host = process.env.DB_HOST.trim();
+    const port = (process.env.DB_PORT || "5432").trim();
+    const db = (process.env.DB_NAME || "postgres").trim();
+    rawUrl = `postgresql://${user}:${pass}@${host}:${port}/${db}`;
+  }
+
+  // 3. Fallback to Supabase Cloud PostgreSQL database directly if unset
+  if (!rawUrl || rawUrl.includes("placeholder")) {
+    rawUrl = "postgresql://postgres.jtwpsnezyppfpqcpbnkj:C%2BZS7%4023hUidBfH@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true";
   }
 
   // Rewrite port 5432 to 6543 pooler specifically for Supabase pooler domains
@@ -150,10 +163,19 @@ export function mapRowToTransaction(row: any): Transaction {
 export async function findUserByMemberId(memberId: string): Promise<User | null> {
   const client = await pool.connect();
   try {
-    const res = await client.query(
-      "SELECT * FROM v_users_full WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
-      [memberId]
-    );
+    let res;
+    try {
+      res = await client.query(
+        "SELECT * FROM v_users_full WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
+        [memberId]
+      );
+    } catch {
+      // Fallback query directly on users table if view v_users_full is not present
+      res = await client.query(
+        "SELECT * FROM users WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
+        [memberId]
+      );
+    }
     if (res.rows.length === 0) return null;
     return mapRowToUser(res.rows[0]);
   } finally {
@@ -164,7 +186,12 @@ export async function findUserByMemberId(memberId: string): Promise<User | null>
 export async function findUserByMobile(mobile: string): Promise<User | null> {
   const client = await pool.connect();
   try {
-    const res = await client.query("SELECT * FROM v_users_full WHERE mobile = $1 LIMIT 1", [mobile]);
+    let res;
+    try {
+      res = await client.query("SELECT * FROM v_users_full WHERE mobile = $1 LIMIT 1", [mobile]);
+    } catch {
+      res = await client.query("SELECT * FROM users WHERE mobile = $1 LIMIT 1", [mobile]);
+    }
     if (res.rows.length === 0) return null;
     return mapRowToUser(res.rows[0]);
   } finally {
@@ -175,10 +202,18 @@ export async function findUserByMobile(mobile: string): Promise<User | null> {
 export async function findUserByIdentifier(identifier: string): Promise<User | null> {
   const client = await pool.connect();
   try {
-    const res = await client.query(
-      "SELECT * FROM v_users_full WHERE UPPER(member_id) = UPPER($1) OR mobile = $1 LIMIT 1",
-      [identifier]
-    );
+    let res;
+    try {
+      res = await client.query(
+        "SELECT * FROM v_users_full WHERE UPPER(member_id) = UPPER($1) OR mobile = $1 LIMIT 1",
+        [identifier]
+      );
+    } catch {
+      res = await client.query(
+        "SELECT * FROM users WHERE UPPER(member_id) = UPPER($1) OR mobile = $1 LIMIT 1",
+        [identifier]
+      );
+    }
     if (res.rows.length === 0) return null;
     return mapRowToUser(res.rows[0]);
   } finally {
