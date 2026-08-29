@@ -22,16 +22,17 @@ function getConnectionString(): string {
 
   // 3. Fallback to Supabase Cloud PostgreSQL database directly if unset
   if (!rawUrl || rawUrl.includes("placeholder")) {
-    rawUrl = "postgresql://postgres.jtwpsnezyppfpqcpbnkj:C%2BZS7%4023hUidBfH@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true";
+    rawUrl = "postgresql://postgres.jtwpsnezyppfpqcpbnkj:C%2BZS7%4023hUidBfH@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres";
   }
 
-  // Rewrite port 5432 to 6543 pooler specifically for Supabase pooler domains
-  if (rawUrl.includes(".pooler.supabase.com:5432")) {
-    rawUrl = rawUrl.replace(".pooler.supabase.com:5432", ".pooler.supabase.com:6543");
+  // Ensure port 5432 is used so hosting firewalls (GoDaddy/cPanel) permit outbound DB connection
+  if (rawUrl.includes(".pooler.supabase.com:6543")) {
+    rawUrl = rawUrl.replace(".pooler.supabase.com:6543", ".pooler.supabase.com:5432");
   }
 
-  if (rawUrl.includes(".pooler.supabase.com") && !rawUrl.includes("pgbouncer=true")) {
-    rawUrl += (rawUrl.includes("?") ? "&" : "?") + "pgbouncer=true";
+  // Remove pgbouncer param when on port 5432 session mode
+  if (rawUrl.includes(":5432") && rawUrl.includes("pgbouncer=true")) {
+    rawUrl = rawUrl.replace("pgbouncer=true", "").replace("&&", "&").replace("?&", "?").replace(/[?&]$/, "");
   }
 
   return rawUrl;
