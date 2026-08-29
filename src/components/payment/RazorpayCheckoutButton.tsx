@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { openRazorpayCheckout, RazorpayOptions } from "@/lib/razorpayClient";
+import { openRazorpayCheckout } from "@/lib/razorpayClient";
 import { CreditCard, Loader2, ShieldCheck } from "lucide-react";
 
 interface RazorpayCheckoutButtonProps {
@@ -18,6 +18,7 @@ interface RazorpayCheckoutButtonProps {
     razorpay_order_id: string;
     razorpay_signature: string;
   }) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onFailure?: (error: any) => void;
   className?: string;
   buttonText?: string;

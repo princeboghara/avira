@@ -1,5 +1,14 @@
 "use client";
 
+declare global {
+  interface Window {
+    Razorpay?: new (options: Record<string, unknown>) => {
+      open: () => void;
+      on: (event: string, handler: (res: { error?: { description?: string; reason?: string } }) => void) => void;
+    };
+  }
+}
+
 /**
  * Dynamically loads the Razorpay Standard Checkout script (https://checkout.razorpay.com/v1/checkout.js)
  */
@@ -10,7 +19,7 @@ export function loadRazorpayScript(): Promise<boolean> {
       return;
     }
 
-    if ((window as any).Razorpay) {
+    if (window.Razorpay) {
       resolve(true);
       return;
     }
@@ -55,6 +64,7 @@ export interface RazorpayOptions {
     razorpay_signature: string;
     verified: boolean;
   }) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onFailure?: (error: any) => void;
   onDismiss?: () => void;
 }
@@ -69,15 +79,14 @@ export interface RazorpayOptions {
 export async function openRazorpayCheckout(options: RazorpayOptions): Promise<void> {
   const isLoaded = await loadRazorpayScript();
   if (!isLoaded) {
-    alert("Failed to load Razorpay Payment Gateway. Please check your internet connection.");
-    if (options.onFailure) {
-      options.onFailure(new Error("Razorpay SDK load failed"));
-    }
+    const err = new Error("Failed to load Razorpay SDK. Please check your internet connection.");
+    if (options.onFailure) options.onFailure(err);
+    else alert(err.message);
     return;
   }
 
   try {
-    // 1. Create order on backend
+    // 1. Create order on server
     const createRes = await fetch("/api/create-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -95,10 +104,13 @@ export async function openRazorpayCheckout(options: RazorpayOptions): Promise<vo
       throw new Error(orderData.message || "Failed to initiate payment order");
     }
 
-    const key = orderData.key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_TVDtnzMXyvMMER";
+    const key = orderData.key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
+    if (!key) {
+      throw new Error("Razorpay Client Key is not configured. Please set NEXT_PUBLIC_RAZORPAY_KEY_ID.");
+    }
 
     // 2. Open Razorpay Checkout modal
-    const rzpOptions = {
+    const rzpOptions: Record<string, unknown> = {
       key,
       amount: orderData.amount,
       currency: orderData.currency || "INR",
@@ -111,8 +123,9 @@ export async function openRazorpayCheckout(options: RazorpayOptions): Promise<vo
         email: "",
         contact: "",
       },
-      theme: options.theme || {
-        color: "#006d36",
+      notes: options.notes || {},
+      theme: {
+        color: options.theme?.color || "#006d36",
       },
       handler: async function (response: {
         razorpay_payment_id: string;
@@ -120,7 +133,7 @@ export async function openRazorpayCheckout(options: RazorpayOptions): Promise<vo
         razorpay_signature: string;
       }) {
         try {
-          // 3. Verify signature on backend
+          // 3. Verify Payment Signature on backend
           const verifyRes = await fetch("/api/verify-payment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -142,9 +155,9 @@ export async function openRazorpayCheckout(options: RazorpayOptions): Promise<vo
             if (options.onFailure) options.onFailure(err);
             else alert("Payment verification failed: " + err.message);
           }
-        } catch (verErr: any) {
+        } catch (verErr: unknown) {
           if (options.onFailure) options.onFailure(verErr);
-          else alert("Verification network error: " + verErr.message);
+          else alert("Verification network error occurred.");
         }
       },
       modal: {
@@ -156,9 +169,13 @@ export async function openRazorpayCheckout(options: RazorpayOptions): Promise<vo
       },
     };
 
-    const rzpInstance = new (window as any).Razorpay(rzpOptions);
+    if (!window.Razorpay) {
+      throw new Error("Razorpay instance is unavailable on window.");
+    }
+
+    const rzpInstance = new window.Razorpay(rzpOptions);
     
-    rzpInstance.on("payment.failed", function (response: any) {
+    rzpInstance.on("payment.failed", function (response: { error?: { description?: string; reason?: string } }) {
       console.error("Razorpay payment failed:", response.error);
       const errMsg = response.error?.description || response.error?.reason || "Payment process was interrupted or failed.";
       if (options.onFailure) {
@@ -169,12 +186,13 @@ export async function openRazorpayCheckout(options: RazorpayOptions): Promise<vo
     });
 
     rzpInstance.open();
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Open Razorpay error:", err);
     if (options.onFailure) {
       options.onFailure(err);
     } else {
-      alert("Error initiating Razorpay checkout: " + err.message);
+      const msg = err instanceof Error ? err.message : "Error initiating Razorpay checkout";
+      alert("Error initiating Razorpay checkout: " + msg);
     }
   }
 }

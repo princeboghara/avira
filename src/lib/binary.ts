@@ -203,7 +203,7 @@ export async function creditPurchasePV(
   purchaseType: "ACTIVATION" | "REPURCHASE" = "ACTIVATION",
   packageName: string,
   amount: number,
-  items: any[] = [],
+  items: unknown[] = [],
   skipOrderCreation: boolean = false
 ): Promise<{
   newPersonalPv: number;

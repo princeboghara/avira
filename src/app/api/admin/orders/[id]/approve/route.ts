@@ -14,12 +14,15 @@ export async function POST(
   const client = await pool.connect();
 
   try {
+    await client.query("BEGIN");
+
     const orderRes = await client.query(
-      `SELECT * FROM orders WHERE id = $1 LIMIT 1`,
+      `SELECT * FROM orders WHERE id = $1 FOR UPDATE`,
       [id]
     );
 
     if (orderRes.rows.length === 0) {
+      await client.query("ROLLBACK");
       return NextResponse.json(
         { success: false, message: "Order not found" },
         { status: 404 }
@@ -29,11 +32,18 @@ export async function POST(
     const order = orderRes.rows[0];
 
     if (order.status !== "PENDING" && order.status !== "PENDING_APPROVAL") {
+      await client.query("ROLLBACK");
       return NextResponse.json(
         { success: false, message: `Order is already ${order.status}` },
         { status: 400 }
       );
     }
+
+    // Update order status to CONFIRMED inside transaction
+    await client.query(
+      `UPDATE orders SET status = 'CONFIRMED' WHERE id = $1`,
+      [id]
+    );
 
     let parsedItems = [];
     if (order.items) {
@@ -58,17 +68,14 @@ export async function POST(
       true // skipOrderCreation = true prevents duplicate order record
     );
 
-    // Update order status to CONFIRMED
-    await client.query(
-      `UPDATE orders SET status = 'CONFIRMED' WHERE id = $1`,
-      [id]
-    );
+    await client.query("COMMIT");
 
     return NextResponse.json({
       success: true,
       message: `Order #${id} approved successfully! Status set to CONFIRMED and +${order.pv} PV credited to member.`,
     });
   } catch (error) {
+    await client.query("ROLLBACK");
     console.error("Order approval error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to approve order" },

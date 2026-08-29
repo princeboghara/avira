@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -12,7 +12,6 @@ import {
   Maximize2,
   ChevronRight,
   ArrowUp,
-  RotateCcw,
 } from "lucide-react";
 
 export interface TreeNode {
@@ -60,8 +59,10 @@ export default function BinaryGenealogyTree({
   const [zoomScale, setZoomScale] = useState<number>(1);
 
   // Sync rootNode when parent changes it
-  React.useEffect(() => {
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTreeData(rootNode);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setExpandedNodes((prev) => ({
       ...prev,
       [rootNode.id]: true,

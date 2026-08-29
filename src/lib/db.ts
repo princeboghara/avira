@@ -1,11 +1,13 @@
 import { Pool } from "pg";
 import { User, Transaction, Order } from "@/types";
 
-const DEFAULT_DATABASE_URL =
-  "postgresql://postgres.jtwpsnezyppfpqcpbnkj:C%2BZS7%4023hUidBfH@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true";
-
 function getConnectionString(): string {
-  let rawUrl = (process.env.DATABASE_URL || process.env.DIRECT_URL || DEFAULT_DATABASE_URL).trim();
+  let rawUrl = (process.env.DATABASE_URL || process.env.DIRECT_URL || "").trim();
+  if (!rawUrl) {
+    throw new Error(
+      "DATABASE_URL or DIRECT_URL environment variable is not defined. Please configure database credentials in .env."
+    );
+  }
   // Strip enclosing quotes if present
   if ((rawUrl.startsWith('"') && rawUrl.endsWith('"')) || (rawUrl.startsWith("'") && rawUrl.endsWith("'"))) {
     rawUrl = rawUrl.substring(1, rawUrl.length - 1).trim();

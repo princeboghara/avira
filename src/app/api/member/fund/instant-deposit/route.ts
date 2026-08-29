@@ -64,6 +64,19 @@ export async function POST(req: NextRequest) {
       }
       const user = userRes.rows[0];
 
+      // 2.5 Idempotency: Check if this Razorpay Payment ID has already been credited
+      const existingTxn = await client.query(
+        "SELECT id FROM fund_requests WHERE transaction_id = $1 LIMIT 1",
+        [razorpay_payment_id]
+      );
+      if (existingTxn.rows.length > 0) {
+        await client.query("ROLLBACK");
+        return NextResponse.json(
+          { success: false, message: "This payment has already been credited to your Fund Wallet." },
+          { status: 400 }
+        );
+      }
+
       // 3. Create approved fund_request record
       const requestId = `fund_rzp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
       await client.query(

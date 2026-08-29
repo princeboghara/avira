@@ -29,7 +29,7 @@ export interface TreeNodeData {
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session || !session.memberId) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }

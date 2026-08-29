@@ -5,7 +5,7 @@ import { getWeeklyPeriods, syncAndGetWeeklyPayouts } from "@/lib/payouts";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session || !session.memberId) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
@@ -15,10 +15,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
     }
 
-    // Sync current week to ensure latest matching is captured in payouts table
-    const weeks = getWeeklyPeriods(8);
-    for (const w of weeks.slice(0, 3)) {
-      await syncAndGetWeeklyPayouts(w);
+    // Sync only current week cycle if needed
+    const weeks = getWeeklyPeriods(1);
+    if (weeks.length > 0) {
+      await syncAndGetWeeklyPayouts(weeks[0]);
     }
 
     const client = await pool.connect();

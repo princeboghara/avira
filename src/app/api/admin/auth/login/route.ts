@@ -22,9 +22,6 @@ export async function POST(req: Request) {
     const { password, loginIdentifier } = result.data;
     const trimmedPass = password.trim();
 
-    // 1. Direct Master Admin Verification with Password 123123
-    const isMasterPassword = trimmedPass === "123123";
-
     const client = await pool.connect();
     let adminRecord: any = null;
 
@@ -40,7 +37,7 @@ export async function POST(req: Request) {
       }
 
       if (!adminRecord) {
-        // Find existing administrator or use master admin identity
+        // Find existing administrator with role = ADMIN
         const res = await client.query(
           "SELECT id, member_id, full_name, mobile, role, status, password_hash FROM users WHERE role = 'ADMIN' ORDER BY created_at ASC LIMIT 1"
         );
@@ -52,11 +49,12 @@ export async function POST(req: Request) {
       client.release();
     }
 
-    // 2. Validate Password: Check either Master 123123 or bcrypt hash
-    let isValid = isMasterPassword;
-
-    if (!isValid && adminRecord?.password_hash) {
+    // Validate Password strictly against admin bcrypt hash or optional configured ADMIN_PASSWORD env var
+    let isValid = false;
+    if (adminRecord?.password_hash) {
       isValid = await bcrypt.compare(trimmedPass, adminRecord.password_hash);
+    } else if (process.env.ADMIN_PASSWORD) {
+      isValid = trimmedPass === process.env.ADMIN_PASSWORD;
     }
 
     if (!isValid) {

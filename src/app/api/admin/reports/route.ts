@@ -11,25 +11,50 @@ export async function GET(req: NextRequest) {
   const fromDate = searchParams.get("from");
   const toDate = searchParams.get("to");
 
-  let dateCondition = "created_at >= CURRENT_DATE";
-  let txDateCondition = "t.created_at >= CURRENT_DATE";
+  let startDate: string | null = null;
+  let endDate: string | null = null;
+
+  const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
   if (range === "today") {
-    dateCondition = "created_at >= CURRENT_DATE";
-    txDateCondition = "t.created_at >= CURRENT_DATE";
+    // Current date
   } else if (range === "week") {
-    dateCondition = "created_at >= (CURRENT_DATE - INTERVAL '7 days')";
-    txDateCondition = "t.created_at >= (CURRENT_DATE - INTERVAL '7 days')";
+    // Last 7 days
   } else if (range === "month") {
-    dateCondition = "created_at >= (CURRENT_DATE - INTERVAL '30 days')";
-    txDateCondition = "t.created_at >= (CURRENT_DATE - INTERVAL '30 days')";
+    // Last 30 days
   } else if (range === "custom" && fromDate && toDate) {
-    dateCondition = `created_at >= '${fromDate} 00:00:00' AND created_at <= '${toDate} 23:59:59'`;
-    txDateCondition = `t.created_at >= '${fromDate} 00:00:00' AND t.created_at <= '${toDate} 23:59:59'`;
+    if (isoDateRegex.test(fromDate.trim()) && isoDateRegex.test(toDate.trim())) {
+      startDate = `${fromDate.trim()} 00:00:00`;
+      endDate = `${toDate.trim()} 23:59:59`;
+    }
   }
 
   const client = await pool.connect();
   try {
+    let orderCondition = "created_at >= CURRENT_DATE";
+    let txCondition = "t.created_at >= CURRENT_DATE";
+    let orderListCondition = "o.created_at >= CURRENT_DATE";
+    let memberCondition = "created_at >= CURRENT_DATE";
+    const queryParams: string[] = [];
+
+    if (range === "week") {
+      orderCondition = "created_at >= (CURRENT_DATE - INTERVAL '7 days')";
+      txCondition = "t.created_at >= (CURRENT_DATE - INTERVAL '7 days')";
+      orderListCondition = "o.created_at >= (CURRENT_DATE - INTERVAL '7 days')";
+      memberCondition = "created_at >= (CURRENT_DATE - INTERVAL '7 days')";
+    } else if (range === "month") {
+      orderCondition = "created_at >= (CURRENT_DATE - INTERVAL '30 days')";
+      txCondition = "t.created_at >= (CURRENT_DATE - INTERVAL '30 days')";
+      orderListCondition = "o.created_at >= (CURRENT_DATE - INTERVAL '30 days')";
+      memberCondition = "created_at >= (CURRENT_DATE - INTERVAL '30 days')";
+    } else if (startDate && endDate) {
+      orderCondition = "created_at >= $1::timestamp AND created_at <= $2::timestamp";
+      txCondition = "t.created_at >= $1::timestamp AND t.created_at <= $2::timestamp";
+      orderListCondition = "o.created_at >= $1::timestamp AND o.created_at <= $2::timestamp";
+      memberCondition = "created_at >= $1::timestamp AND created_at <= $2::timestamp";
+      queryParams.push(startDate, endDate);
+    }
+
     // 1. Order Summary for selected range
     const ordersRes = await client.query(`
       SELECT 
@@ -41,8 +66,8 @@ export async function GET(req: NextRequest) {
         COUNT(CASE WHEN status = 'PACKED' THEN 1 END) as packed_orders,
         COUNT(CASE WHEN status = 'DISPATCHED' THEN 1 END) as dispatched_orders
       FROM orders
-      WHERE ${dateCondition};
-    `);
+      WHERE ${orderCondition};
+    `, queryParams);
 
     // 2. New Members for selected range
     const membersRes = await client.query(`
@@ -50,8 +75,8 @@ export async function GET(req: NextRequest) {
         COUNT(*) as new_members_count,
         COUNT(CASE WHEN status = 'ACTIVE' OR personal_pv >= 100 THEN 1 END) as active_new_members
       FROM v_users_full
-      WHERE ${dateCondition};
-    `);
+      WHERE ${memberCondition};
+    `, queryParams);
 
     // 3. Commissions Distributed in selected range
     const commissionRes = await client.query(`
@@ -59,8 +84,8 @@ export async function GET(req: NextRequest) {
         COALESCE(SUM(amount), 0) as total_commissions_distributed,
         COUNT(*) as commission_payouts_count
       FROM transactions t
-      WHERE ${txDateCondition};
-    `);
+      WHERE ${txCondition};
+    `, queryParams);
 
     // 4. Detailed Orders List
     const ordersListRes = await client.query(`
@@ -77,10 +102,10 @@ export async function GET(req: NextRequest) {
         u.full_name
       FROM orders o
       LEFT JOIN users u ON o.user_id = u.id
-      WHERE ${dateCondition.replace(/created_at/g, "o.created_at")}
+      WHERE ${orderListCondition}
       ORDER BY o.created_at DESC
       LIMIT 100;
-    `);
+    `, queryParams);
 
     // 5. Detailed New Joinings List
     const membersListRes = await client.query(`
@@ -94,10 +119,10 @@ export async function GET(req: NextRequest) {
         created_at,
         sponsor_id
       FROM v_users_full
-      WHERE ${dateCondition}
+      WHERE ${memberCondition}
       ORDER BY created_at DESC
       LIMIT 100;
-    `);
+    `, queryParams);
 
     const ordSummary = ordersRes.rows[0] || {};
     const memSummary = membersRes.rows[0] || {};

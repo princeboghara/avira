@@ -3,9 +3,9 @@ import { getSession } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session || !session.memberId) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
@@ -73,7 +73,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session || !session.memberId) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }

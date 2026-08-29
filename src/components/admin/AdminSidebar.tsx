@@ -140,8 +140,10 @@ export default function AdminSidebar({
       g.links.some((l) => l.href.split("?")[0] === pathname)
     );
     if (active) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpenCategories((prev) => ({ ...prev, [active.category]: true }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   const toggleCategory = (cat: string) => {

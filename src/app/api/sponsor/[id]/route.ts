@@ -26,37 +26,13 @@ export async function GET(
     });
   }
 
-  const fullAddress = [
-    user.address,
-    user.city,
-    user.state ? `${user.state}${user.pincode ? ` - ${user.pincode}` : ""}` : user.pincode,
-  ]
-    .filter(Boolean)
-    .join(", ");
-
-  const userData = {
-    id: user.id,
-    memberId: user.memberId,
-    fullName: user.fullName,
-    mobile: user.mobile,
-    address: user.address || fullAddress,
-    city: user.city,
-    state: user.state,
-    pincode: user.pincode,
-    status: user.status,
-  };
-
   return NextResponse.json({
     success: true,
     exists: true,
     memberId: user.memberId,
     fullName: user.fullName,
-    mobile: user.mobile,
-    address: user.address || fullAddress,
-    city: user.city,
-    state: user.state,
-    pincode: user.pincode,
     status: user.status,
-    user: userData,
+    city: user.city || "",
+    state: user.state || "",
   });
 }

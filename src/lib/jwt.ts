@@ -1,18 +1,25 @@
 import jwt from "jsonwebtoken";
 
 function getAccessSecret(): string {
-  return (
-    process.env.JWT_ACCESS_SECRET ||
-    process.env.JWT_SECRET ||
-    "avira_mlm_emerald_super_secret_access_jwt_key_2026"
-  );
+  const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("JWT_ACCESS_SECRET is required in production environment.");
+    }
+    return "avira_dev_access_secret_key_change_in_prod";
+  }
+  return secret;
 }
 
 function getRefreshSecret(): string {
-  return (
-    process.env.JWT_REFRESH_SECRET ||
-    "avira_mlm_emerald_super_secret_refresh_jwt_key_2026"
-  );
+  const secret = process.env.JWT_REFRESH_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("JWT_REFRESH_SECRET is required in production environment.");
+    }
+    return "avira_dev_refresh_secret_key_change_in_prod";
+  }
+  return secret;
 }
 
 export interface TokenPayload {

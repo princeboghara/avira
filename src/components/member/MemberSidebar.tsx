@@ -87,8 +87,10 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
   useEffect(() => {
     const active = menuGroups.find((g) => g.links.some((l) => l.href === pathname));
     if (active) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpenGroups((prev) => ({ ...prev, [active.category]: true }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   const toggleGroup = (cat: string) => {

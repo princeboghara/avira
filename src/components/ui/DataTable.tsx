@@ -10,7 +10,6 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
-  Download,
 } from "lucide-react";
 
 export interface Column<T> {
@@ -35,6 +34,7 @@ interface DataTableProps<T> {
   emptyMessage?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function DataTable<T extends Record<string, any>>({
   data,
   columns,
