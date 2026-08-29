@@ -127,10 +127,10 @@ export default function MemberStatementPage() {
       cell: (row) => (
         <div className="text-xs font-mono">
           <div className="text-red-600 font-bold">
-            -₹{(row.tdsAmount + row.adminCharge).toLocaleString("en-IN")}
+            -₹{(row.tdsAmount + row.adminCharge + (row.rpWalletDeduction || row.grossAmount * 0.05)).toLocaleString("en-IN")}
           </div>
           <div className="text-[10px] text-[#5f5e5e]">
-            TDS 5%: ₹{row.tdsAmount} • Admin 10%: ₹{row.adminCharge}
+            TDS 2%: ₹{row.tdsAmount} • Admin 8%: ₹{row.adminCharge} • RP 5%: ₹{row.rpWalletDeduction || (row.grossAmount * 0.05).toFixed(2)}
           </div>
         </div>
       ),
@@ -217,7 +217,7 @@ export default function MemberStatementPage() {
               Weekly Payout Statement
             </h1>
             <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl">
-              Track your weekly accumulated binary matching bonuses, 15% statutory deductions (5% TDS + 10% Admin Charge), and completed bank transfers.
+              Track your weekly accumulated income, 15% deductions (2% TDS + 8% Admin Charge + 5% RP Wallet), and completed bank transfers.
             </p>
           </div>
         </div>
@@ -238,13 +238,13 @@ export default function MemberStatementPage() {
 
           <div className="p-5 rounded-3xl bg-white border border-gray-200 shadow-2xs">
             <span className="text-[11px] font-bold uppercase tracking-wider text-red-600 block">
-              15% Deductions (TDS & Admin)
+              15% Deductions (TDS, Admin, RP)
             </span>
             <span className="text-xl sm:text-2xl font-mono font-black text-red-600 block mt-1">
-              ₹{(summary.totalTds + summary.totalAdmin).toLocaleString("en-IN")}
+              ₹{(summary.totalTds + summary.totalAdmin + (summary.totalGross * 0.05)).toLocaleString("en-IN")}
             </span>
             <span className="text-[10px] text-[#5f5e5e] block mt-0.5">
-              TDS: ₹{summary.totalTds} • Admin: ₹{summary.totalAdmin}
+              TDS (2%): ₹{summary.totalTds} • Admin (8%): ₹{summary.totalAdmin}
             </span>
           </div>
 

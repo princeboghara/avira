@@ -22,6 +22,8 @@ import {
   PlusCircle,
   Wallet,
   History,
+  Award,
+  Crown,
 } from "lucide-react";
 import { User } from "@/types";
 
@@ -67,6 +69,8 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
       icon: TrendingUp,
       links: [
         { name: "Binary Income", href: "/dashboard/earnings/binary", icon: TrendingUp },
+        { name: "Leadership Bonus", href: "/dashboard/earnings/leadership", icon: Award },
+        { name: "Royalty Income", href: "/dashboard/earnings/royalty", icon: Crown },
         { name: "Payout Statement", href: "/dashboard/statement", icon: FileText },
       ],
     },

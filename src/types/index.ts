@@ -120,12 +120,12 @@ export interface PincodeInfo {
 export interface Transaction {
   id: string;
   userId: string;
-  type: 'DIRECT_REFERRAL' | 'LEVEL_BONUS' | 'BINARY_MATCHING' | 'WITHDRAWAL' | 'WELCOME_BONUS';
+  type: 'DIRECT_REFERRAL' | 'LEVEL_BONUS' | 'BINARY_MATCHING' | 'LEADERSHIP_BONUS' | 'ROYALTY_INCOME' | 'WITHDRAWAL' | 'WELCOME_BONUS';
   amount: number; // Gross amount
-  tdsAmount?: number; // 3% TDS
+  tdsAmount?: number; // 2% TDS
   adminCharge?: number; // 8% Admin Fee
-  rpWalletAmount?: number; // 2% Repurchase Wallet
-  netAmount?: number; // Net paid to wallet (87%)
+  rpWalletAmount?: number; // 5% Repurchase Wallet
+  netAmount?: number; // Net paid to wallet (85%)
   description: string;
   status: 'COMPLETED' | 'PENDING' | 'PROCESSING';
   date: string;

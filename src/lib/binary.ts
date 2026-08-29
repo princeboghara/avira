@@ -124,9 +124,106 @@ export async function linkBinaryNode(
  * IMPORTANT: left_pv and right_pv are CUMULATIVE LIFETIME TOTALS and MUST NEVER DECREASE!
  * Only carry_left_pv and carry_right_pv are decremented by the matched volume.
  */
+/**
+ * Distributes Leadership Supporting Bonus across 2 generation levels (Direct Sponsor Tree):
+ * - Level 1 Direct Sponsor: 15% of the binary matching payout
+ * - Level 2 Direct Sponsor: 5% of the binary matching payout
+ * 
+ * Rules:
+ * - Calculated strictly on Sponsor ID (Direct Sponsor Tree), NOT on Binary Parent ID.
+ * - Eligible receiving sponsor must have personal_pv >= 100 (Active Associate).
+ * - Credits wallet_balance, total_earnings, today_earnings in user_wallets.
+ * - Logs structured transaction with type: 'LEADERSHIP_BONUS'.
+ */
+export async function distributeLeadershipBonus(
+  client: PoolClient,
+  earner: { id: string; memberId: string; fullName: string; sponsorId?: string },
+  binaryPayout: number
+) {
+  if (binaryPayout <= 0 || !earner.sponsorId) return;
+
+  const dateStr = new Date().toISOString().replace("T", " ").substring(0, 16);
+
+  // 1. Level 1 Direct Sponsor (15%)
+  const l1Res = await client.query(
+    `SELECT u.id, u.member_id, u.full_name, u.sponsor_id, b.personal_pv
+     FROM users u
+     LEFT JOIN user_binary_pv b ON u.id = b.user_id
+     WHERE UPPER(u.member_id) = UPPER($1) OR u.id::text = $1
+     LIMIT 1 FOR UPDATE`,
+    [earner.sponsorId]
+  );
+
+  if (l1Res.rows.length === 0) return;
+  const l1Sponsor = l1Res.rows[0];
+  const l1Pv = parseFloat(l1Sponsor.personal_pv || "0");
+  const l1BonusAmount = Math.round((binaryPayout * 0.15) * 100) / 100;
+
+  if (l1BonusAmount > 0 && l1Pv >= 100) {
+    // Credit Level 1 Sponsor wallet
+    await client.query(
+      `UPDATE user_wallets 
+       SET wallet_balance = wallet_balance + $1, 
+           total_earnings = total_earnings + $1, 
+           today_earnings = today_earnings + $1, 
+           updated_at = NOW() 
+       WHERE user_id = $2`,
+      [l1BonusAmount, l1Sponsor.id]
+    );
+
+    const txId1 = `tx_${Date.now()}_lead1_${l1Sponsor.member_id}`;
+    const desc1 = `Leadership Supporting Bonus (15% Level 1) from ${earner.fullName} (${earner.memberId}) Binary Payout ₹${binaryPayout}`;
+
+    await client.query(
+      `INSERT INTO transactions (id, user_id, type, amount, description, status, date)
+       VALUES ($1, $2, 'LEADERSHIP_BONUS', $3, $4, 'COMPLETED', $5)`,
+      [txId1, l1Sponsor.id, l1BonusAmount, desc1, dateStr]
+    );
+  }
+
+  // 2. Level 2 Direct Sponsor (5%)
+  if (!l1Sponsor.sponsor_id) return;
+
+  const l2Res = await client.query(
+    `SELECT u.id, u.member_id, u.full_name, u.sponsor_id, b.personal_pv
+     FROM users u
+     LEFT JOIN user_binary_pv b ON u.id = b.user_id
+     WHERE UPPER(u.member_id) = UPPER($1) OR u.id::text = $1
+     LIMIT 1 FOR UPDATE`,
+    [l1Sponsor.sponsor_id]
+  );
+
+  if (l2Res.rows.length === 0) return;
+  const l2Sponsor = l2Res.rows[0];
+  const l2Pv = parseFloat(l2Sponsor.personal_pv || "0");
+  const l2BonusAmount = Math.round((binaryPayout * 0.05) * 100) / 100;
+
+  if (l2BonusAmount > 0 && l2Pv >= 100) {
+    // Credit Level 2 Sponsor wallet
+    await client.query(
+      `UPDATE user_wallets 
+       SET wallet_balance = wallet_balance + $1, 
+           total_earnings = total_earnings + $1, 
+           today_earnings = today_earnings + $1, 
+           updated_at = NOW() 
+       WHERE user_id = $2`,
+      [l2BonusAmount, l2Sponsor.id]
+    );
+
+    const txId2 = `tx_${Date.now()}_lead2_${l2Sponsor.member_id}`;
+    const desc2 = `Leadership Supporting Bonus (5% Level 2) from ${earner.fullName} (${earner.memberId}) Binary Payout ₹${binaryPayout}`;
+
+    await client.query(
+      `INSERT INTO transactions (id, user_id, type, amount, description, status, date)
+       VALUES ($1, $2, 'LEADERSHIP_BONUS', $3, $4, 'COMPLETED', $5)`,
+      [txId2, l2Sponsor.id, l2BonusAmount, desc2, dateStr]
+    );
+  }
+}
+
 async function matchBinaryForUser(client: PoolClient, userId: string) {
   const userRes = await client.query(
-    `SELECT u.id, u.member_id, u.full_name, b.personal_pv, b.left_pv, b.right_pv, b.carry_left_pv, b.carry_right_pv, w.wallet_balance, w.total_earnings 
+    `SELECT u.id, u.member_id, u.full_name, u.sponsor_id, b.personal_pv, b.left_pv, b.right_pv, b.carry_left_pv, b.carry_right_pv, w.wallet_balance, w.total_earnings 
      FROM users u
      JOIN user_binary_pv b ON u.id = b.user_id
      JOIN user_wallets w ON u.id = w.user_id
@@ -185,6 +282,18 @@ async function matchBinaryForUser(client: PoolClient, userId: string) {
     `INSERT INTO transactions (id, user_id, type, amount, description, status, date)
      VALUES ($1, $2, 'BINARY_MATCHING', $3, $4, 'COMPLETED', $5)`,
     [txId, user.id, payout, desc, dateStr]
+  );
+
+  // Distribute 2-Level Leadership Supporting Bonus (15% Level 1, 5% Level 2) to direct sponsor hierarchy
+  await distributeLeadershipBonus(
+    client,
+    {
+      id: user.id,
+      memberId: user.member_id,
+      fullName: user.full_name,
+      sponsorId: user.sponsor_id,
+    },
+    payout
   );
 
   return { memberId: user.member_id, matchedPv, payout, newLeft: newCarryLeft, newRight: newCarryRight };

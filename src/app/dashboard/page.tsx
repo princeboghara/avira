@@ -15,6 +15,7 @@ import {
   Clock,
   Layers,
   Award,
+  Crown,
   CheckCircle2,
   AlertCircle,
   Network,
@@ -43,6 +44,9 @@ export default function DashboardPage() {
   // Binary earnings summary from /api/member/earnings/binary
   const [netBinaryIncome, setNetBinaryIncome] = useState(0);
   const [rpWalletAmount, setRpWalletAmount] = useState(0);
+  const [leadershipBonusAmount, setLeadershipBonusAmount] = useState(0);
+  const [royaltyIncomeAmount, setRoyaltyIncomeAmount] = useState(0);
+  const [isRoyaltyQualified, setIsRoyaltyQualified] = useState(false);
 
   // Payout Statement summaries
   const [totalPaidIncome, setTotalPaidIncome] = useState(0);
@@ -58,11 +62,13 @@ export default function DashboardPage() {
 
     async function loadDashboardData() {
       try {
-        const [meRes, teamRes, earnRes, stateRes] = await Promise.allSettled([
+        const [meRes, teamRes, earnRes, stateRes, leadRes, royRes] = await Promise.allSettled([
           fetch("/api/auth/me", { cache: "no-store" }),
           fetch("/api/member/team", { cache: "no-store" }),
           fetch("/api/member/earnings/binary", { cache: "no-store" }),
           fetch("/api/member/statement", { cache: "no-store" }),
+          fetch("/api/member/earnings/leadership", { cache: "no-store" }),
+          fetch("/api/member/earnings/royalty", { cache: "no-store" }),
         ]);
 
         if (meRes.status === "fulfilled") {
@@ -88,6 +94,21 @@ export default function DashboardPage() {
           if (earnData.success && earnData.summary) {
             setNetBinaryIncome(earnData.summary.totalNet || 0);
             setRpWalletAmount(earnData.summary.rpWalletBalance || 0);
+          }
+        }
+
+        if (leadRes.status === "fulfilled") {
+          const leadData = await leadRes.value.json();
+          if (leadData.success && leadData.summary) {
+            setLeadershipBonusAmount(leadData.summary.totalGross || 0);
+          }
+        }
+
+        if (royRes.status === "fulfilled") {
+          const royData = await royRes.value.json();
+          if (royData.success) {
+            setRoyaltyIncomeAmount(royData.summary?.totalGross || 0);
+            setIsRoyaltyQualified(royData.qualification?.isQualified || false);
           }
         }
 
@@ -422,36 +443,13 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Sub-income Cards Grid (Today, Binary, RP Wallet, Fund Wallet) */}
-            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-              {/* Today's Income */}
-              <div className="rounded-3xl p-5 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-2.5">
-                    <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold">
-                      <Zap className="w-4 h-4" />
-                    </div>
-                    <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-[#006d36]">
-                      Today
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">
-                    Today&apos;s Income
-                  </span>
-                  <div className="text-xl font-black font-mono text-slate-900">
-                    ₹{user?.todayEarnings?.toLocaleString("en-IN") || 0}
-                  </div>
-                </div>
-                <div className="text-[9px] text-slate-400 pt-2.5 mt-2.5 border-t border-slate-100">
-                  Daily pair match
-                </div>
-              </div>
-
+            {/* Sub-income Cards Grid (Binary, Leadership Bonus, Royalty Income, RP Wallet, Fund Wallet) */}
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
               {/* Binary Matching Income */}
-              <div className="rounded-3xl p-5 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
+              <div className="rounded-3xl p-4 sm:p-5 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-2.5">
-                    <div className="w-9 h-9 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
+                    <div className="w-8 h-8 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
                       <TrendingUp className="w-4 h-4" />
                     </div>
                     <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
@@ -461,20 +459,78 @@ export default function DashboardPage() {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">
                     Binary Income
                   </span>
-                  <div className="text-xl font-black font-mono text-slate-900">
+                  <div className="text-lg sm:text-xl font-black font-mono text-slate-900">
                     ₹{netBinaryIncome.toLocaleString("en-IN")}
                   </div>
                 </div>
-                <div className="text-[9px] text-slate-400 pt-2.5 mt-2.5 border-t border-slate-100">
-                  Matching payout
+                <div className="text-[9px] text-slate-400 pt-2.5 mt-2.5 border-t border-slate-100 flex items-center justify-between">
+                  <span>Matching payout</span>
+                  <Link href="/dashboard/earnings/binary" className="hover:underline text-purple-700 font-bold flex items-center gap-0.5">
+                    <span>View</span>
+                    <ArrowRight className="w-2.5 h-2.5" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Leadership Supporting Bonus (15% / 5%) */}
+              <div className="rounded-3xl p-4 sm:p-5 bg-gradient-to-br from-amber-50/50 via-white to-white border border-amber-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="w-8 h-8 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold shadow-2xs">
+                      <Award className="w-4 h-4 text-amber-700" />
+                    </div>
+                    <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                      15% / 5%
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 block mb-0.5">
+                    Leadership Bonus
+                  </span>
+                  <div className="text-lg sm:text-xl font-black font-mono text-amber-950">
+                    ₹{leadershipBonusAmount.toLocaleString("en-IN")}
+                  </div>
+                </div>
+                <div className="text-[9px] text-amber-800 font-semibold pt-2.5 mt-2.5 border-t border-amber-100 flex items-center justify-between">
+                  <span>2-Level Sponsor</span>
+                  <Link href="/dashboard/earnings/leadership" className="hover:underline text-amber-900 font-bold flex items-center gap-0.5">
+                    <span>Ledger</span>
+                    <ArrowRight className="w-2.5 h-2.5" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Royalty Club Income (5% Pool) */}
+              <div className="rounded-3xl p-4 sm:p-5 bg-gradient-to-br from-yellow-50/60 via-white to-white border border-yellow-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="w-8 h-8 rounded-2xl bg-yellow-100 text-yellow-900 flex items-center justify-center font-bold shadow-2xs">
+                      <Crown className="w-4 h-4 text-yellow-700 fill-yellow-400" />
+                    </div>
+                    <span className={`text-[9px] font-bold font-mono px-2 py-0.5 rounded-full border ${isRoyaltyQualified ? "bg-emerald-100 text-[#006d36] border-emerald-300" : "bg-yellow-100 text-yellow-900 border-yellow-300"}`}>
+                      {isRoyaltyQualified ? "👑 Qualified" : "5% Pool"}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-yellow-900 block mb-0.5">
+                    Royalty Income
+                  </span>
+                  <div className="text-lg sm:text-xl font-black font-mono text-yellow-950">
+                    ₹{royaltyIncomeAmount.toLocaleString("en-IN")}
+                  </div>
+                </div>
+                <div className="text-[9px] text-yellow-800 font-semibold pt-2.5 mt-2.5 border-t border-yellow-100 flex items-center justify-between">
+                  <span>Monthly Pool</span>
+                  <Link href="/dashboard/earnings/royalty" className="hover:underline text-yellow-900 font-bold flex items-center gap-0.5">
+                    <span>Tracker</span>
+                    <ArrowRight className="w-2.5 h-2.5" />
+                  </Link>
                 </div>
               </div>
 
               {/* Repurchase Balance (RP Wallet) */}
-              <div className="rounded-3xl p-5 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
+              <div className="rounded-3xl p-4 sm:p-5 bg-white border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-2.5">
-                    <div className="w-9 h-9 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                    <div className="w-8 h-8 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
                       <Layers className="w-4 h-4" />
                     </div>
                     <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
@@ -484,7 +540,7 @@ export default function DashboardPage() {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">
                     RP Wallet
                   </span>
-                  <div className="text-xl font-black font-mono text-slate-900">
+                  <div className="text-lg sm:text-xl font-black font-mono text-slate-900">
                     ₹{(user?.rpWallet || rpWalletAmount).toLocaleString("en-IN")}
                   </div>
                 </div>
@@ -493,29 +549,29 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* NEW: Fund Wallet Card */}
-              <div className="rounded-3xl p-5 bg-gradient-to-br from-emerald-50 via-white to-white border border-emerald-300 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+              {/* Fund Wallet Card */}
+              <div className="rounded-3xl p-4 sm:p-5 bg-gradient-to-br from-emerald-50 via-white to-white border border-emerald-300 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
                 <div>
                   <div className="flex items-center justify-between mb-2.5">
-                    <div className="w-9 h-9 rounded-2xl bg-[#006d36] text-white flex items-center justify-center font-bold shadow-xs">
+                    <div className="w-8 h-8 rounded-2xl bg-[#006d36] text-white flex items-center justify-center font-bold shadow-xs">
                       <Wallet className="w-4 h-4" />
                     </div>
                     <Link
                       href="/dashboard/fund"
                       className="text-[9px] font-black font-mono px-2 py-0.5 rounded-full bg-[#006d36] text-white hover:bg-[#005025] cursor-pointer"
                     >
-                      + Add Fund
+                      + Add
                     </Link>
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#006d36] block mb-0.5">
                     Fund Wallet
                   </span>
-                  <div className="text-xl font-black font-mono text-[#006d36]">
+                  <div className="text-lg sm:text-xl font-black font-mono text-[#006d36]">
                     ₹{(user?.fundWallet || 0).toLocaleString("en-IN")}
                   </div>
                 </div>
                 <div className="text-[9px] text-emerald-700 font-semibold pt-2.5 mt-2.5 border-t border-emerald-100 flex items-center justify-between">
-                  <span>For Purchases</span>
+                  <span>Purchases</span>
                   <Link href="/dashboard/fund" className="hover:underline flex items-center gap-0.5">
                     <span>Deposit</span>
                     <ArrowRight className="w-2.5 h-2.5" />

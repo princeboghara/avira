@@ -260,10 +260,10 @@ export default function AdminWithdrawMasterPage() {
       cell: (row) => (
         <div className="text-xs font-mono">
           <div className="text-red-600 font-bold">
-            -₹{(row.tdsAmount + row.adminCharge).toLocaleString("en-IN")}
+            -₹{(row.tdsAmount + row.adminCharge + (row.rpWalletDeduction || row.grossAmount * 0.05)).toLocaleString("en-IN")}
           </div>
           <div className="text-[10px] text-[#5f5e5e]">
-            TDS 5%: ₹{row.tdsAmount} • Admin 10%: ₹{row.adminCharge}
+            TDS 2%: ₹{row.tdsAmount} • Admin 8%: ₹{row.adminCharge} • RP 5%: ₹{row.rpWalletDeduction || (row.grossAmount * 0.05).toFixed(2)}
           </div>
         </div>
       ),
@@ -356,7 +356,7 @@ export default function AdminWithdrawMasterPage() {
               Withdraw Master (Weekly Settlement)
             </h1>
             <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl">
-              Inspect weekly accumulated earnings with 15% automatic statutory deductions (5% TDS + 10% Admin) and release bank payments.
+              Inspect weekly accumulated earnings with 15% automatic statutory deductions (2% TDS + 8% Admin + 5% RP Wallet) and release bank payments.
             </p>
           </div>
 
@@ -443,7 +443,7 @@ export default function AdminWithdrawMasterPage() {
               ₹{(summary.totalTds + summary.totalAdmin).toLocaleString("en-IN")}
             </span>
             <span className="text-[10px] text-[#5f5e5e] block mt-0.5">
-              TDS: ₹{summary.totalTds} • Admin: ₹{summary.totalAdmin}
+              TDS (2%): ₹{summary.totalTds} • Admin (8%): ₹{summary.totalAdmin}
             </span>
           </div>
 

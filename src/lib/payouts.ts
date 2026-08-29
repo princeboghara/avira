@@ -92,7 +92,7 @@ export async function syncAndGetWeeklyPayouts(week: WeekPeriod) {
         COALESCE(SUM(t.amount), 0) as gross_amount
       FROM transactions t
       JOIN v_users_full u ON u.id = t.user_id
-      WHERE (t.type = 'BINARY_MATCHING' OR t.description ILIKE '%binary%')
+      WHERE (t.type IN ('BINARY_MATCHING', 'LEADERSHIP_BONUS', 'ROYALTY_INCOME') OR t.description ILIKE '%binary%' OR t.description ILIKE '%leadership%' OR t.description ILIKE '%royalty%')
         AND t.created_at >= $1::timestamp
         AND t.created_at <= ($2 || ' 23:59:59')::timestamp
       GROUP BY 
@@ -106,9 +106,10 @@ export async function syncAndGetWeeklyPayouts(week: WeekPeriod) {
     // 2. Insert or sync with existing payout records
     for (const row of earningsRes.rows) {
       const gross = parseFloat(row.gross_amount || "0");
-      const tds = Math.round(gross * 0.05 * 100) / 100; // 5% TDS
-      const adminCharge = Math.round(gross * 0.10 * 100) / 100; // 10% Admin Charge
-      const net = Math.round((gross - tds - adminCharge) * 100) / 100; // 85% Net
+      const tds = Math.round(gross * 0.02 * 100) / 100; // 2% TDS
+      const adminCharge = Math.round(gross * 0.08 * 100) / 100; // 8% Admin Charge
+      const rpWallet = Math.round(gross * 0.05 * 100) / 100; // 5% RP Wallet
+      const net = Math.round((gross - tds - adminCharge - rpWallet) * 100) / 100; // 85% Net
 
       const payoutId = `payout_${week.identifier}_${row.member_id}`;
 
@@ -136,11 +137,12 @@ export async function syncAndGetWeeklyPayouts(week: WeekPeriod) {
           upi_id,
           kyc_status,
           status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 0, $13, $14, $15, $16, $17, $18, 'PENDING')
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, 'PENDING')
         ON CONFLICT (id) DO UPDATE SET
           gross_amount = CASE WHEN payouts.status = 'PENDING' THEN EXCLUDED.gross_amount ELSE payouts.gross_amount END,
           tds_amount = CASE WHEN payouts.status = 'PENDING' THEN EXCLUDED.tds_amount ELSE payouts.tds_amount END,
           admin_charge = CASE WHEN payouts.status = 'PENDING' THEN EXCLUDED.admin_charge ELSE payouts.admin_charge END,
+          rp_wallet_deduction = CASE WHEN payouts.status = 'PENDING' THEN EXCLUDED.rp_wallet_deduction ELSE payouts.rp_wallet_deduction END,
           net_amount = CASE WHEN payouts.status = 'PENDING' THEN EXCLUDED.net_amount ELSE payouts.net_amount END,
           bank_name = EXCLUDED.bank_name,
           bank_account_number = EXCLUDED.bank_account_number,
@@ -162,6 +164,7 @@ export async function syncAndGetWeeklyPayouts(week: WeekPeriod) {
           gross,
           tds,
           adminCharge,
+          rpWallet,
           net,
           row.bank_name || "",
           row.bank_account_number || "",
