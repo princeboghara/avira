@@ -62,7 +62,8 @@ export const pool: Pool =
     ssl: getSslConfig(),
     max: 20,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 20000,
+    keepAlive: true,
     allowExitOnIdle: false,
   }));
 

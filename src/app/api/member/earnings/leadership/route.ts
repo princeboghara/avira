@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { pool, findUserByIdentifier } from "@/lib/db";
 
+import { getLeadershipPercentages } from "@/lib/settings";
+
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
@@ -23,6 +25,7 @@ export async function GET(req: NextRequest) {
 
     const client = await pool.connect();
     try {
+      const currentPercentages = await getLeadershipPercentages(client);
       let query = `
         SELECT 
           id,
@@ -67,8 +70,8 @@ export async function GET(req: NextRequest) {
       const records = res.rows.map((row, idx) => {
         const gross = Number(row.amount || 0);
         const desc = row.description || "";
-        const isLevel1 = desc.includes("15%") || desc.includes("Level 1") || !desc.includes("Level 2");
-        const level = isLevel1 ? "Level 1 (15%)" : "Level 2 (5%)";
+        const isLevel1 = desc.includes("Level 1") || !desc.includes("Level 2");
+        const level = isLevel1 ? `Level 1 (${currentPercentages.level1}%)` : `Level 2 (${currentPercentages.level2}%)`;
 
         if (isLevel1) {
           totalLevel1 += gross;
@@ -102,6 +105,7 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
+        currentPercentages,
         summary: {
           totalGross,
           totalLevel1,

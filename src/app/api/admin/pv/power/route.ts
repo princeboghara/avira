@@ -60,11 +60,12 @@ export async function POST(req: NextRequest) {
   const client = await pool.connect();
   try {
     const body = await req.json();
-    const { memberId, leg, pv: rawPv, note } = body;
+    const { memberId, leg, pv: rawPv, note, propagateUpline = true } = body;
 
     const memberIdClean = String(memberId || "").trim().toUpperCase();
     const targetLeg = String(leg || "").trim().toUpperCase();
     const pv = parseFloat(rawPv);
+    const shouldPropagate = propagateUpline !== false && propagateUpline !== "false" && propagateUpline !== "MEMBER_ONLY";
 
     if (!memberIdClean) {
       return NextResponse.json({ success: false, message: "Member ID is required." }, { status: 400 });
@@ -111,8 +112,9 @@ export async function POST(req: NextRequest) {
     );
 
     // 3. Record Admin Power PV Transaction Audit
+    const modeLabel = shouldPropagate ? "with Full Upline Tree Propagation" : "Selected Member Only (No Upline Flow)";
     const txId = `tx_${Date.now()}_power_${user.member_id}`;
-    const desc = note || `Admin Power PV Credit: ${pv} PV into ${targetLeg} Leg`;
+    const desc = note || `Admin Power PV Credit: ${pv} PV into ${targetLeg} Leg (${modeLabel})`;
     const dateStr = new Date().toISOString().replace("T", " ").substring(0, 16);
 
     await client.query(
@@ -121,50 +123,55 @@ export async function POST(req: NextRequest) {
       [txId, userId, desc, dateStr]
     );
 
-    // 4. Propagate PV UPWARD through ancestors in the binary tree
+    // 4. Propagate PV UPWARD through ancestors in the binary tree (if enabled)
     let currentChildId = userId;
     let parentId = user.binary_parent_id;
     let propagatedAncestorsCount = 0;
 
-    while (parentId) {
-      const parentRes = await client.query(
-        "SELECT user_id, left_child_id, right_child_id, binary_parent_id FROM user_binary_pv WHERE user_id = $1 FOR UPDATE",
-        [parentId]
-      );
-
-      if (parentRes.rows.length === 0) break;
-      const parent = parentRes.rows[0];
-
-      if (parent.left_child_id === currentChildId) {
-        // Belongs to Parent's LEFT Leg
-        await client.query(
-          "UPDATE user_binary_pv SET left_pv = left_pv + $1, carry_left_pv = carry_left_pv + $1, updated_at = NOW() WHERE user_id = $2",
-          [pv, parent.user_id]
+    if (shouldPropagate) {
+      while (parentId) {
+        const parentRes = await client.query(
+          "SELECT user_id, left_child_id, right_child_id, binary_parent_id FROM user_binary_pv WHERE user_id = $1 FOR UPDATE",
+          [parentId]
         );
-        propagatedAncestorsCount++;
-      } else if (parent.right_child_id === currentChildId) {
-        // Belongs to Parent's RIGHT Leg
-        await client.query(
-          "UPDATE user_binary_pv SET right_pv = right_pv + $1, carry_right_pv = carry_right_pv + $1, updated_at = NOW() WHERE user_id = $2",
-          [pv, parent.user_id]
-        );
-        propagatedAncestorsCount++;
+
+        if (parentRes.rows.length === 0) break;
+        const parent = parentRes.rows[0];
+
+        if (parent.left_child_id === currentChildId) {
+          // Belongs to Parent's LEFT Leg
+          await client.query(
+            "UPDATE user_binary_pv SET left_pv = left_pv + $1, carry_left_pv = carry_left_pv + $1, updated_at = NOW() WHERE user_id = $2",
+            [pv, parent.user_id]
+          );
+          propagatedAncestorsCount++;
+        } else if (parent.right_child_id === currentChildId) {
+          // Belongs to Parent's RIGHT Leg
+          await client.query(
+            "UPDATE user_binary_pv SET right_pv = right_pv + $1, carry_right_pv = carry_right_pv + $1, updated_at = NOW() WHERE user_id = $2",
+            [pv, parent.user_id]
+          );
+          propagatedAncestorsCount++;
+        }
+
+        currentChildId = parent.user_id;
+        parentId = parent.binary_parent_id;
       }
-
-      currentChildId = parent.user_id;
-      parentId = parent.binary_parent_id;
     }
 
     await client.query("COMMIT");
 
     return NextResponse.json({
       success: true,
-      message: `Successfully credited ${pv} Power PV into ${targetLeg} leg of ${user.full_name} (${memberIdClean}) and propagated to ${propagatedAncestorsCount} upline leaders.`,
+      message: shouldPropagate
+        ? `Successfully credited ${pv} Power PV into ${targetLeg} leg of ${user.full_name} (${memberIdClean}) and propagated to ${propagatedAncestorsCount} upline leaders.`
+        : `Successfully credited ${pv} Power PV into ${targetLeg} leg of ${user.full_name} (${memberIdClean}) [Direct Member Only - No Upline Flow].`,
       data: {
         memberId: memberIdClean,
         fullName: user.full_name,
         leg: targetLeg,
         addedPv: pv,
+        propagateUpline: shouldPropagate,
         propagatedUplineNodes: propagatedAncestorsCount,
       },
     });

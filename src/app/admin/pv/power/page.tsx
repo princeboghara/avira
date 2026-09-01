@@ -37,6 +37,7 @@ export default function PowerPvManagerPage() {
   const [successMsg, setSuccessMsg] = useState("");
 
   const [selectedLeg, setSelectedLeg] = useState<"LEFT" | "RIGHT">("LEFT");
+  const [propagateUpline, setPropagateUpline] = useState<boolean>(true);
   const [pvAmount, setPvAmount] = useState<number | "">("");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -87,13 +88,14 @@ export default function PowerPvManagerPage() {
           memberId: member.memberId,
           leg: selectedLeg,
           pv: pvNum,
-          note: note || `Admin Power PV Credit (${pvNum} PV into ${selectedLeg} Leg)`,
+          propagateUpline,
+          note: note || `Admin Power PV Credit (${pvNum} PV into ${selectedLeg} Leg - ${propagateUpline ? "With Upline Flow" : "Member Only"})`,
         }),
       });
 
       const data = await res.json();
       if (data.success) {
-        setSuccessMsg(data.message || "Power PV credited and propagated successfully!");
+        setSuccessMsg(data.message || "Power PV credited successfully!");
         // Update local member state
         setMember((prev) =>
           prev
@@ -120,7 +122,7 @@ export default function PowerPvManagerPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-8 max-w-5xl mx-auto pb-12">
+      <div className="space-y-8 max-w-5xl mx-auto pb-12 font-[Arial,sans-serif]">
         {/* Header */}
         <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#4f378a] to-[#6750a4] text-white shadow-xl shadow-[#4f378a]/15">
           <div className="flex items-center gap-2.5 mb-2">
@@ -132,10 +134,10 @@ export default function PowerPvManagerPage() {
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-            Power PV Leg Injection & Upline Propagation
+            Power PV Leg Injection & Manager
           </h1>
           <p className="text-xs sm:text-sm text-purple-100 mt-1 max-w-2xl">
-            Inject Power PV directly into an associate&apos;s Left or Right leg. The volume automatically passes up through all upline binary ancestors for 1:1 matching!
+            Inject Power PV directly into an associate&apos;s Left or Right leg. Choose whether to credit only the member or propagate volume upward through all upline binary ancestors!
           </p>
         </div>
 
@@ -212,6 +214,66 @@ export default function PowerPvManagerPage() {
 
             {/* Injection Form */}
             <form onSubmit={handleCreditPowerPv} className="space-y-6 pt-2">
+              {/* 2-Option Distribution Mode Selector */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-900 uppercase tracking-wider">
+                  Power PV Distribution Mode / અપલાઇન કેલ્ક્યુલેશન ઓપ્શન:
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {/* Option 1: Member Only */}
+                  <div
+                    onClick={() => setPropagateUpline(false)}
+                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 ${
+                      !propagateUpline
+                        ? "bg-purple-50/70 border-purple-700 shadow-sm"
+                        : "bg-slate-50 border-slate-200 hover:border-slate-300 opacity-75"
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full mt-0.5 flex items-center justify-center border-2 shrink-0 ${
+                        !propagateUpline ? "border-purple-700 bg-purple-700 text-white" : "border-slate-300 bg-white"
+                      }`}
+                    >
+                      {!propagateUpline && <span className="w-2 h-2 rounded-full bg-white" />}
+                    </div>
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 block flex items-center gap-1.5">
+                        <span>1. માત્ર આ મેમ્બરમાં જ જમા થાય (Member Only)</span>
+                      </span>
+                      <span className="text-[11px] text-slate-600 block mt-0.5 leading-snug">
+                        ખાસ આ ID ના પસંદ કરેલા લેગમાં જ PV જમા થશે. <strong>અપલાઇનમાં કોઈપણ ઉપરની ID માં PV કાઉન્ટ કે કેલ્ક્યુલેશન જશે નહીં.</strong>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Option 2: With Upline Propagation */}
+                  <div
+                    onClick={() => setPropagateUpline(true)}
+                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 ${
+                      propagateUpline
+                        ? "bg-purple-50/70 border-purple-700 shadow-sm"
+                        : "bg-slate-50 border-slate-200 hover:border-slate-300 opacity-75"
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full mt-0.5 flex items-center justify-center border-2 shrink-0 ${
+                        propagateUpline ? "border-purple-700 bg-purple-700 text-white" : "border-slate-300 bg-white"
+                      }`}
+                    >
+                      {propagateUpline && <span className="w-2 h-2 rounded-full bg-white" />}
+                    </div>
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 block flex items-center gap-1.5">
+                        <span>2. અપલાઇન સાથે (Full Tree Propagation)</span>
+                      </span>
+                      <span className="text-[11px] text-slate-600 block mt-0.5 leading-snug">
+                        આ મેમ્બરના લેગમાં જમા થશે + <strong>તમામ ઉપરના Upline લીડર્સના Binary લેગમાં પણ PV આપમેળે કાઉન્ટ થઈને 1:1 મેચિંગ થશે.</strong>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Leg Selector */}
               <div>
                 <label className="block text-xs font-bold text-[#1a1c1c] mb-2">
@@ -286,7 +348,7 @@ export default function PowerPvManagerPage() {
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
                   <span>
                     {submitting
-                      ? "Injecting & Propagating..."
+                      ? "Processing Injection..."
                       : `Inject ${pvAmount || 0} PV into ${selectedLeg} Leg`}
                   </span>
                 </button>

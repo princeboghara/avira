@@ -155,6 +155,7 @@ export default function TreeViewPage() {
             onSelectRootId={(id) => loadTree(id)}
             breadcrumbs={breadcrumbs}
             parentMemberId={parentMemberId}
+            viewerMemberId={myMemberId || tree.memberId}
           />
         )}
       </div>

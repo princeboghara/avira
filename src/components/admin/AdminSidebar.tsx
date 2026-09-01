@@ -24,6 +24,7 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
+  Award,
 } from "lucide-react";
 import { User } from "@/types";
 
@@ -129,6 +130,14 @@ export default function AdminSidebar({
         { name: "Week Report", href: "/admin/reports?range=week", icon: BarChart3 },
         { name: "Month Report", href: "/admin/reports?range=month", icon: BarChart3 },
         { name: "Custom Report", href: "/admin/reports?range=custom", icon: BarChart3 },
+      ],
+    },
+    {
+      category: "8. Plan Settings",
+      icon: Award,
+      links: [
+        { name: "Leadership Bonus Setup", href: "/admin/settings/leadership", icon: Award },
+        { name: "Binary Cutoff Engine", href: "/admin/binary", icon: TrendingUp },
       ],
     },
   ];

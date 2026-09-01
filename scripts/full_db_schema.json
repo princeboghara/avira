@@ -1,0 +1,2263 @@
+{
+  "_backup_fund_requests": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "member_id",
+      "data_type": "character varying",
+      "character_maximum_length": 32,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "full_name",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "mobile",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "transaction_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "slip_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "rejection_reason",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "approved_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "approved_by",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "_backup_orders": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "purchase_type",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "package_name",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "pv",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "items",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "status",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "billed_by",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "customer_name",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "customer_mobile",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "transaction_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "payment_slip",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "shipping_address",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "rejection_reason",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "customer_email",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "state",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "pincode",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "order_date_raw",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "gst_amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "net_amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "_backup_support_tickets": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "member_id",
+      "data_type": "character varying",
+      "character_maximum_length": 32,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "full_name",
+      "data_type": "character varying",
+      "character_maximum_length": 128,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "mobile",
+      "data_type": "character varying",
+      "character_maximum_length": 32,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "subject",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "category",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "message",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "status",
+      "data_type": "character varying",
+      "character_maximum_length": 32,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "admin_response",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "resolved_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "_backup_transactions": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "type",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "description",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "date",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "tds_amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "admin_charge",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "rp_wallet_amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "net_amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "_backup_user_binary_pv": [
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "personal_pv",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "left_pv",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "right_pv",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "carry_left_pv",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "carry_right_pv",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "binary_parent_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "binary_position",
+      "data_type": "character varying",
+      "character_maximum_length": 10,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "left_child_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "right_child_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "daily_capping",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "last_cutoff_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "_backup_user_kyc": [
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "pan_number",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "pan_card_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "pan_status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "pan_rejection_reason",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "aadhaar_number",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "aadhaar_name",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "aadhaar_front_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "aadhaar_back_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "aadhaar_status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "aadhaar_rejection_reason",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "bank_name",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "bank_account_number",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "ifsc_code",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "bank_proof_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "bank_status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "bank_rejection_reason",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "upi_id",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "gst_number",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "nominee_name",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "nominee_relation",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "kyc_status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "kyc_document_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "kyc_submitted_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "kyc_verified_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "kyc_rejection_reason",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "_backup_user_wallets": [
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "wallet_balance",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "rp_wallet",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "fund_wallet",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "total_earnings",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "today_earnings",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "direct_referrals_count",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "total_team_count",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "_backup_users": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "member_id",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "full_name",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "mobile",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "password_hash",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "sponsor_id",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "sponsor_name",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "pincode",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "city",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "state",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "role",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "joined_date",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "email",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "address",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "avatar_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "categories": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "name",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "description",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "column_name": "image_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "''::text"
+    },
+    {
+      "column_name": "status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": "'ACTIVE'::character varying"
+    }
+  ],
+  "fund_requests": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "member_id",
+      "data_type": "character varying",
+      "character_maximum_length": 32,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "full_name",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "mobile",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "transaction_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "slip_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "NO",
+      "column_default": "'PENDING'::character varying"
+    },
+    {
+      "column_name": "rejection_reason",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "column_name": "approved_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "approved_by",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "hsn_codes": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "hsn_code",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "sgst",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "column_name": "cgst",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "column_name": "igst",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "column_name": "description",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    }
+  ],
+  "orders": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "purchase_type",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "package_name",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "pv",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "column_name": "items",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "'[]'::jsonb"
+    },
+    {
+      "column_name": "status",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "YES",
+      "column_default": "'COMPLETED'::character varying"
+    },
+    {
+      "column_name": "billed_by",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "customer_name",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "customer_mobile",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "transaction_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "payment_slip",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "shipping_address",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "rejection_reason",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "customer_email",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "state",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "pincode",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "order_date_raw",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "gst_amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "column_name": "net_amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    }
+  ],
+  "payouts": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "week_identifier",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "week_start_date",
+      "data_type": "date",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "week_end_date",
+      "data_type": "date",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "week_label",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "member_id",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "full_name",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "mobile",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "gross_amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "tds_amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "admin_charge",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "rp_wallet_deduction",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "net_amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "bank_name",
+      "data_type": "character varying",
+      "character_maximum_length": 150,
+      "is_nullable": "YES",
+      "column_default": "''::character varying"
+    },
+    {
+      "column_name": "bank_account_number",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": "''::character varying"
+    },
+    {
+      "column_name": "ifsc_code",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "YES",
+      "column_default": "''::character varying"
+    },
+    {
+      "column_name": "upi_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": "''::character varying"
+    },
+    {
+      "column_name": "kyc_status",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "YES",
+      "column_default": "'NOT_SUBMITTED'::character varying"
+    },
+    {
+      "column_name": "status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "NO",
+      "column_default": "'PENDING'::character varying"
+    },
+    {
+      "column_name": "paid_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "transaction_reference",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": "''::character varying"
+    },
+    {
+      "column_name": "notes",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "''::text"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    }
+  ],
+  "products": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "name",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "category_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "category_name",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "hsn_code",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "net_quantity",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "mrp",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "discount_price",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "column_name": "pv",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "image_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "description",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "in_stock",
+      "data_type": "boolean",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "true"
+    },
+    {
+      "column_name": "tag",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "image_icon",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "column_name": "stock_quantity",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "100"
+    },
+    {
+      "column_name": "slug",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "category",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": "'Health & Wellness'::character varying"
+    },
+    {
+      "column_name": "dp",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "stock",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "1000"
+    },
+    {
+      "column_name": "is_active",
+      "data_type": "boolean",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "true"
+    }
+  ],
+  "support_tickets": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "member_id",
+      "data_type": "character varying",
+      "character_maximum_length": 32,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "full_name",
+      "data_type": "character varying",
+      "character_maximum_length": 128,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "mobile",
+      "data_type": "character varying",
+      "character_maximum_length": 32,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "subject",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "category",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "message",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "status",
+      "data_type": "character varying",
+      "character_maximum_length": 32,
+      "is_nullable": "YES",
+      "column_default": "'OPEN'::character varying"
+    },
+    {
+      "column_name": "admin_response",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "column_name": "resolved_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "system_settings": [
+    {
+      "column_name": "key",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "value",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "description",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "''::text"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    }
+  ],
+  "transactions": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "type",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "description",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": "'COMPLETED'::character varying"
+    },
+    {
+      "column_name": "date",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "column_name": "tds_amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "column_name": "admin_charge",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "column_name": "rp_wallet_amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "column_name": "net_amount",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    }
+  ],
+  "user_binary_pv": [
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "personal_pv",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "left_pv",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "right_pv",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "carry_left_pv",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "carry_right_pv",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "binary_parent_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "binary_position",
+      "data_type": "character varying",
+      "character_maximum_length": 10,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "left_child_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "right_child_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "daily_capping",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "1000.00"
+    },
+    {
+      "column_name": "last_cutoff_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    }
+  ],
+  "user_kyc": [
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "pan_number",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "pan_card_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "pan_status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": "'NOT_SUBMITTED'::character varying"
+    },
+    {
+      "column_name": "pan_rejection_reason",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "aadhaar_number",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "aadhaar_name",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "aadhaar_front_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "aadhaar_back_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "aadhaar_status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": "'NOT_SUBMITTED'::character varying"
+    },
+    {
+      "column_name": "aadhaar_rejection_reason",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "bank_name",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "bank_account_number",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "ifsc_code",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "bank_proof_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "bank_status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": "'NOT_SUBMITTED'::character varying"
+    },
+    {
+      "column_name": "bank_rejection_reason",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "upi_id",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "gst_number",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "nominee_name",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "nominee_relation",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "kyc_status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": "'NOT_SUBMITTED'::character varying"
+    },
+    {
+      "column_name": "kyc_document_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "kyc_submitted_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "kyc_verified_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "kyc_rejection_reason",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    }
+  ],
+  "user_wallets": [
+    {
+      "column_name": "user_id",
+      "data_type": "character varying",
+      "character_maximum_length": 64,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "wallet_balance",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "rp_wallet",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "fund_wallet",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "total_earnings",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "today_earnings",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0.00"
+    },
+    {
+      "column_name": "direct_referrals_count",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "column_name": "total_team_count",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    }
+  ],
+  "users": [
+    {
+      "column_name": "id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "member_id",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "full_name",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "mobile",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "password_hash",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "sponsor_id",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "sponsor_name",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "pincode",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "city",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "state",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "role",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": "'MEMBER'::character varying"
+    },
+    {
+      "column_name": "status",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": "'ACTIVE'::character varying"
+    },
+    {
+      "column_name": "joined_date",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "column_name": "email",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "address",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "avatar_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ]
+}

@@ -71,8 +71,8 @@ export async function checkRoyaltyQualification(
 
   for (const d of directsRes.rows) {
     const pv = parseFloat(d.personal_pv || "0");
-    const isLeft = leftUserIds.has(d.id) || d.binary_position === "LEFT";
-    const isRight = rightUserIds.has(d.id) || d.binary_position === "RIGHT";
+    const isLeft = leftUserIds.has(d.id) || (leftUserIds.size === 0 && d.binary_position === "LEFT" && d.binary_parent_id === userId);
+    const isRight = rightUserIds.has(d.id) || (rightUserIds.size === 0 && d.binary_position === "RIGHT" && d.binary_parent_id === userId);
 
     if (pv >= 1000) {
       if (isLeft) {
@@ -132,25 +132,24 @@ export async function getMonthlyRoyaltyPool(
   ];
   const monthLabel = `${monthNames[monthIndex]} ${year}`;
 
-  // 1. Calculate Total Company PV generated in the month from orders or total activations
+  // 1. Calculate Total Company PV generated in real-time from active orders and personal activation PVs
   const ordersPvRes = await client.query(
     `SELECT COALESCE(SUM(pv), 0) as total_pv
      FROM orders
-     WHERE status IN ('CONFIRMED', 'PACKED', 'DISPATCHED', 'DELIVERED', 'COMPLETED')
+     WHERE status IN ('CONFIRMED', 'PACKED', 'DISPATCHED', 'DELIVERED', 'COMPLETED', 'APPROVED', 'PAID')
        AND created_at >= $1::timestamp
        AND created_at <= ($2 || ' 23:59:59')::timestamp`,
     [startDateStr, endDateStr]
   );
+  const ordersPv = parseFloat(ordersPvRes.rows[0]?.total_pv || "0");
 
-  let totalCompanyPv = parseFloat(ordersPvRes.rows[0]?.total_pv || "0");
+  const cumulativePvRes = await client.query(
+    `SELECT COALESCE(SUM(personal_pv), 0) as total_pv FROM user_binary_pv WHERE personal_pv > 0`
+  );
+  const userPvSum = parseFloat(cumulativePvRes.rows[0]?.total_pv || "0");
 
-  // If orders in month is 0 (e.g. initial setup), calculate from cumulative active user personal_pv
-  if (totalCompanyPv <= 0) {
-    const cumulativePvRes = await client.query(
-      `SELECT COALESCE(SUM(personal_pv), 0) as total_pv FROM user_binary_pv WHERE personal_pv >= 100`
-    );
-    totalCompanyPv = parseFloat(cumulativePvRes.rows[0]?.total_pv || "0");
-  }
+  // Real-time live total company PV turnover
+  const totalCompanyPv = Math.max(ordersPv, userPvSum);
 
   const royaltyPercentage = 5; // 5% of monthly activation PV
   const poolAmount = Math.round(totalCompanyPv * 0.05 * 100) / 100;

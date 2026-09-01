@@ -42,6 +42,7 @@ interface BinaryGenealogyTreeProps {
   onSelectRootId?: (id: string) => void;
   breadcrumbs?: Array<{ memberId: string; fullName: string; position?: string }>;
   parentMemberId?: string | null;
+  viewerMemberId?: string;
 }
 
 export default function BinaryGenealogyTree({
@@ -49,6 +50,7 @@ export default function BinaryGenealogyTree({
   onSelectRootId,
   breadcrumbs = [],
   parentMemberId,
+  viewerMemberId,
 }: BinaryGenealogyTreeProps) {
   // Tree state holding the full tree hierarchy (supports dynamic node additions)
   const [treeData, setTreeData] = useState<TreeNode>(rootNode);
@@ -218,6 +220,9 @@ export default function BinaryGenealogyTree({
             loadingNodes={loadingNodes}
             onToggleExpand={handleToggleExpand}
             onSelectRootId={onSelectRootId}
+            isExtremeLeft={true}
+            isExtremeRight={true}
+            viewerMemberId={viewerMemberId || rootNode.memberId}
           />
         </div>
       </div>
@@ -237,6 +242,9 @@ function RecursiveTreeNode({
   loadingNodes,
   onToggleExpand,
   onSelectRootId,
+  isExtremeLeft = false,
+  isExtremeRight = false,
+  viewerMemberId,
 }: {
   node: TreeNode;
   level: number;
@@ -245,6 +253,9 @@ function RecursiveTreeNode({
   loadingNodes: Record<string, boolean>;
   onToggleExpand: (node: TreeNode) => void;
   onSelectRootId?: (id: string) => void;
+  isExtremeLeft?: boolean;
+  isExtremeRight?: boolean;
+  viewerMemberId?: string;
 }) {
   const isExpanded = Boolean(expandedNodes[node.id]);
   const isLoading = Boolean(loadingNodes[node.id]);
@@ -257,6 +268,10 @@ function RecursiveTreeNode({
     node.hasRightChild ||
     node.hasMoreChildren
   );
+
+  const effectiveViewerId = viewerMemberId || node.memberId;
+  const leftSponsorId = isExtremeLeft ? effectiveViewerId : node.memberId;
+  const rightSponsorId = isExtremeRight ? effectiveViewerId : node.memberId;
 
   return (
     <div className="flex flex-col items-center">
@@ -299,10 +314,13 @@ function RecursiveTreeNode({
                   loadingNodes={loadingNodes}
                   onToggleExpand={onToggleExpand}
                   onSelectRootId={onSelectRootId}
+                  isExtremeLeft={isExtremeLeft}
+                  isExtremeRight={false}
+                  viewerMemberId={effectiveViewerId}
                 />
               ) : (
                 <VacantSlot
-                  sponsorId={node.memberId}
+                  sponsorId={leftSponsorId}
                   parentId={node.memberId}
                   position="LEFT"
                 />
@@ -321,10 +339,13 @@ function RecursiveTreeNode({
                   loadingNodes={loadingNodes}
                   onToggleExpand={onToggleExpand}
                   onSelectRootId={onSelectRootId}
+                  isExtremeLeft={false}
+                  isExtremeRight={isExtremeRight}
+                  viewerMemberId={effectiveViewerId}
                 />
               ) : (
                 <VacantSlot
-                  sponsorId={node.memberId}
+                  sponsorId={rightSponsorId}
                   parentId={node.memberId}
                   position="RIGHT"
                 />

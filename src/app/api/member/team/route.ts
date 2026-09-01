@@ -89,11 +89,51 @@ export async function GET(req: NextRequest) {
         };
       });
 
+      // 3. Calculate Today's & Weekly PV for Left vs Right downlines
+      const pvRes = await client.query(
+        `
+        WITH RECURSIVE downline AS (
+          SELECT 
+            id, binary_position AS side
+          FROM v_users_full
+          WHERE binary_parent_id = $1
+
+          UNION ALL
+
+          SELECT 
+            u.id, d.side
+          FROM v_users_full u
+          INNER JOIN downline d ON u.binary_parent_id = d.id
+        )
+        SELECT 
+          COALESCE(SUM(CASE WHEN d.side = 'LEFT' AND o.created_at >= CURRENT_DATE THEN o.pv ELSE 0 END), 0) AS today_left_pv,
+          COALESCE(SUM(CASE WHEN d.side = 'RIGHT' AND o.created_at >= CURRENT_DATE THEN o.pv ELSE 0 END), 0) AS today_right_pv,
+          COALESCE(SUM(CASE WHEN d.side = 'LEFT' AND o.created_at >= date_trunc('week', CURRENT_DATE) THEN o.pv ELSE 0 END), 0) AS weekly_left_pv,
+          COALESCE(SUM(CASE WHEN d.side = 'RIGHT' AND o.created_at >= date_trunc('week', CURRENT_DATE) THEN o.pv ELSE 0 END), 0) AS weekly_right_pv
+        FROM downline d
+        JOIN orders o ON o.user_id = d.id
+        WHERE o.status IN ('APPROVED', 'PAID', 'CONFIRMED', 'COMPLETED', 'DISPATCHED', 'DELIVERED');
+      `,
+        [root.id]
+      );
+
+      const pvRow = pvRes.rows[0] || {};
+      const todayLeftPv = parseFloat(pvRow.today_left_pv || "0");
+      const todayRightPv = parseFloat(pvRow.today_right_pv || "0");
+      const weeklyLeftPv = parseFloat(pvRow.weekly_left_pv || "0");
+      const weeklyRightPv = parseFloat(pvRow.weekly_right_pv || "0");
+
       return NextResponse.json({
         success: true,
         totalTeam: teamList.length,
         leftCount,
         rightCount,
+        pvStats: {
+          todayLeftPv,
+          todayRightPv,
+          weeklyLeftPv,
+          weeklyRightPv,
+        },
         team: teamList,
       });
     } finally {

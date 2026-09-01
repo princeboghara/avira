@@ -30,7 +30,11 @@ export const metadata: Metadata = {
   description:
     "Explore certified organic botanical formulations, wild Himalayan cold-extracted juices, and therapeutic herbal remedies crafted for executive vitality and peak human performance.",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: "/apple-icon.png",
   },
 };
 

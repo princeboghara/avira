@@ -12,6 +12,8 @@ import {
   ArrowRight,
   TrendingUp,
   User as UserIcon,
+  Layers,
+  Network,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 
@@ -36,6 +38,7 @@ export default function SelfPvManagerPage() {
   const [successMsg, setSuccessMsg] = useState("");
 
   const [pvAmount, setPvAmount] = useState<number | "">("");
+  const [propagateUpline, setPropagateUpline] = useState<boolean>(false);
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -84,7 +87,8 @@ export default function SelfPvManagerPage() {
         body: JSON.stringify({
           memberId: member.memberId,
           pv: pvNum,
-          note: note || `Admin Self PV Credit (${pvNum} PV)`,
+          propagateUpline,
+          note: note || `Admin Self PV Credit (${pvNum} PV - ${propagateUpline ? "With Upline Flow" : "Member Only"})`,
         }),
       });
 
@@ -116,7 +120,7 @@ export default function SelfPvManagerPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-8 max-w-5xl mx-auto pb-12">
+      <div className="space-y-8 max-w-5xl mx-auto pb-12 font-[Arial,sans-serif]">
         {/* Header */}
         <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#006d36] to-[#50c878] text-white shadow-xl shadow-[#006d36]/15">
           <div className="flex items-center gap-2.5 mb-2">
@@ -131,7 +135,7 @@ export default function SelfPvManagerPage() {
             Self PV Credit & Activation Manager
           </h1>
           <p className="text-xs sm:text-sm text-emerald-100 mt-1 max-w-2xl">
-            Search any associate by ID, view their current Personal Volume & Rank, and credit Self PV directly to their personal account.
+            Search any associate by ID, view their current Personal Volume & Rank, and credit Self PV directly to their personal account with optional Upline tree propagation.
           </p>
         </div>
 
@@ -213,7 +217,67 @@ export default function SelfPvManagerPage() {
             </div>
 
             {/* PV Form */}
-            <form onSubmit={handleCreditSelfPv} className="space-y-4 pt-2">
+            <form onSubmit={handleCreditSelfPv} className="space-y-5 pt-2">
+              {/* 2-Option Distribution Mode Selector */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-900 uppercase tracking-wider">
+                  PV Distribution Mode / અપલાઇન કેલ્ક્યુલેશન ઓપ્શન:
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {/* Option 1: Member Only */}
+                  <div
+                    onClick={() => setPropagateUpline(false)}
+                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 ${
+                      !propagateUpline
+                        ? "bg-emerald-50/70 border-[#006d36] shadow-sm"
+                        : "bg-slate-50 border-slate-200 hover:border-slate-300 opacity-75"
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full mt-0.5 flex items-center justify-center border-2 shrink-0 ${
+                        !propagateUpline ? "border-[#006d36] bg-[#006d36] text-white" : "border-slate-300 bg-white"
+                      }`}
+                    >
+                      {!propagateUpline && <span className="w-2 h-2 rounded-full bg-white" />}
+                    </div>
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 block flex items-center gap-1.5">
+                        <span>1. માત્ર આ મેમ્બરમાં જ જમા થાય (Member Only)</span>
+                      </span>
+                      <span className="text-[11px] text-slate-600 block mt-0.5 leading-snug">
+                        ખાસ આ ID નું Personal PV અને Capping વધશે. <strong>અપલાઇનમાં કોઈપણ PV કે મેચિંગ કેલ્ક્યુલેશન જશે નહીં.</strong>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Option 2: With Upline Propagation */}
+                  <div
+                    onClick={() => setPropagateUpline(true)}
+                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 ${
+                      propagateUpline
+                        ? "bg-emerald-50/70 border-[#006d36] shadow-sm"
+                        : "bg-slate-50 border-slate-200 hover:border-slate-300 opacity-75"
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full mt-0.5 flex items-center justify-center border-2 shrink-0 ${
+                        propagateUpline ? "border-[#006d36] bg-[#006d36] text-white" : "border-slate-300 bg-white"
+                      }`}
+                    >
+                      {propagateUpline && <span className="w-2 h-2 rounded-full bg-white" />}
+                    </div>
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 block flex items-center gap-1.5">
+                        <span>2. અપલાઇન સાથે (Full Tree Propagation)</span>
+                      </span>
+                      <span className="text-[11px] text-slate-600 block mt-0.5 leading-snug">
+                        મેમ્બરનું Personal PV પણ વધશે + <strong>તમામ ઉપરના Upline લીડર્સના Binary લેગમાં પણ PV કાઉન્ટ થઈને 1:1 મેચિંગ થશે.</strong>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[#1a1c1c] mb-1.5">

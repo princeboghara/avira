@@ -68,10 +68,11 @@ export async function POST(req: NextRequest) {
   const client = await pool.connect();
   try {
     const body = await req.json();
-    const { memberId, pv: rawPv, note } = body;
+    const { memberId, pv: rawPv, note, propagateUpline = true } = body;
 
     const memberIdClean = String(memberId || "").trim().toUpperCase();
     const pv = parseFloat(rawPv);
+    const shouldPropagate = propagateUpline !== false && propagateUpline !== "false" && propagateUpline !== "MEMBER_ONLY";
 
     if (!memberIdClean) {
       return NextResponse.json({ success: false, message: "Member ID is required." }, { status: 400 });
@@ -94,7 +95,8 @@ export async function POST(req: NextRequest) {
     const user = userRes.rows[0];
 
     // Credit PV directly through binary engine
-    const packageName = note || `Admin Self PV Transfer: +${pv} PV`;
+    const modeLabel = shouldPropagate ? "with Binary Upline Propagation" : "Member Account Only (No Upline Flow)";
+    const packageName = note || `Admin Self PV Transfer: +${pv} PV (${modeLabel})`;
     const result = await creditPurchasePV(
       user.id,
       pv,
@@ -102,18 +104,20 @@ export async function POST(req: NextRequest) {
       packageName,
       0, // Admin direct PV credit (₹0 bill)
       [{ name: `Self PV Transfer (+${pv} PV)`, quantity: 1, mrp: 0, price: 0, discountPrice: 0, pv, subtotalMrp: 0, subtotalPv: pv }],
-      false
+      false,
+      shouldPropagate
     );
 
     return NextResponse.json({
       success: true,
-      message: `Successfully credited +${pv} Self PV to ${user.full_name} (${memberIdClean}). New Personal PV: ${result.newPersonalPv} PV. Daily Cap: ₹${result.newCapping}.`,
+      message: `Successfully credited +${pv} Self PV to ${user.full_name} (${memberIdClean}) [${modeLabel}]. New Personal PV: ${result.newPersonalPv} PV. Daily Cap: ₹${result.newCapping}.`,
       data: {
         memberId: memberIdClean,
         fullName: user.full_name,
         addedPv: pv,
         newPersonalPv: result.newPersonalPv,
         newCapping: result.newCapping,
+        propagateUpline: shouldPropagate,
         instantMatchesCount: result.instantMatches.length,
       },
     });

@@ -1,6 +1,7 @@
 import { PoolClient } from "pg";
 import { pool } from "@/lib/db";
 import { BinaryTreeNode } from "@/types";
+import { getLeadershipPercentages } from "@/lib/settings";
 
 /**
  * Calculates Daily Capping based on Member's Personal PV
@@ -143,23 +144,25 @@ export async function distributeLeadershipBonus(
   if (binaryPayout <= 0 || !earner.sponsorId) return;
 
   const dateStr = new Date().toISOString().replace("T", " ").substring(0, 16);
+  const { level1, level2 } = await getLeadershipPercentages(client);
 
-  // 1. Level 1 Direct Sponsor (15%)
+  // 1. Level 1 Direct Sponsor - Requires DIAMOND rank (personal_pv >= 1000)
   const l1Res = await client.query(
     `SELECT u.id, u.member_id, u.full_name, u.sponsor_id, b.personal_pv
      FROM users u
-     LEFT JOIN user_binary_pv b ON u.id = b.user_id
+     JOIN user_binary_pv b ON u.id = b.user_id
      WHERE UPPER(u.member_id) = UPPER($1) OR u.id::text = $1
-     LIMIT 1 FOR UPDATE`,
+     LIMIT 1 FOR UPDATE OF u, b`,
     [earner.sponsorId]
   );
 
   if (l1Res.rows.length === 0) return;
   const l1Sponsor = l1Res.rows[0];
   const l1Pv = parseFloat(l1Sponsor.personal_pv || "0");
-  const l1BonusAmount = Math.round((binaryPayout * 0.15) * 100) / 100;
+  const l1BonusAmount = Math.round((binaryPayout * (level1 / 100)) * 100) / 100;
+  const isL1Diamond = l1Pv >= 1000;
 
-  if (l1BonusAmount > 0 && l1Pv >= 100) {
+  if (l1BonusAmount > 0 && isL1Diamond && level1 > 0) {
     // Credit Level 1 Sponsor wallet
     await client.query(
       `UPDATE user_wallets 
@@ -172,7 +175,7 @@ export async function distributeLeadershipBonus(
     );
 
     const txId1 = `tx_${Date.now()}_lead1_${l1Sponsor.member_id}`;
-    const desc1 = `Leadership Supporting Bonus (15% Level 1) from ${earner.fullName} (${earner.memberId}) Binary Payout ₹${binaryPayout}`;
+    const desc1 = `Leadership Supporting Bonus (${level1}% Level 1 - Diamond Rank) from ${earner.fullName} (${earner.memberId}) Binary Payout ₹${binaryPayout}`;
 
     await client.query(
       `INSERT INTO transactions (id, user_id, type, amount, description, status, date)
@@ -181,24 +184,25 @@ export async function distributeLeadershipBonus(
     );
   }
 
-  // 2. Level 2 Direct Sponsor (5%)
-  if (!l1Sponsor.sponsor_id) return;
+  // 2. Level 2 Direct Sponsor - Requires DIAMOND rank (personal_pv >= 1000)
+  if (!l1Sponsor.sponsor_id || level2 <= 0) return;
 
   const l2Res = await client.query(
     `SELECT u.id, u.member_id, u.full_name, u.sponsor_id, b.personal_pv
      FROM users u
-     LEFT JOIN user_binary_pv b ON u.id = b.user_id
+     JOIN user_binary_pv b ON u.id = b.user_id
      WHERE UPPER(u.member_id) = UPPER($1) OR u.id::text = $1
-     LIMIT 1 FOR UPDATE`,
+     LIMIT 1 FOR UPDATE OF u, b`,
     [l1Sponsor.sponsor_id]
   );
 
   if (l2Res.rows.length === 0) return;
   const l2Sponsor = l2Res.rows[0];
   const l2Pv = parseFloat(l2Sponsor.personal_pv || "0");
-  const l2BonusAmount = Math.round((binaryPayout * 0.05) * 100) / 100;
+  const l2BonusAmount = Math.round((binaryPayout * (level2 / 100)) * 100) / 100;
+  const isL2Diamond = l2Pv >= 1000;
 
-  if (l2BonusAmount > 0 && l2Pv >= 100) {
+  if (l2BonusAmount > 0 && isL2Diamond) {
     // Credit Level 2 Sponsor wallet
     await client.query(
       `UPDATE user_wallets 
@@ -211,7 +215,7 @@ export async function distributeLeadershipBonus(
     );
 
     const txId2 = `tx_${Date.now()}_lead2_${l2Sponsor.member_id}`;
-    const desc2 = `Leadership Supporting Bonus (5% Level 2) from ${earner.fullName} (${earner.memberId}) Binary Payout ₹${binaryPayout}`;
+    const desc2 = `Leadership Supporting Bonus (${level2}% Level 2 - Diamond Rank) from ${earner.fullName} (${earner.memberId}) Binary Payout ₹${binaryPayout}`;
 
     await client.query(
       `INSERT INTO transactions (id, user_id, type, amount, description, status, date)
@@ -313,7 +317,8 @@ export async function creditPurchasePV(
   packageName: string,
   amount: number,
   items: unknown[] = [],
-  skipOrderCreation: boolean = false
+  skipOrderCreation: boolean = false,
+  propagateUpline: boolean = true
 ): Promise<{
   newPersonalPv: number;
   newCapping: number;
@@ -377,41 +382,43 @@ export async function creditPurchasePV(
     const selfMatch = await matchBinaryForUser(client, userId);
     if (selfMatch) instantMatches.push(selfMatch);
 
-    // 3. Propagate PV UPWARD through ancestors in the binary tree & execute INSTANT matching
-    let currentChildId = userId;
-    let parentId = userRes.rows[0].binary_parent_id;
+    // 3. Propagate PV UPWARD through ancestors in the binary tree & execute INSTANT matching (if enabled)
+    if (propagateUpline) {
+      let currentChildId = userId;
+      let parentId = userRes.rows[0].binary_parent_id;
 
-    while (parentId) {
-      const parentRes = await client.query(
-        "SELECT user_id, left_child_id, right_child_id, binary_parent_id FROM user_binary_pv WHERE user_id = $1 FOR UPDATE",
-        [parentId]
-      );
-
-      if (parentRes.rows.length === 0) break;
-
-      const parent = parentRes.rows[0];
-
-      if (parent.left_child_id === currentChildId) {
-        // PV belongs to Parent's LEFT Leg (Updates cumulative lifetime and carry-forward balance)
-        await client.query(
-          "UPDATE user_binary_pv SET left_pv = left_pv + $1, carry_left_pv = carry_left_pv + $1, updated_at = NOW() WHERE user_id = $2",
-          [pv, parent.user_id]
+      while (parentId) {
+        const parentRes = await client.query(
+          "SELECT user_id, left_child_id, right_child_id, binary_parent_id FROM user_binary_pv WHERE user_id = $1 FOR UPDATE",
+          [parentId]
         );
-      } else if (parent.right_child_id === currentChildId) {
-        // PV belongs to Parent's RIGHT Leg (Updates cumulative lifetime and carry-forward balance)
-        await client.query(
-          "UPDATE user_binary_pv SET right_pv = right_pv + $1, carry_right_pv = carry_right_pv + $1, updated_at = NOW() WHERE user_id = $2",
-          [pv, parent.user_id]
-        );
+
+        if (parentRes.rows.length === 0) break;
+
+        const parent = parentRes.rows[0];
+
+        if (parent.left_child_id === currentChildId) {
+          // PV belongs to Parent's LEFT Leg (Updates cumulative lifetime and carry-forward balance)
+          await client.query(
+            "UPDATE user_binary_pv SET left_pv = left_pv + $1, carry_left_pv = carry_left_pv + $1, updated_at = NOW() WHERE user_id = $2",
+            [pv, parent.user_id]
+          );
+        } else if (parent.right_child_id === currentChildId) {
+          // PV belongs to Parent's RIGHT Leg (Updates cumulative lifetime and carry-forward balance)
+          await client.query(
+            "UPDATE user_binary_pv SET right_pv = right_pv + $1, carry_right_pv = carry_right_pv + $1, updated_at = NOW() WHERE user_id = $2",
+            [pv, parent.user_id]
+          );
+        }
+
+        // INSTANT MATCHING: Check and credit matching bonus to parent immediately!
+        const parentMatch = await matchBinaryForUser(client, parent.user_id);
+        if (parentMatch) instantMatches.push(parentMatch);
+
+        // Climb up
+        currentChildId = parent.user_id;
+        parentId = parent.binary_parent_id;
       }
-
-      // INSTANT MATCHING: Check and credit matching bonus to parent immediately!
-      const parentMatch = await matchBinaryForUser(client, parent.user_id);
-      if (parentMatch) instantMatches.push(parentMatch);
-
-      // Climb up
-      currentChildId = parent.user_id;
-      parentId = parent.binary_parent_id;
     }
 
     await client.query("COMMIT");

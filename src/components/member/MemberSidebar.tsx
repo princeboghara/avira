@@ -24,6 +24,7 @@ import {
   History,
   Award,
   Crown,
+  MapPin,
 } from "lucide-react";
 import { User } from "@/types";
 
@@ -62,6 +63,7 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
         { name: "Binary Tree", href: "/dashboard/tree", icon: Network },
         { name: "Direct Referral", href: "/dashboard/community/referrals", icon: Users },
         { name: "Total Team", href: "/dashboard/community/team", icon: Network },
+        { name: "Network Map", href: "/dashboard/community/map", icon: MapPin },
       ],
     },
     {
