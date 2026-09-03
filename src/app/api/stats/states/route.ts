@@ -72,10 +72,11 @@ export async function GET(req: NextRequest) {
     const adminSession = await getAdminSession(req);
     const memberSession = await getSession(req);
 
-    // Determine if admin request
+    // Determine if admin request (Master Map)
     const isAdmin =
-      scopeParam === "admin" &&
-      (adminSession !== null || memberSession?.role === "ADMIN");
+      scopeParam === "admin" ||
+      adminSession !== null ||
+      memberSession?.role === "ADMIN";
 
     let stateRows: any[] = [];
     let cityRows: any[] = [];
@@ -128,11 +129,11 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      targetMemberId = memberSession.memberId;
+      targetMemberId = req.nextUrl.searchParams.get("memberId") || memberSession.memberId;
 
       // Find root user ID
       const rootRes = await client.query(
-        `SELECT id, member_id FROM users WHERE UPPER(member_id) = UPPER($1) LIMIT 1`,
+        `SELECT id, member_id FROM users WHERE UPPER(member_id) = UPPER($1) OR id = $1 LIMIT 1`,
         [targetMemberId]
       );
 
@@ -153,6 +154,7 @@ export async function GET(req: NextRequest) {
       }
 
       const rootId = rootRes.rows[0].id;
+      const rootMemberId = rootRes.rows[0].member_id;
 
       // Recursive CTE to fetch ONLY this user's downline subtree
       const stateQuery = await client.query(
@@ -160,7 +162,7 @@ export async function GET(req: NextRequest) {
         WITH RECURSIVE downline AS (
           SELECT user_id
           FROM user_binary_pv
-          WHERE binary_parent_id = $1
+          WHERE binary_parent_id = $1 OR binary_parent_id = $2
 
           UNION ALL
 
@@ -180,7 +182,7 @@ export async function GET(req: NextRequest) {
         GROUP BY raw_state
         ORDER BY total_count DESC;
       `,
-        [rootId]
+        [rootId, rootMemberId]
       );
       stateRows = stateQuery.rows;
 
@@ -189,7 +191,7 @@ export async function GET(req: NextRequest) {
         WITH RECURSIVE downline AS (
           SELECT user_id
           FROM user_binary_pv
-          WHERE binary_parent_id = $1
+          WHERE binary_parent_id = $1 OR binary_parent_id = $2
 
           UNION ALL
 
@@ -207,7 +209,7 @@ export async function GET(req: NextRequest) {
         GROUP BY raw_state, raw_city
         ORDER BY raw_state, city_count DESC;
       `,
-        [rootId]
+        [rootId, rootMemberId]
       );
       cityRows = cityQuery.rows;
     }

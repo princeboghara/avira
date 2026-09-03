@@ -279,12 +279,31 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
     setIsDragging(false);
   };
 
-  const handleWheelZoom = (e: React.WheelEvent) => {
-    // Smooth mouse wheel zoom
-    e.preventDefault();
-    const delta = e.deltaY < 0 ? 0.15 : -0.15;
-    setZoomLevel((z) => Math.min(3.0, Math.max(0.7, Number((z + delta).toFixed(2)))));
-  };
+  // Native non-passive event listener for wheel and touchmove to isolate map and prevent page scroll
+  useEffect(() => {
+    const el = mapContainerRef.current;
+    if (!el) return;
+
+    const onWheelNative = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      setZoomLevel((z) => Math.min(3.0, Math.max(0.7, Number((z + delta).toFixed(2)))));
+    };
+
+    const onTouchMoveNative = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        e.preventDefault();
+      }
+    };
+
+    el.addEventListener("wheel", onWheelNative, { passive: false });
+    el.addEventListener("touchmove", onTouchMoveNative, { passive: false });
+
+    return () => {
+      el.removeEventListener("wheel", onWheelNative);
+      el.removeEventListener("touchmove", onTouchMoveNative);
+    };
+  }, []);
 
   const handleReset = () => {
     setZoomLevel(1);
@@ -315,16 +334,18 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
             </span>
             <div>
               <h2 className="text-xl font-bold text-stone-900 tracking-tight flex items-center gap-2">
-                <span>{isMember ? "Your National Network Territory" : "India Direct Selling Footprint"}</span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100/80 text-[#059669] font-bold">
-                  Live Geographic Sync
-                </span>
+                <span>{isMember ? "India State Distribution" : "India National Network (Master Map)"}</span>
+                {!isMember && (
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100/80 text-[#059669] font-bold">
+                    Master Geographic Sync
+                  </span>
+                )}
               </h2>
-              <p className="text-xs text-stone-500 font-bold mt-0.5">
-                {isMember
-                  ? "Interactive live geographic distribution of your binary associate team across 28 States & 8 Union Territories"
-                  : "All-India associate density, pin-code registrations and statewide BV performance"}
-              </p>
+              {!isMember && (
+                <p className="text-xs text-stone-500 font-bold mt-0.5">
+                  Master geographic distribution of all associates across 28 States & 8 Union Territories
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -521,8 +542,8 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            onWheel={handleWheelZoom}
-            className={`map-svg-container relative w-full aspect-[612/696] max-w-[560px] flex items-center justify-center select-none py-2 overflow-hidden ${
+            style={{ touchAction: "none" }}
+            className={`map-svg-container relative w-full aspect-[612/696] max-w-[560px] flex items-center justify-center select-none py-2 overflow-hidden touch-none ${
               isDragging ? "cursor-grabbing" : "cursor-grab"
             }`}
           >

@@ -139,6 +139,21 @@ export default function MemberProfilePage() {
     }
   };
 
+  const filledFieldsCount = [
+    avatarUrl,
+    profile?.fullName,
+    profile?.mobile,
+    email,
+    address,
+    profile?.pincode,
+    profile?.city,
+    profile?.state,
+    nomineeName,
+    nomineeRelation,
+  ].filter(Boolean).length;
+
+  const profileCompletion = Math.round((filledFieldsCount / 10) * 100);
+
   if (loading) {
     return (
       <MemberLayout>
@@ -194,28 +209,54 @@ export default function MemberProfilePage() {
         )}
 
         <form onSubmit={handleSaveProfile} className="space-y-6">
-          {/* Profile Picture (PFP) Upload & Card */}
+          {/* Profile Picture (PFP) Upload with Circular Progress Round Bar */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-4">
             <h2 className="text-base font-black text-[#1a1c1c] pb-2 border-b border-gray-100">
-              Profile Avatar & Identification
+              Profile Avatar & Completion Progress
             </h2>
 
             <div className="flex flex-col sm:flex-row items-center gap-6">
-              <div className="relative">
-                {avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={avatarUrl}
-                    alt="PFP"
-                    className="w-24 h-24 rounded-full object-cover border-4 border-emerald-200 shadow-sm"
+              <div className="relative flex items-center justify-center">
+                {/* Circular Progress SVG Gauge Ring */}
+                <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="54"
+                    className="stroke-slate-100"
+                    strokeWidth="6"
+                    fill="transparent"
                   />
-                ) : (
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#006d36] to-[#50c878] text-white flex items-center justify-center text-3xl font-black shadow-sm">
-                    {profile?.fullName?.charAt(0) || "A"}
-                  </div>
-                )}
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="54"
+                    className="stroke-[#006d36] transition-all duration-700 ease-out"
+                    strokeWidth="6"
+                    strokeDasharray={2 * Math.PI * 54}
+                    strokeDashoffset={2 * Math.PI * 54 * (1 - profileCompletion / 100)}
+                    strokeLinecap="round"
+                    fill="transparent"
+                  />
+                </svg>
 
-                <label className="absolute bottom-0 right-0 p-2 bg-[#006d36] hover:bg-[#005025] text-white rounded-full cursor-pointer shadow-md transition-transform active:scale-95">
+                {/* PFP inside Gauge Ring */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={avatarUrl}
+                      alt="PFP"
+                      className="w-24 h-24 rounded-full object-cover shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#006d36] to-[#50c878] text-white flex items-center justify-center text-3xl font-black shadow-sm">
+                      {profile?.fullName?.charAt(0) || "A"}
+                    </div>
+                  )}
+                </div>
+
+                <label className="absolute bottom-1 right-1 p-2 bg-[#006d36] hover:bg-[#005025] text-white rounded-full cursor-pointer shadow-md transition-transform active:scale-95 z-10">
                   <Upload className="w-3.5 h-3.5" />
                   <input
                     type="file"
@@ -226,16 +267,18 @@ export default function MemberProfilePage() {
                 </label>
               </div>
 
-              <div className="text-center sm:text-left space-y-1">
-                <span className="text-base font-black text-[#1a1c1c] block">
-                  {profile?.fullName}
-                </span>
-                <span className="font-mono text-xs font-bold text-[#006d36] block">
-                  Associate ID: {profile?.memberId}
-                </span>
-                <span className="text-[11px] text-[#5f5e5e] block">
-                  Click the camera icon to upload a personal profile picture (Max 5MB)
-                </span>
+              <div className="space-y-1.5 text-center sm:text-left">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#006d36] text-xs font-black">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{profileCompletion}% Profile Complete</span>
+                </div>
+                <h3 className="text-lg font-black text-[#1a1c1c]">{profile?.fullName}</h3>
+                <p className="text-xs text-[#5f5e5e] font-mono">
+                  Member ID: <span className="font-bold text-[#006d36]">{profile?.memberId}</span>
+                </p>
+                <p className="text-[11px] text-gray-400">
+                  Fill in all address, email, and nominee fields below to achieve 100% complete profile.
+                </p>
               </div>
             </div>
           </div>
@@ -384,13 +427,21 @@ export default function MemberProfilePage() {
                   <label className="block font-bold text-[#1a1c1c] uppercase tracking-wider mb-1.5">
                     Nominee Relationship:
                   </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Spouse, Father, Son, Daughter"
+                  <select
                     value={nomineeRelation}
                     onChange={(e) => setNomineeRelation(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-xs text-[#1a1c1c] outline-hidden focus:border-[#006d36] focus:bg-white"
-                  />
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-xs text-[#1a1c1c] outline-hidden focus:border-[#006d36] focus:bg-white cursor-pointer"
+                  >
+                    <option value="">-- Select Relationship --</option>
+                    <option value="Spouse">Spouse (Husband / Wife)</option>
+                    <option value="Father">Father</option>
+                    <option value="Mother">Mother</option>
+                    <option value="Son">Son</option>
+                    <option value="Daughter">Daughter</option>
+                    <option value="Brother">Brother</option>
+                    <option value="Sister">Sister</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
               </div>
             </div>

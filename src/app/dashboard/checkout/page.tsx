@@ -58,6 +58,7 @@ export default function MemberCheckoutPage() {
   const [submittingOrder, setSubmittingOrder] = useState(false);
   const [uploadingSlip, setUploadingSlip] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [orderPlacedSuccess, setOrderPlacedSuccess] = useState(false);
 
   // Company Payment Credentials
   const COMPANY_BANK = {
@@ -229,11 +230,10 @@ export default function MemberCheckoutPage() {
         localStorage.removeItem("aviracare_cart");
         localStorage.removeItem("aviracare_checkout_target");
 
-        router.push(
-          `/dashboard/orders?success=1&orderId=${encodeURIComponent(
-            data.orderId || "new"
-          )}`
-        );
+        setOrderPlacedSuccess(true);
+        setTimeout(() => {
+          router.push("/dashboard/orders");
+        }, 1800);
       } else {
         alert(data.message || "Failed to submit order.");
       }
@@ -447,39 +447,40 @@ export default function MemberCheckoutPage() {
             )}
 
             {/* If Razorpay is selected, show Instant Gateway Card with direct PAY button */}
+            {/* If Razorpay is selected, show Neumorphic Instant Gateway Card */}
             {paymentMode === "razorpay" && !isFullWalletPayment && (
-              <div className="bg-gradient-to-br from-emerald-900 via-teal-900 to-emerald-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl space-y-5 animate-fadeIn border border-emerald-500/30">
+              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-slate-200/80 space-y-5 animate-fadeIn">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#006d36] flex items-center justify-center border border-emerald-200 shadow-2xs">
                       <CreditCard className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-black text-base">Razorpay Online Payment</h3>
-                      <p className="text-xs text-emerald-200/80">Standard 256-bit Secure Gateway</p>
+                      <h3 className="font-black text-base text-slate-900">Razorpay Online Payment</h3>
+                      <p className="text-xs text-slate-500">Standard 256-bit Secure Gateway</p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-400 text-gray-950 uppercase tracking-wider">
+                  <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-100 text-[#006d36] uppercase tracking-wider">
                     Fast & Live
                   </span>
                 </div>
 
-                <div className="p-4 bg-white/10 rounded-2xl border border-white/10 space-y-2.5 text-xs">
-                  <div className="flex items-center justify-between text-emerald-100 pb-2 border-b border-white/10">
-                    <span className="text-emerald-200">Payable Amount:</span>
-                    <strong className="font-mono text-base text-white">₹{remainingPayable.toLocaleString("en-IN")}</strong>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/60 space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between text-slate-700 pb-2 border-b border-slate-200/60">
+                    <span className="font-bold">Payable Amount:</span>
+                    <strong className="font-mono text-base text-[#006d36]">₹{remainingPayable.toLocaleString("en-IN")}</strong>
                   </div>
-                  <div className="flex items-center gap-2 text-emerald-300 font-bold">
-                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                  <div className="flex items-center gap-2 text-slate-600 font-bold">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-[#006d36]" />
                     <span>Instant PV Credit & Order Confirmation</span>
                   </div>
-                  <div className="flex items-center gap-2 text-emerald-300 font-bold">
-                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                  <div className="flex items-center gap-2 text-slate-600 font-bold">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-[#006d36]" />
                     <span>UPI (GPay, PhonePe, Paytm), Cards, NetBanking, QR</span>
                   </div>
-                  <div className="flex items-center gap-2 text-emerald-300 font-bold">
-                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-                    <span>0 Waiting • 0 Manual Slip Uploads</span>
+                  <div className="flex items-center gap-2 text-slate-600 font-bold">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-[#006d36]" />
+                    <span>0 Waiting • Direct Associate Invoice Generation</span>
                   </div>
                 </div>
 
@@ -488,18 +489,18 @@ export default function MemberCheckoutPage() {
                   type="button"
                   onClick={handleRazorpayOnlinePay}
                   disabled={submittingOrder}
-                  className="w-full py-4 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-gray-950 font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-xl hover:shadow-emerald-400/20 active:scale-98 transition-all cursor-pointer disabled:opacity-50"
+                  className="w-full py-4 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-md active:scale-98 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {submittingOrder ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Opening Razorpay Window...</span>
+                      <span>Opening Gateway...</span>
                     </>
                   ) : (
                     <>
                       <CreditCard className="w-5 h-5" />
                       <span>Pay ₹{remainingPayable.toLocaleString("en-IN")} via Razorpay</span>
-                      <Zap className="w-4 h-4 text-emerald-900 fill-emerald-900 ml-1" />
+                      <Zap className="w-4 h-4 text-emerald-200 fill-emerald-200 ml-1" />
                     </>
                   )}
                 </button>
@@ -576,9 +577,6 @@ export default function MemberCheckoutPage() {
                     <Wallet className="w-4 h-4 text-gray-400" />
                     <span>Fund Wallet Balance: ₹0</span>
                   </div>
-                  <Link href="/dashboard/fund" className="text-[10px] text-[#006d36] font-bold hover:underline">
-                    + Deposit Funds
-                  </Link>
                 </div>
               )}
             </div>
@@ -757,6 +755,25 @@ export default function MemberCheckoutPage() {
                       : "Confirm & Submit Order"}
                   </span>
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Order Placed Success Modal */}
+        {orderPlacedSuccess && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn">
+            <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center space-y-4 shadow-2xl border border-emerald-300 animate-scaleUp">
+              <div className="w-20 h-20 mx-auto rounded-full bg-emerald-100 flex items-center justify-center text-[#006d36] shadow-md animate-bounce">
+                <CheckCircle2 className="w-12 h-12" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-900">Order Placed Successfully!</h2>
+              <p className="text-xs text-slate-500 font-medium">
+                Your order has been recorded. Redirecting directly to your Past Orders page...
+              </p>
+              <div className="pt-2 flex items-center justify-center gap-2 text-xs font-mono font-bold text-[#006d36]">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Redirecting to Past Orders...</span>
               </div>
             </div>
           </div>

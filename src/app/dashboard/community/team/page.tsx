@@ -48,6 +48,15 @@ export default function AllTeamDirectoryPage() {
 
   const columns: Column<TeamMember>[] = [
     {
+      header: "Joining Date",
+      accessorKey: "joiningDate",
+      sortable: true,
+      cell: (row) => {
+        const d = row.joiningDate ? new Date(row.joiningDate).toLocaleDateString("en-IN") : "Recent";
+        return <span className="font-mono text-xs text-[#5f5e5e] font-semibold">{d}</span>;
+      },
+    },
+    {
       header: "Depth Level",
       accessorKey: "level",
       sortable: true,
@@ -63,7 +72,7 @@ export default function AllTeamDirectoryPage() {
       accessorKey: "memberId",
       sortable: true,
       cell: (row) => (
-        <span className="font-mono font-bold text-xs text-[#006d36]">
+        <span className="font-mono font-black text-sm text-[#006d36]">
           {row.memberId}
         </span>
       ),
@@ -73,9 +82,8 @@ export default function AllTeamDirectoryPage() {
       accessorKey: "fullName",
       sortable: true,
       cell: (row) => (
-        <div>
-          <div className="font-bold text-[#1a1c1c]">{row.fullName}</div>
-          <div className="font-mono text-[10px] text-[#5f5e5e]">{row.mobile}</div>
+        <div className="font-black text-sm text-[#1a1c1c]">
+          {row.fullName}
         </div>
       ),
     },
@@ -86,9 +94,9 @@ export default function AllTeamDirectoryPage() {
       align: "center",
       cell: (row) => (
         <span
-          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+          className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase ${
             row.position === "LEFT"
-              ? "bg-blue-50 text-blue-700 border border-blue-200"
+              ? "bg-emerald-50 text-[#006d36] border border-emerald-200"
               : "bg-purple-50 text-purple-700 border border-purple-200"
           }`}
         >
@@ -97,86 +105,61 @@ export default function AllTeamDirectoryPage() {
       ),
     },
     {
-      header: "Personal PV",
-      accessorKey: "currentPv",
-      sortable: true,
-      align: "center",
-      cell: (row) => {
-        const pv = row.currentPv || 0;
-        const isActive = pv >= 100;
-        return (
-          <span
-            className={`inline-block px-2.5 py-0.5 rounded-full font-mono text-xs font-bold ${
-              isActive ? "bg-emerald-100 text-[#006d36]" : "bg-red-100 text-red-700"
-            }`}
-          >
-            {pv} PV
-          </span>
-        );
-      },
-    },
-    {
-      header: "Joining Date",
-      accessorKey: "joiningDate",
-      sortable: true,
-      cell: (row) => {
-        const d = row.joiningDate ? new Date(row.joiningDate).toLocaleDateString("en-IN") : "Recent";
-        return <span className="font-mono text-xs text-[#5f5e5e]">{d}</span>;
-      },
-    },
-    {
       header: "Status",
       accessorKey: "status",
       sortable: true,
       align: "center",
-      cell: (row) => (
-        <span
-          className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-            (row.currentPv || 0) >= 100
-              ? "bg-emerald-100 text-[#006d36]"
-              : "bg-amber-100 text-amber-800"
-          }`}
-        >
-          {(row.currentPv || 0) >= 100 ? "Active" : "Red (0-99 PV)"}
-        </span>
-      ),
+      cell: (row) => {
+        const isActive = (row.currentPv || 0) >= 100 || row.status === "ACTIVE";
+        return (
+          <span
+            className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+              isActive
+                ? "bg-emerald-100 text-[#006d36]"
+                : "bg-amber-100 text-amber-800"
+            }`}
+          >
+            {isActive ? "Active" : "Inactive"}
+          </span>
+        );
+      },
     },
   ];
 
   return (
     <MemberLayout>
-      <div className="space-y-8 max-w-6xl mx-auto pb-12">
+      <div className="space-y-6 max-w-6xl mx-auto pb-12">
         {/* Page Header */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-[#006d36] font-mono text-[10px] font-black uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 mb-1 text-xs">
+              <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-[#006d36] font-mono text-[10px] font-black uppercase tracking-wider">
                 My Community
               </span>
-              <span className="text-xs text-[#5f5e5e] font-medium">
-                Downline Team
+              <span className="text-[#5f5e5e] font-bold">
+                • Downline Team
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-[#1a1c1c] tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-[#1a1c1c] tracking-tight">
               Total Binary Team
             </h1>
-            <p className="text-xs text-[#5f5e5e] mt-1">
+            <p className="text-xs text-[#5f5e5e] mt-0.5">
               Complete downline network hierarchy across Left and Right binary structures with level depth indicators.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="p-3.5 bg-blue-50 rounded-2xl border border-blue-200 text-center min-w-[100px]">
-              <span className="text-[9px] font-bold text-blue-700 uppercase block">Left Team</span>
-              <span className="text-xl font-black font-mono text-blue-800">{leftCount}</span>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 sm:p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center min-w-[90px]">
+              <span className="text-[9px] font-bold text-[#006d36] uppercase block">Left Team</span>
+              <span className="text-lg sm:text-xl font-black font-mono text-[#006d36]">{leftCount}</span>
             </div>
-            <div className="p-3.5 bg-purple-50 rounded-2xl border border-purple-200 text-center min-w-[100px]">
+            <div className="p-2.5 sm:p-3 bg-purple-50 rounded-xl border border-purple-200 text-center min-w-[90px]">
               <span className="text-[9px] font-bold text-purple-700 uppercase block">Right Team</span>
-              <span className="text-xl font-black font-mono text-purple-800">{rightCount}</span>
+              <span className="text-lg sm:text-xl font-black font-mono text-purple-800">{rightCount}</span>
             </div>
-            <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-center min-w-[110px]">
-              <span className="text-[9px] font-bold text-[#006d36] uppercase block">Total Members</span>
-              <span className="text-xl font-black font-mono text-[#006d36]">{totalTeam}</span>
+            <div className="p-2.5 sm:p-3 bg-slate-50 rounded-xl border border-slate-200 text-center min-w-[100px]">
+              <span className="text-[9px] font-bold text-[#1a1c1c] uppercase block">Total Members</span>
+              <span className="text-lg sm:text-xl font-black font-mono text-[#1a1c1c]">{totalTeam}</span>
             </div>
           </div>
         </div>
@@ -192,11 +175,14 @@ export default function AllTeamDirectoryPage() {
             data={team}
             columns={columns}
             keyExtractor={(item) => item.id || item.memberId}
-            searchPlaceholder="Search by ID, Name, Mobile, Level..."
-            searchableKeys={["memberId", "fullName", "mobile", "position", "levelLabel"]}
+            searchPlaceholder="Search by ID, Name, Level..."
+            searchableKeys={["memberId", "fullName", "position"]}
             initialPageSize={10}
-            title="Downline Team Hierarchy"
-            emptyMessage="No downline members found."
+            selectable={false}
+            showPrint={false}
+            showIndex={true}
+            title="Binary Team Directory"
+            emptyMessage="No team members registered yet."
           />
         )}
       </div>

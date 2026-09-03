@@ -32,6 +32,9 @@ interface DataTableProps<T> {
   actions?: React.ReactNode;
   initialPageSize?: number;
   emptyMessage?: string;
+  selectable?: boolean;
+  showPrint?: boolean;
+  showIndex?: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,6 +49,9 @@ export default function DataTable<T extends Record<string, any>>({
   actions,
   initialPageSize = 10,
   emptyMessage = "No records found.",
+  selectable = true,
+  showPrint = true,
+  showIndex = true,
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState<number | "ALL">(initialPageSize);
@@ -75,6 +81,9 @@ export default function DataTable<T extends Record<string, any>>({
   // 2. Sort Data
   const sortedData = useMemo(() => {
     if (!sortKey) return filteredData;
+    if (sortKey === "__index__") {
+      return sortDirection === "desc" ? [...filteredData].reverse() : [...filteredData];
+    }
 
     return [...filteredData].sort((a, b) => {
       const valA = a[sortKey];
@@ -191,14 +200,16 @@ export default function DataTable<T extends Record<string, any>>({
             />
           </div>
 
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="neo-btn-icon p-2.5 rounded-xl text-[#64748b] hover:text-[#006d36] cursor-pointer"
-            title="Print / Export Table"
-          >
-            <Printer className="w-4 h-4" />
-          </button>
+          {showPrint && (
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="neo-btn-icon p-2.5 rounded-xl text-[#64748b] hover:text-[#006d36] cursor-pointer"
+              title="Print / Export Table"
+            >
+              <Printer className="w-4 h-4" />
+            </button>
+          )}
 
           {onBulkDelete && selectedIds.size > 0 && (
             <button
@@ -222,17 +233,40 @@ export default function DataTable<T extends Record<string, any>>({
             <thead>
               <tr className="border-b border-gray-200/70 bg-white/50 text-[#475569] uppercase tracking-wider font-extrabold select-none">
                 {/* Select All Checkbox */}
-                <th className="py-4 px-4 w-10 text-center">
-                  <input
-                    type="checkbox"
-                    checked={allCurrentSelected}
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 rounded border-gray-300 text-[#006d36] focus:ring-[#006d36] cursor-pointer"
-                  />
-                </th>
+                {selectable && (
+                  <th className="py-4 px-4 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      checked={allCurrentSelected}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 rounded border-gray-300 text-[#006d36] focus:ring-[#006d36] cursor-pointer"
+                    />
+                  </th>
+                )}
 
-                {/* Index / Sr. No. */}
-                <th className="py-4 px-4 w-14 font-mono">#</th>
+                {/* Index / Sr. No. with Sorting */}
+                {showIndex && (
+                  <th
+                    onClick={() => handleSort("__index__")}
+                    className="py-4 px-4 w-14 font-mono cursor-pointer hover:bg-white/80 transition-colors select-none"
+                    title="Sort by Serial Number"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>#</span>
+                      <span className="text-[#94a3b8]">
+                        {sortKey === "__index__" ? (
+                          sortDirection === "asc" ? (
+                            <ChevronUp className="w-3.5 h-3.5 text-[#006d36]" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5 text-[#006d36]" />
+                          )
+                        ) : (
+                          <ChevronsUpDown className="w-3.5 h-3.5" />
+                        )}
+                      </span>
+                    </div>
+                  </th>
+                )}
 
                 {/* Columns */}
                 {columns.map((col, idx) => {
@@ -277,7 +311,7 @@ export default function DataTable<T extends Record<string, any>>({
               {paginatedData.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={columns.length + 2}
+                    colSpan={columns.length + (selectable ? 1 : 0) + (showIndex ? 1 : 0)}
                     className="py-14 text-center text-xs text-[#64748b] font-medium"
                   >
                     {emptyMessage}
@@ -297,19 +331,23 @@ export default function DataTable<T extends Record<string, any>>({
                       }`}
                     >
                       {/* Checkbox */}
-                      <td className="py-3.5 px-4 text-center">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleToggleRow(rowId)}
-                          className="w-4 h-4 rounded border-gray-300 text-[#006d36] focus:ring-[#006d36] cursor-pointer"
-                        />
-                      </td>
+                      {selectable && (
+                        <td className="py-3.5 px-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleRow(rowId)}
+                            className="w-4 h-4 rounded border-gray-300 text-[#006d36] focus:ring-[#006d36] cursor-pointer"
+                          />
+                        </td>
+                      )}
 
                       {/* Sr No. */}
-                      <td className="py-3.5 px-4 font-mono font-bold text-[#64748b] text-[11px]">
-                        {globalIndex}
-                      </td>
+                      {showIndex && (
+                        <td className="py-3.5 px-4 font-mono font-bold text-[#64748b] text-[11px]">
+                          {globalIndex}
+                        </td>
+                      )}
 
                       {/* Columns */}
                       {columns.map((col, cIdx) => (

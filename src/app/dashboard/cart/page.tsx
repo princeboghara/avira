@@ -40,11 +40,15 @@ export default function MemberCartPage() {
   const [memberVerified, setMemberVerified] = useState(false);
   const [memberError, setMemberError] = useState("");
   const [shippingAddress, setShippingAddress] = useState("");
+  const [shippingCharge, setShippingCharge] = useState(0);
 
   useEffect(() => {
     async function loadUserAndCart() {
       try {
-        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        const [res, shipRes] = await Promise.all([
+          fetch("/api/auth/me", { cache: "no-store" }),
+          fetch("/api/settings/shipping", { cache: "no-store" }).catch(() => null),
+        ]);
         const data = await res.json();
         if (data.success && data.user) {
           setUser(data.user);
@@ -53,6 +57,12 @@ export default function MemberCartPage() {
           setTargetMemberMobile("");
           setShippingAddress("");
           setMemberVerified(false);
+        }
+        if (shipRes) {
+          const shipData = await shipRes.json();
+          if (shipData?.success && typeof shipData.shippingCharge === "number") {
+            setShippingCharge(shipData.shippingCharge);
+          }
         }
       } catch (err) {
         console.error("Error loading user:", err);
@@ -182,10 +192,7 @@ export default function MemberCartPage() {
   // 4. Total PV (NO '+' prefix)
   const totalPv = cart.reduce((acc, it) => acc + it.product.pv * it.quantity, 0);
 
-  // 5. Shipping (₹0)
-  const shippingCharge = 0;
-
-  // 6. Estimated GST Tax Breakdown based on HSN/GST Rate
+  // 5. Estimated GST Tax Breakdown based on HSN/GST Rate
   const totalGstEstimated = cart.reduce((acc, it) => {
     const price = (it.product.discountPrice || it.product.mrp) * it.quantity;
     const rate = (it.product as any).gstRate || 18; // standard GST rate
@@ -219,7 +226,7 @@ export default function MemberCartPage() {
         address: shippingAddress.trim(),
         totalMrpAmount: totalMrpAmount,
         totalDiscount: totalDiscount,
-        totalAmount: totalPayableAmount,
+        totalAmount: totalPayableAmount + shippingCharge,
         totalPv: totalPv,
         shippingCharge: shippingCharge,
         taxAmount: Math.round(totalGstEstimated),
@@ -433,22 +440,24 @@ export default function MemberCartPage() {
                     <span className="font-mono">{totalPv} PV</span>
                   </div>
 
-                  {/* 4. Shipping Charges (₹0) */}
+                  {/* 4. Shipping Charges */}
                   <div className="flex items-center justify-between text-[#5f5e5e]">
                     <span>Shipping Charges:</span>
-                    <span className="font-mono font-bold text-[#006d36]">₹0 (Free Delivery)</span>
+                    <span className="font-mono font-bold text-[#006d36]">
+                      {shippingCharge > 0 ? `₹${shippingCharge}` : "₹0 (Free Delivery)"}
+                    </span>
                   </div>
 
-                  {/* 5. Tax (GST Included by HSN) */}
+                  {/* 5. Tax (GST Included by HSN - Clean without ~) */}
                   <div className="flex items-center justify-between text-[#5f5e5e] pt-1 border-t border-gray-100">
                     <span>Tax (GST by HSN):</span>
-                    <span className="font-mono">Included (~₹{Math.round(totalGstEstimated).toLocaleString("en-IN")})</span>
+                    <span className="font-mono">Included (₹{Math.round(totalGstEstimated).toLocaleString("en-IN")})</span>
                   </div>
 
                   {/* 6. Final Payable Amount */}
                   <div className="flex items-center justify-between text-sm font-black text-[#1a1c1c] pt-2 border-t border-gray-200">
                     <span>Final Payable Amount:</span>
-                    <span className="font-mono text-base text-[#006d36]">₹{totalPayableAmount.toLocaleString("en-IN")}</span>
+                    <span className="font-mono text-base text-[#006d36]">₹{(totalPayableAmount + shippingCharge).toLocaleString("en-IN")}</span>
                   </div>
                 </div>
 

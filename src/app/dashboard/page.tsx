@@ -201,6 +201,22 @@ export default function DashboardPage() {
   const carryLeftPv = user?.carryLeftPv ?? 0;
   const carryRightPv = user?.carryRightPv ?? 0;
 
+  // Profile completion percentage
+  const profileFields = [
+    user?.avatarUrl,
+    user?.fullName,
+    user?.mobile,
+    user?.email,
+    user?.address,
+    user?.pincode,
+    user?.city,
+    user?.state,
+    user?.nomineeName,
+    user?.nomineeRelation,
+  ];
+  const filledProfileFields = profileFields.filter(Boolean).length;
+  const profileCompletion = Math.round((filledProfileFields / 10) * 100);
+
   if (loading) {
     return (
       <MemberLayout user={user}>
@@ -222,106 +238,104 @@ export default function DashboardPage() {
 
   return (
     <MemberLayout user={user}>
-      <div className="space-y-7 max-w-7xl mx-auto pb-20 animate-fadeIn font-sans">
+      <div className="space-y-6 sm:space-y-7 max-w-7xl mx-auto pb-20 animate-fadeIn font-sans">
         {/* ========================================================
-            1. RADIANT COLORFUL NEUMORPHIC PROFILE HEADER
+            1. COMPACT PROFESSIONAL NEUMORPHIC PROFILE HEADER
            ======================================================== */}
-        <div className="neo-card-emerald rounded-[32px] sm:rounded-[36px] p-6 sm:p-8 relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          {/* Ambient Lighting Orbs */}
-          <div className="absolute -top-12 -left-12 w-64 h-64 rounded-full bg-emerald-400/25 blur-3xl pointer-events-none" />
-          <div className="absolute top-0 right-0 w-64 h-64 bg-teal-400/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-10 right-1/4 w-52 h-52 bg-green-300/20 rounded-full blur-2xl pointer-events-none" />
+        <div className="bg-white/95 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-xs relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-300 hover:shadow-md">
+          {/* Subtle Ambient Light Orb */}
+          <div className="absolute -top-10 -left-10 w-48 h-48 rounded-full bg-emerald-100/40 blur-2xl pointer-events-none" />
 
-          <div className="flex items-center gap-4 sm:gap-6 relative z-10">
-            {/* Avatar with Neumorphic 3D Ring */}
+          <div className="flex items-center gap-3.5 sm:gap-4 relative z-10">
+            {/* Avatar with Compact 3D Ring */}
             <div className="relative shrink-0 group">
-              <div className="p-1 rounded-[26px] neo-card bg-gradient-to-tr from-emerald-100 to-white shadow-md">
+              <div className="p-0.5 rounded-2xl bg-gradient-to-tr from-emerald-100 to-white shadow-xs">
                 {user?.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={user.avatarUrl}
                     alt={user.fullName}
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-[22px] object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[22px] bg-gradient-to-br from-[#006d36] via-[#005228] to-[#013317] text-white font-heading font-black text-2xl sm:text-3xl flex items-center justify-center shadow-lg shadow-emerald-900/30 group-hover:scale-105 transition-transform duration-300">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#006d36] via-[#005228] to-[#013317] text-white font-heading font-black text-xl sm:text-2xl flex items-center justify-center shadow-sm shadow-emerald-900/30 group-hover:scale-105 transition-transform duration-300">
                     {user?.fullName?.charAt(0) || "A"}
                   </div>
                 )}
               </div>
               {/* Active Pulse Pill */}
-              <span className="absolute -bottom-1 -right-1 flex h-5 w-5">
+              <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5">
                 {isUserActive && (
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 )}
                 <span
-                  className={`relative inline-flex rounded-full h-5 w-5 border-2 border-white shadow-md ${
+                  className={`relative inline-flex rounded-full h-3.5 w-3.5 border-2 border-white shadow-xs ${
                     isUserActive ? "bg-emerald-500" : "bg-rose-500"
                   }`}
                 />
               </span>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
+              {/* Full Name */}
+              <h1 className="text-lg sm:text-xl font-heading font-black text-[#0f172a] tracking-tight">
+                {user?.fullName}
+              </h1>
+
               {/* Badges Strip */}
-              <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
                 {/* Member ID with Copy Action */}
                 <button
                   type="button"
                   onClick={handleCopyMemberId}
                   title="Click to copy Member ID"
-                  className="neo-btn-secondary font-mono text-xs font-black px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer group bg-white/90"
+                  className="bg-slate-100 hover:bg-slate-200 font-mono text-[11px] font-black px-2.5 py-1 rounded-lg flex items-center gap-1 cursor-pointer transition-colors"
                 >
                   <span className="text-[#006d36]">{user?.memberId}</span>
                   {copiedId ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <Check className="w-3 h-3 text-emerald-600" />
                   ) : (
-                    <Copy className="w-3.5 h-3.5 text-[#006d36] group-hover:scale-110 transition-transform" />
+                    <Copy className="w-3 h-3 text-[#006d36]" />
                   )}
                 </button>
 
                 {/* Rank Badge */}
                 <span
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-gradient-to-r ${rankBadgeColor} shadow-md`}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-gradient-to-r ${rankBadgeColor} shadow-xs`}
                 >
-                  <RankIcon className="w-3.5 h-3.5" />
+                  <RankIcon className="w-3 h-3" />
                   <span>{rankName} ({personalPv} PV)</span>
                 </span>
 
                 {/* Active / Inactive Status Pill */}
                 <span
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase shadow-xs ${
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase shadow-2xs ${
                     isUserActive
-                      ? "bg-emerald-500 text-white shadow-emerald-500/25"
-                      : "bg-rose-500 text-white shadow-rose-500/25"
+                      ? "bg-emerald-50 text-[#006d36] border border-emerald-200"
+                      : "bg-rose-50 text-rose-700 border border-rose-200"
                   }`}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-current" />
                   <span>{isUserActive ? "Active" : "Inactive (<100 PV)"}</span>
                 </span>
               </div>
-
-              {/* Full Name */}
-              <h1 className="text-xl sm:text-2xl font-heading font-black text-[#0f172a] tracking-tight">
-                {user?.fullName}
-              </h1>
             </div>
           </div>
 
           {/* Action Shortcuts */}
-          <div className="flex items-center gap-3 w-full sm:w-auto relative z-10">
+          <div className="flex items-center gap-2 w-full sm:w-auto relative z-10">
             <Link
               href="/dashboard/profile"
-              className="neo-btn-secondary flex-1 sm:flex-none px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer bg-white"
+              className="flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
             >
-              <UserIcon className="w-4 h-4 text-[#64748b]" />
+              <UserIcon className="w-3.5 h-3.5" />
               <span>Profile</span>
             </Link>
             <Link
               href="/dashboard/store"
-              className="neo-btn-primary flex-1 sm:flex-none px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-700/25"
+              className="flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer bg-[#006d36] hover:bg-[#005025] text-white shadow-xs transition-colors"
             >
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingBag className="w-3.5 h-3.5" />
               <span>Store</span>
             </Link>
           </div>
@@ -517,46 +531,55 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {/* Row 2: Today's Income Card (Directly Below Paid & Pending) */}
-          <div className="neo-card-amber rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 flex items-center justify-between relative overflow-hidden group neo-card-hover">
-            <div className="absolute -top-8 -right-8 w-32 h-32 bg-amber-400/20 rounded-full blur-xl pointer-events-none" />
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#d97706] to-[#f59e0b] text-white flex items-center justify-center shadow-md shadow-amber-600/30 shrink-0">
-                <Zap className="w-6 h-6" />
-              </div>
+          {/* Row 2: Today's & This Week's Income Side-by-Side (grid-cols-2 on Mobile & Desktop!) */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-5">
+            {/* Today's Income Card */}
+            <div className="neo-card-amber rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden group neo-card-hover">
+              <div className="absolute -top-8 -right-8 w-28 h-28 bg-amber-400/20 rounded-full blur-xl pointer-events-none" />
               <div>
-                <span className="text-[11px] font-black uppercase tracking-widest text-[#92400e] block mb-0.5">
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#d97706] to-[#f59e0b] text-white flex items-center justify-center shadow-md shadow-amber-600/30 shrink-0">
+                    <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-900 border border-amber-500/30">
+                    Today
+                  </span>
+                </div>
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#92400e] block mb-0.5">
                   Today&apos;s Income
                 </span>
-                <div className="text-2xl sm:text-3xl font-heading font-black text-amber-800 tracking-tight">
+                <div className="text-xl sm:text-3xl font-heading font-black text-amber-800 tracking-tight">
                   ₹{todayIncome.toLocaleString("en-IN")}
                 </div>
               </div>
-            </div>
-            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-900 border border-amber-500/30 shadow-xs">
-              ⚡ Today&apos;s Earnings
-            </span>
-          </div>
-
-          {/* Row 3: This Week's Income Card (Directly Below Today's Income) */}
-          <div className="neo-card-violet rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 flex items-center justify-between relative overflow-hidden group neo-card-hover">
-            <div className="absolute -top-8 -right-8 w-32 h-32 bg-purple-400/20 rounded-full blur-xl pointer-events-none" />
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center shadow-md shadow-purple-600/30 shrink-0">
-                <TrendingUp className="w-6 h-6" />
+              <div className="pt-2 sm:pt-3 mt-2 sm:mt-3 border-t border-amber-500/20 text-[10px] sm:text-xs text-[#92400e] font-bold flex items-center justify-between">
+                <span>⚡ Live Daily</span>
               </div>
+            </div>
+
+            {/* This Week's Income Card */}
+            <div className="neo-card-violet rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden group neo-card-hover">
+              <div className="absolute -top-8 -right-8 w-28 h-28 bg-purple-400/20 rounded-full blur-xl pointer-events-none" />
               <div>
-                <span className="text-[11px] font-black uppercase tracking-widest text-[#5b21b6] block mb-0.5">
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center shadow-md shadow-purple-600/30 shrink-0">
+                    <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-900 border border-purple-500/30">
+                    Weekly
+                  </span>
+                </div>
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#5b21b6] block mb-0.5">
                   This Week&apos;s Income
                 </span>
-                <div className="text-2xl sm:text-3xl font-heading font-black text-[#5b21b6] tracking-tight">
+                <div className="text-xl sm:text-3xl font-heading font-black text-[#5b21b6] tracking-tight">
                   ₹{thisWeekIncome.toLocaleString("en-IN")}
                 </div>
               </div>
+              <div className="pt-2 sm:pt-3 mt-2 sm:mt-3 border-t border-purple-500/20 text-[10px] sm:text-xs text-[#5b21b6] font-bold flex items-center justify-between">
+                <span>📅 Current Cycle</span>
+              </div>
             </div>
-            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-900 border border-purple-500/30 shadow-xs">
-              📅 Current Cycle
-            </span>
           </div>
         </div>
 
@@ -564,29 +587,29 @@ export default function DashboardPage() {
             4. VOLUME & TEAM PODS (MATCHED PV REMOVED)
            ======================================================== */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {/* Card 1: Downline Associates (Royal Fuchsia / Magenta Orchid) */}
-          <div className="neo-card-fuchsia rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group neo-card-hover">
+          {/* Card 1: Downline Associates (Executive Royal Sapphire Blue) */}
+          <div className="border border-blue-200/80 bg-gradient-to-br from-blue-50/90 via-white to-sky-50/50 rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group shadow-xs hover:shadow-md transition-all duration-300">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-black uppercase tracking-wider text-[#86198f]">
+                <span className="text-xs font-black uppercase tracking-wider text-[#1e40af]">
                   Downline Team
                 </span>
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#c026d3] to-[#e879f9] text-white flex items-center justify-center shadow-md shadow-fuchsia-600/25">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#1d4ed8] to-[#60a5fa] text-white flex items-center justify-center shadow-md shadow-blue-600/25">
                   <Users className="w-4 h-4" />
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl neo-inset-fuchsia text-center my-1">
-                <span className="text-3xl font-heading font-black text-[#a21caf] block">
+              <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200/60 text-center my-1">
+                <span className="text-3xl font-heading font-black text-[#1e40af] block">
                   {totalTeamCount}
                 </span>
-                <span className="text-[10px] uppercase font-bold text-[#86198f] tracking-wider block mt-0.5">
+                <span className="text-[10px] uppercase font-bold text-[#1e40af] tracking-wider block mt-0.5">
                   Total Associates in Network
                 </span>
               </div>
             </div>
 
-            <div className="mt-3 text-center text-xs text-[#86198f] font-bold pt-2 border-t border-fuchsia-500/20">
+            <div className="mt-3 text-center text-xs text-[#1e40af] font-bold pt-2 border-t border-blue-500/20">
               👥 Active Team Size
             </div>
           </div>
@@ -624,107 +647,138 @@ export default function DashboardPage() {
         </div>
 
         {/* ========================================================
-            5. ACCOUNT CREDENTIALS & COMPLIANCE (COLORFUL PODS)
+            5. ACCOUNT CREDENTIALS & COMPLIANCE (2x2 ON MOBILE)
            ======================================================== */}
-        <div className="neo-card rounded-[32px] p-6 sm:p-8 border border-white">
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200/80">
-            <div>
-              <h2 className="text-base sm:text-lg font-heading font-black text-[#0f172a]">
-                Account Credentials & Daily Boundaries
-              </h2>
-              <p className="text-xs text-[#64748b] font-medium">
-                Verification credentials, daily capping limits, and direct upline hierarchy
-              </p>
-            </div>
-            <Link
-              href="/dashboard/kyc"
-              className="text-xs font-bold text-[#006d36] hover:underline flex items-center gap-1"
-            >
-              <span>Manage KYC</span>
-              <ChevronRight className="w-4 h-4" />
-            </Link>
+        <div className="neo-card rounded-[32px] p-5 sm:p-7 border border-white">
+          <div className="mb-4 sm:mb-5 pb-3 border-b border-gray-200/80">
+            <h2 className="text-base sm:text-lg font-heading font-black text-[#0f172a]">
+              Account Credentials & Boundaries
+            </h2>
+            <p className="text-xs text-[#64748b] font-medium">
+              Registration info, compliance status, capping boundaries, and profile completion
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Activation Date */}
-            <div className="p-4 rounded-2xl neo-inset-emerald">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Calendar className="w-4 h-4 text-[#006d36]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-[#065f46]">Activation Date</span>
+          {/* 4 Cards: 2x2 Grid on Mobile (grid-cols-2), 4 on Desktop (lg:grid-cols-4) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {/* Joining Date */}
+            <div className="p-3.5 sm:p-4 rounded-2xl neo-inset-emerald flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#006d36]" />
+                  <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#065f46]">Joining Date</span>
+                </div>
+                <div className="font-mono font-black text-xs sm:text-sm text-[#006d36] mt-0.5">
+                  {user?.createdAt
+                    ? new Date(user.createdAt).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : user?.joinedDate
+                    ? new Date(user.joinedDate).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : user?.activationDate
+                    ? new Date(user.activationDate).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "—"}
+                </div>
               </div>
-              <div className="font-mono font-black text-sm text-[#006d36] mt-1">
-                {user?.activationDate
-                  ? new Date(user.activationDate).toLocaleDateString("en-IN", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })
-                  : user?.joinedDate
-                  ? new Date(user.joinedDate).toLocaleDateString("en-IN", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })
-                  : "Verified"}
-              </div>
-              <span className="text-[10px] text-[#047857] font-medium">Account Registration</span>
+              <span className="text-[9px] sm:text-[10px] text-[#047857] font-medium block mt-1">Official Joining Date</span>
             </div>
 
             {/* KYC Status (Glacial Cyan) */}
-            <div className="p-4 rounded-2xl neo-inset-cyan">
-              <div className="flex items-center gap-2 mb-1.5">
-                <FileCheck className="w-4 h-4 text-[#0891b2]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-[#0e7490]">KYC Compliance</span>
+            <div className="p-3.5 sm:p-4 rounded-2xl neo-inset-cyan flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                  <FileCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0891b2]" />
+                  <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#0e7490]">KYC Status</span>
+                </div>
+                <div className="mt-1">
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase shadow-2xs ${
+                      user?.kycStatus === "VERIFIED"
+                        ? "bg-emerald-500 text-white"
+                        : user?.kycStatus === "PENDING"
+                        ? "bg-amber-500 text-white"
+                        : user?.kycStatus === "REJECTED"
+                        ? "bg-rose-500 text-white"
+                        : "bg-gray-400 text-white"
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    <span>{user?.kycStatus || "PENDING"}</span>
+                  </span>
+                </div>
               </div>
-              <div className="mt-1">
-                <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase shadow-xs ${
-                    user?.kycStatus === "VERIFIED"
-                      ? "bg-emerald-500 text-white"
-                      : user?.kycStatus === "PENDING"
-                      ? "bg-amber-500 text-white"
-                      : user?.kycStatus === "REJECTED"
-                      ? "bg-rose-500 text-white"
-                      : "bg-gray-400 text-white"
-                  }`}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  {user?.kycStatus || "NOT SUBMITTED"}
-                </span>
-              </div>
-              <span className="text-[10px] text-[#0e7490] font-medium block mt-1">Aadhaar, PAN, Bank</span>
+              <span className="text-[9px] sm:text-[10px] text-[#0e7490] font-medium block mt-1">Aadhaar, PAN, Bank</span>
             </div>
 
             {/* Daily Capping (Ruby Rose / Shield) */}
-            <div className="p-4 rounded-2xl neo-inset-rose">
-              <div className="flex items-center gap-2 mb-1.5">
-                <ShieldCheck className="w-4 h-4 text-rose-600" />
-                <span className="text-xs font-bold uppercase tracking-wider text-rose-800">Daily Capping</span>
+            <div className="p-3.5 sm:p-4 rounded-2xl neo-inset-rose flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                  <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" />
+                  <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-rose-800">Daily Capping</span>
+                </div>
+                <div className="font-mono font-black text-xs sm:text-sm text-rose-900 mt-0.5">
+                  ₹{(user?.dailyCapping || (isUserActive ? 1000 : 0)).toLocaleString("en-IN")} / Day
+                </div>
               </div>
-              <div className="font-mono font-black text-sm text-rose-900 mt-1">
-                ₹{(user?.dailyCapping || (isUserActive ? 1000 : 0)).toLocaleString("en-IN")} / Day
-              </div>
-              <span className="text-[10px] text-rose-700 font-medium">Based on PV rank</span>
+              <span className="text-[9px] sm:text-[10px] text-rose-700 font-medium block mt-1">Based on PV rank</span>
             </div>
 
-            {/* Direct Sponsor (Royal Violet / Purple) */}
-            <div className="p-4 rounded-2xl neo-inset-purple">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Users className="w-4 h-4 text-[#7c3aed]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-[#6d28d9]">Direct Sponsor</span>
+            {/* Profile Completion (Royal Violet / Purple) */}
+            <Link
+              href="/dashboard/profile"
+              className="p-3.5 sm:p-4 rounded-2xl neo-inset-purple flex flex-col justify-between group cursor-pointer hover:bg-purple-100/50 transition-colors"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#7c3aed]" />
+                    <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#6d28d9]">
+                      Profile
+                    </span>
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-black text-[#6d28d9] font-mono">
+                    {profileCompletion}%
+                  </span>
+                </div>
+
+                {/* Mini Progress Bar */}
+                <div className="w-full bg-purple-200/80 rounded-full h-1.5 sm:h-2 my-1 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-purple-600 to-indigo-600 h-full rounded-full transition-all duration-700"
+                    style={{ width: `${profileCompletion}%` }}
+                  />
+                </div>
               </div>
-              <div className="font-mono font-black text-sm text-[#4c1d95] mt-1 truncate">
-                {user?.sponsorId || "DIRECT"}
+
+              <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-[#6d28d9] font-bold mt-1">
+                <span>{profileCompletion === 100 ? "100% Done" : "Complete Now"}</span>
+                <span className="group-hover:underline flex items-center">
+                  <span>Edit</span>
+                  <ChevronRight className="w-3 h-3" />
+                </span>
               </div>
-              <span className="text-[10px] text-[#6d28d9] font-medium truncate block">
-                {user?.sponsorName || "Direct Upline Master"}
-              </span>
-            </div>
+            </Link>
           </div>
         </div>
 
         {/* ========================================================
-            6. RECENT FINANCIAL STATEMENT ACCORDION
+            6. PAN-INDIA ASSOCIATES GEOGRAPHIC DISTRIBUTION MAP
+           ======================================================== */}
+        <IndiaStateMap scope="member" />
+
+        {/* ========================================================
+            7. RECENT FINANCIAL STATEMENT ACCORDION
            ======================================================== */}
         <div className="neo-card rounded-[32px] overflow-hidden transition-all duration-300 border border-white">
           <button
@@ -847,11 +901,6 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-
-        {/* ========================================================
-            7. PAN-INDIA ASSOCIATES GEOGRAPHIC DISTRIBUTION MAP
-           ======================================================== */}
-        <IndiaStateMap scope="member" />
       </div>
     </MemberLayout>
   );

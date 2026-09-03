@@ -204,21 +204,9 @@ export default function AdminLayout({
         </main>
       </div>
 
-      {/* 4. ENTERPRISE FOOTER */}
-      <footer className="mt-auto glass-header border-t border-white/80 py-5 text-xs text-[#64748b]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-[#0f172a]">Avira Lifecare Global Private Limited Operations</span>
-            <span>•</span>
-            <span>Enterprise MLM Engine v2.0</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/admin/dashboard" className="hover:text-[#006d36] transition-colors">Dashboard</Link>
-            <Link href="/admin/orders" className="hover:text-[#006d36] transition-colors">Orders</Link>
-            <Link href="/admin/members" className="hover:text-[#006d36] transition-colors">Members</Link>
-            <Link href="/admin/reports" className="hover:text-[#006d36] transition-colors">Reports</Link>
-          </div>
-        </div>
+      {/* 4. MINIMALIST FROSTED FOOTER */}
+      <footer className="mt-auto py-5 px-4 sm:px-6 lg:px-8 glass-header border-t border-white/80 text-center text-xs text-[#64748b] flex flex-col sm:flex-row items-center justify-center gap-3">
+        <p>© 2026 Avira Lifecare Global Private Limited. All rights reserved.</p>
       </footer>
     </div>
   );

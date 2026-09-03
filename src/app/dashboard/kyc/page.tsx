@@ -213,28 +213,28 @@ export default function MemberKycVerificationPage() {
     <MemberLayout>
       <div className="space-y-8 max-w-5xl mx-auto pb-12">
         {/* ========================================================
-            1. TOP HEADER & ROUND PROGRESS BAR GAUGE
+            1. TOP HEADER & ROUND PROGRESS BAR GAUGE (NEUMORPHIC)
            ======================================================== */}
-        <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#006d36] via-[#005a2c] to-[#4f378a] text-white shadow-xl shadow-[#006d36]/15 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="rounded-3xl p-6 sm:p-8 bg-white border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-emerald-200 text-xs font-bold font-mono">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-[#006d36] border border-emerald-200 text-xs font-bold font-mono">
               <ShieldCheck className="w-4 h-4" />
               <span>Government Compliance & Payout Gate</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               KYC Identity Verification
             </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl">
+            <p className="text-xs sm:text-sm text-slate-500 max-w-xl">
               Complete your government identity verification to unlock direct bank withdrawals and full commission payouts.
             </p>
           </div>
 
-          {/* CIRCULAR / ROUND PROGRESS BAR */}
-          <div className="flex flex-col items-center gap-2 shrink-0 bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20">
+          {/* CIRCULAR / ROUND PROGRESS BAR GAUGE */}
+          <div className="flex flex-col items-center gap-2 shrink-0 bg-slate-50 p-5 rounded-3xl border border-slate-200/80 shadow-xs">
             {isFullyVerified ? (
-              <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-emerald-400 to-[#50c878] text-white flex flex-col items-center justify-center shadow-lg border-4 border-white animate-bounce">
-                <CheckCircle2 className="w-9 h-9 text-white" />
-                <span className="text-[10px] font-black uppercase tracking-wider mt-0.5">100% Verified</span>
+              <div className="w-24 h-24 rounded-full bg-emerald-50 border-2 border-[#006d36] text-[#006d36] flex flex-col items-center justify-center shadow-xs">
+                <CheckCircle2 className="w-10 h-10 text-[#006d36]" />
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#006d36] mt-0.5">Verified</span>
               </div>
             ) : (
               <div className="relative w-24 h-24 flex items-center justify-center">
@@ -245,8 +245,8 @@ export default function MemberKycVerificationPage() {
                     cy="48"
                     r="38"
                     stroke="currentColor"
-                    strokeWidth="8"
-                    className="text-white/20"
+                    strokeWidth="7"
+                    className="text-slate-200"
                     fill="transparent"
                   />
                   <circle
@@ -254,8 +254,8 @@ export default function MemberKycVerificationPage() {
                     cy="48"
                     r="38"
                     stroke="currentColor"
-                    strokeWidth="8"
-                    className="text-[#50c878] transition-all duration-700"
+                    strokeWidth="7"
+                    className="text-[#006d36] transition-all duration-700"
                     fill="transparent"
                     strokeDasharray={2 * Math.PI * 38}
                     strokeDashoffset={2 * Math.PI * 38 - (2 * Math.PI * 38 * progressPercent) / 100}
@@ -263,12 +263,12 @@ export default function MemberKycVerificationPage() {
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center">
-                  <span className="font-mono font-black text-lg text-white">{progressPercent}%</span>
-                  <span className="text-[9px] font-bold uppercase text-emerald-200">{verifiedCount}/3 Done</span>
+                  <span className="font-mono font-black text-lg text-slate-900">{progressPercent}%</span>
+                  <span className="text-[9px] font-bold uppercase text-slate-500">{verifiedCount}/3 Done</span>
                 </div>
               </div>
             )}
-            <span className="text-[11px] font-bold text-emerald-100">
+            <span className={`text-[11px] font-bold ${isFullyVerified ? "text-[#006d36]" : "text-slate-600"}`}>
               {isFullyVerified ? "All Documents Approved" : "Verification in Progress"}
             </span>
           </div>
@@ -349,7 +349,7 @@ export default function MemberKycVerificationPage() {
                   <div>
                     <label className="block text-[10px] font-bold text-[#5f5e5e] mb-1">Front Image:</label>
                     {aadhaarFrontUrl ? (
-                      <div className="relative rounded-xl overflow-hidden border border-gray-200 h-24 bg-white p-1 group">
+                      <div className="relative rounded-xl overflow-hidden border border-emerald-200 h-24 bg-white p-1 group">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={aadhaarFrontUrl} alt="Aadhaar Front" className="w-full h-full object-contain" />
                         <button
@@ -365,6 +365,11 @@ export default function MemberKycVerificationPage() {
                           <span>View Full</span>
                         </button>
                       </div>
+                    ) : isAadhaarVerified ? (
+                      <div className="h-24 rounded-xl border border-emerald-200 bg-emerald-50/50 flex flex-col items-center justify-center p-2 text-center">
+                        <CheckCircle2 className="w-5 h-5 text-[#006d36] mb-1" />
+                        <span className="text-[10px] font-bold text-[#006d36]">Verified on Record</span>
+                      </div>
                     ) : (
                       <label className="h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#006d36] flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
                         <Upload className="w-4 h-4 text-gray-400" />
@@ -377,7 +382,7 @@ export default function MemberKycVerificationPage() {
                   <div>
                     <label className="block text-[10px] font-bold text-[#5f5e5e] mb-1">Back Image:</label>
                     {aadhaarBackUrl ? (
-                      <div className="relative rounded-xl overflow-hidden border border-gray-200 h-24 bg-white p-1 group">
+                      <div className="relative rounded-xl overflow-hidden border border-emerald-200 h-24 bg-white p-1 group">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={aadhaarBackUrl} alt="Aadhaar Back" className="w-full h-full object-contain" />
                         <button
@@ -392,6 +397,11 @@ export default function MemberKycVerificationPage() {
                           <Eye className="w-3.5 h-3.5" />
                           <span>View Full</span>
                         </button>
+                      </div>
+                    ) : isAadhaarVerified ? (
+                      <div className="h-24 rounded-xl border border-emerald-200 bg-emerald-50/50 flex flex-col items-center justify-center p-2 text-center">
+                        <CheckCircle2 className="w-5 h-5 text-[#006d36] mb-1" />
+                        <span className="text-[10px] font-bold text-[#006d36]">Verified on Record</span>
                       </div>
                     ) : (
                       <label className="h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#006d36] flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
@@ -465,7 +475,7 @@ export default function MemberKycVerificationPage() {
                 <div>
                   <label className="block text-[10px] font-bold text-[#5f5e5e] mb-1">PAN Photo Proof:</label>
                   {panCardUrl ? (
-                    <div className="relative rounded-xl overflow-hidden border border-gray-200 h-28 bg-white p-1 group">
+                    <div className="relative rounded-xl overflow-hidden border border-emerald-200 h-28 bg-white p-1 group">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={panCardUrl} alt="PAN Card" className="w-full h-full object-contain" />
                       <button
@@ -480,6 +490,11 @@ export default function MemberKycVerificationPage() {
                         <Eye className="w-3.5 h-3.5" />
                         <span>View Full</span>
                       </button>
+                    </div>
+                  ) : isPanVerified ? (
+                    <div className="h-28 rounded-xl border border-emerald-200 bg-emerald-50/50 flex flex-col items-center justify-center p-2 text-center">
+                      <CheckCircle2 className="w-6 h-6 text-[#006d36] mb-1" />
+                      <span className="text-[11px] font-bold text-[#006d36]">Verified on Record</span>
                     </div>
                   ) : (
                     <label className="h-28 rounded-xl border-2 border-dashed border-gray-300 hover:border-purple-600 flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
@@ -573,7 +588,7 @@ export default function MemberKycVerificationPage() {
                 <div>
                   <label className="block text-[10px] font-bold text-[#5f5e5e] mb-1">Cheque / Passbook Image:</label>
                   {bankProofUrl ? (
-                    <div className="relative rounded-xl overflow-hidden border border-gray-200 h-24 bg-white p-1 group">
+                    <div className="relative rounded-xl overflow-hidden border border-emerald-200 h-24 bg-white p-1 group">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={bankProofUrl} alt="Bank Proof" className="w-full h-full object-contain" />
                       <button
@@ -588,6 +603,11 @@ export default function MemberKycVerificationPage() {
                         <Eye className="w-3.5 h-3.5" />
                         <span>View Full</span>
                       </button>
+                    </div>
+                  ) : isBankVerified ? (
+                    <div className="h-24 rounded-xl border border-emerald-200 bg-emerald-50/50 flex flex-col items-center justify-center p-2 text-center">
+                      <CheckCircle2 className="w-5 h-5 text-[#006d36] mb-1" />
+                      <span className="text-[10px] font-bold text-[#006d36]">Verified on Record</span>
                     </div>
                   ) : (
                     <label className="h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-600 flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">

@@ -48,6 +48,7 @@ export default function MemberFundManagerPage() {
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Form States
+  const [depositMethod, setDepositMethod] = useState<"razorpay" | "slip">("razorpay");
   const [amount, setAmount] = useState<string>("");
   const [transactionId, setTransactionId] = useState<string>("");
   const [slipUrl, setSlipUrl] = useState<string>("");
@@ -341,32 +342,31 @@ export default function MemberFundManagerPage() {
         )}
 
         {/* ========================================================
-            1. FUND WALLET BALANCE HERO CARD
+        {/* ========================================================
+            1. FUND WALLET BALANCE NEUMORPHIC CARD
            ======================================================== */}
-        <div className="bg-gradient-to-br from-[#006d36] to-[#004d25] rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden border border-emerald-600/40">
-          <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="space-y-2 text-center md:text-left z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-emerald-100 text-xs font-mono font-bold">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6 relative">
+          <div className="space-y-2 text-center md:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-[#006d36] border border-emerald-200 text-xs font-mono font-bold">
               <Wallet className="w-3.5 h-3.5" />
               <span>Associate Fund Wallet</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white">
+            <h1 className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-slate-900">
               ₹{fundWalletBalance.toLocaleString("en-IN")}
             </h1>
-            <p className="text-xs text-emerald-200 max-w-md">
+            <p className="text-xs text-slate-500 max-w-md">
               Use this balance directly at checkout to purchase botanical products, activate packages, or place orders instantly.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2 z-10 w-full md:w-auto">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
             <button
               type="button"
               onClick={() => setActiveTab("add")}
-              className={`flex-1 md:flex-none px-5 py-3 rounded-2xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`flex-1 md:flex-none px-5 py-3 rounded-2xl font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "add"
-                  ? "bg-[#febd69] text-[#111] hover:bg-[#f3a847]"
-                  : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                  ? "bg-[#006d36] text-white"
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-700"
               }`}
             >
               <PlusCircle className="w-4 h-4" />
@@ -376,10 +376,10 @@ export default function MemberFundManagerPage() {
             <button
               type="button"
               onClick={() => setActiveTab("history")}
-              className={`flex-1 md:flex-none px-5 py-3 rounded-2xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`flex-1 md:flex-none px-5 py-3 rounded-2xl font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "history"
-                  ? "bg-[#febd69] text-[#111] hover:bg-[#f3a847]"
-                  : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                  ? "bg-[#006d36] text-white"
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-700"
               }`}
             >
               <History className="w-4 h-4" />
@@ -391,14 +391,14 @@ export default function MemberFundManagerPage() {
         {/* ========================================================
             2. TABS NAVIGATOR
            ======================================================== */}
-        <div className="flex items-center gap-2 p-1.5 bg-gray-100 rounded-2xl max-w-md">
+        <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-2xl max-w-md">
           <button
             type="button"
             onClick={() => setActiveTab("add")}
             className={`flex-1 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === "add"
-                ? "bg-white text-[#006d36] shadow-sm"
-                : "text-gray-600 hover:text-[#1a1c1c]"
+                ? "bg-white text-[#006d36] shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <PlusCircle className="w-4 h-4" />
@@ -410,12 +410,12 @@ export default function MemberFundManagerPage() {
             onClick={() => setActiveTab("history")}
             className={`flex-1 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === "history"
-                ? "bg-white text-[#006d36] shadow-sm"
-                : "text-gray-600 hover:text-[#1a1c1c]"
+                ? "bg-white text-[#006d36] shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <History className="w-4 h-4" />
-            <span>2. Fund History</span>
+            <span>2. Fund History ({requests.length})</span>
           </button>
         </div>
 
@@ -423,274 +423,361 @@ export default function MemberFundManagerPage() {
             TAB 1: ADD FUND
            ======================================================== */}
         {activeTab === "add" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left: Company Payment Bank Details & QR Code */}
-            <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-gray-200/90 shadow-2xs space-y-5">
-              <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold">
+          <div className="space-y-6">
+            {/* Separate Method Selector: Razorpay Online vs Bank Transfer Slip */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
+              <button
+                type="button"
+                onClick={() => setDepositMethod("razorpay")}
+                className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer flex items-center gap-3 ${
+                  depositMethod === "razorpay"
+                    ? "border-[#006d36] bg-emerald-50/60 shadow-xs"
+                    : "border-slate-200 bg-white hover:border-slate-300"
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  depositMethod === "razorpay" ? "bg-[#006d36] text-white" : "bg-slate-100 text-slate-600"
+                }`}>
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <strong className="block text-xs text-slate-900">Razorpay Online</strong>
+                  <span className="text-[10px] text-slate-500">Instant UPI, QR, Cards (Auto-Credit)</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDepositMethod("slip")}
+                className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer flex items-center gap-3 ${
+                  depositMethod === "slip"
+                    ? "border-[#006d36] bg-emerald-50/60 shadow-xs"
+                    : "border-slate-200 bg-white hover:border-slate-300"
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  depositMethod === "slip" ? "bg-[#006d36] text-white" : "bg-slate-100 text-slate-600"
+                }`}>
                   <Building className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-[#1a1c1c]">Official Company Account</h3>
-                  <span className="text-[11px] text-gray-500 font-mono">Verified Bank & UPI QR</span>
+                  <strong className="block text-xs text-slate-900">Bank Transfer / Slip</strong>
+                  <span className="text-[10px] text-slate-500">NEFT / IMPS & UTR Slip Upload</span>
                 </div>
-              </div>
-
-              {/* Dynamic QR Code for Scan & Pay */}
-              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 flex flex-col items-center justify-center text-center space-y-2">
-                <span className="text-[11px] font-bold text-[#006d36] uppercase tracking-wider">
-                  Scan & Pay via any UPI App
-                </span>
-                <div className="w-44 h-44 bg-white p-2.5 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                      `upi://pay?pa=${COMPANY_BANK.upiId}&pn=${COMPANY_BANK.accountName}&cu=INR`
-                    )}`}
-                    alt="Company UPI QR"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <div className="flex items-center gap-1 text-xs font-mono font-bold text-[#1a1c1c]">
-                  <span>{COMPANY_BANK.upiId}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(COMPANY_BANK.upiId, "upi")}
-                    className="p-1 rounded-md hover:bg-gray-200 text-gray-500 cursor-pointer"
-                    title="Copy UPI ID"
-                  >
-                    {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-                <span className="text-[10px] text-gray-400">GooglePay • PhonePe • Paytm • BHIM</span>
-              </div>
-
-              {/* Bank Transfer Details */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs">
-                  <div>
-                    <span className="text-[10px] text-gray-400 block">Bank Name</span>
-                    <strong className="text-[#1a1c1c]">{COMPANY_BANK.bankName}</strong>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs">
-                  <div>
-                    <span className="text-[10px] text-gray-400 block">Account Holder Name</span>
-                    <strong className="text-[#1a1c1c]">{COMPANY_BANK.accountName}</strong>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs">
-                  <div>
-                    <span className="text-[10px] text-gray-400 block">Account Number</span>
-                    <strong className="text-[#1a1c1c] font-mono">{COMPANY_BANK.accountNumber}</strong>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(COMPANY_BANK.accountNumber, "bank")}
-                    className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-[#006d36] font-bold text-[10px] hover:bg-emerald-50 cursor-pointer flex items-center gap-1"
-                  >
-                    {copiedBank ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                    <span>{copiedBank ? "Copied" : "Copy"}</span>
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs">
-                  <div>
-                    <span className="text-[10px] text-gray-400 block">IFSC Code</span>
-                    <strong className="text-[#1a1c1c] font-mono">{COMPANY_BANK.ifsc}</strong>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(COMPANY_BANK.ifsc, "ifsc")}
-                    className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-[#006d36] font-bold text-[10px] hover:bg-emerald-50 cursor-pointer flex items-center gap-1"
-                  >
-                    {copiedIfsc ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                    <span>{copiedIfsc ? "Copied" : "Copy"}</span>
-                  </button>
-                </div>
-              </div>
+              </button>
             </div>
 
-            {/* Right: Submit Fund Deposit Form */}
-            <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/90 shadow-2xs space-y-6">
-              {/* INSTANT ONLINE DEPOSIT WITH RAZORPAY */}
-              <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-900 via-teal-900 to-emerald-950 text-white space-y-3.5 shadow-md">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-emerald-400" />
-                    <strong className="text-sm font-black">Instant Online Deposit</strong>
+            {/* OPTION 1: RAZORPAY ONLINE INSTANT DEPOSIT */}
+            {depositMethod === "razorpay" && (
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6 max-w-2xl animate-fadeIn">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold">
+                      <Zap className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-base text-slate-900">Instant Online Deposit via Razorpay</h3>
+                      <p className="text-xs text-slate-500">Instant auto-credit to your Fund Wallet with 0 manual verification.</p>
+                    </div>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-500/30">
-                    No Waiting
+                  <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-100 text-[#006d36] uppercase tracking-wider">
+                    Instant
                   </span>
                 </div>
-                <p className="text-xs text-emerald-100/80">
-                  Deposit funds directly using UPI, QR, Debit/Credit Card or NetBanking. Funds are credited instantly without manual approval.
-                </p>
 
-                <div className="pt-1 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
-                  <div className="relative flex-1">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">₹</span>
-                    <input
-                      type="number"
-                      min="1"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="Enter Amount (e.g. 500)"
-                      className="w-full pl-8 pr-3 py-2.5 rounded-xl bg-white text-gray-900 font-mono font-bold text-xs outline-hidden focus:ring-2 focus:ring-emerald-400"
-                    />
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-900">
+                      Enter Deposit Amount (₹) <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">₹</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="e.g. 500, 1000, 2500"
+                        className="w-full pl-8 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono font-bold text-slate-900 outline-none focus:bg-white focus:border-[#006d36] focus:ring-2 focus:ring-[#006d36]/10"
+                      />
+                    </div>
+
+                    {/* Quick Preset Buttons */}
+                    <div className="flex items-center gap-2 pt-1 flex-wrap">
+                      {[500, 1000, 2000, 5000].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setAmount(preset.toString())}
+                          className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-50 hover:text-[#006d36] text-xs font-mono font-bold text-slate-600 cursor-pointer border border-slate-200 transition-colors"
+                        >
+                          +₹{preset}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/60 space-y-2 text-xs text-slate-600 font-medium">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-[#006d36] shrink-0" />
+                      <span>Supports UPI (Google Pay, PhonePe, Paytm), Cards, and NetBanking</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-[#006d36] shrink-0" />
+                      <span>Funds appear in your wallet instantly upon payment completion</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-[#006d36] shrink-0" />
+                      <span>Deposit request automatically recorded in Admin Management</span>
+                    </div>
+                  </div>
+
                   <button
                     type="button"
                     onClick={handleInstantRazorpayDeposit}
                     disabled={submitting || !amount || Number(amount) < 1}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-black text-xs uppercase tracking-wide flex items-center justify-center gap-2 transition-all active:scale-98 shadow-md cursor-pointer disabled:opacity-50"
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    <span>Pay with Razorpay</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* DIVIDER */}
-              <div className="relative flex py-1 items-center">
-                <div className="flex-grow border-t border-gray-200"></div>
-                <span className="flex-shrink mx-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-white px-2">
-                  Or Deposit via Manual Bank Transfer
-                </span>
-                <div className="flex-grow border-t border-gray-200"></div>
-              </div>
-
-              <div>
-                <h3 className="font-black text-base text-[#1a1c1c]">Submit Offline Transfer Slip</h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  If you made a direct IMPS/NEFT transfer to the company account, submit your UTR and screenshot slip below.
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmitFundRequest} className="space-y-4">
-                {/* Amount */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[#1a1c1c]">
-                    Deposit Amount (₹) <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-3 text-sm font-bold text-gray-400">₹</span>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="e.g. 1000, 2500, 5000"
-                      className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm font-mono font-bold text-[#1a1c1c] outline-none focus:bg-white focus:border-[#006d36] focus:ring-2 focus:ring-[#006d36]/10"
-                    />
-                  </div>
-                  {/* Quick Preset Buttons */}
-                  <div className="flex items-center gap-2 pt-1">
-                    {[500, 1000, 2000, 5000].map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setAmount(preset.toString())}
-                        className="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-emerald-50 hover:text-[#006d36] text-[10px] font-mono font-bold text-gray-600 cursor-pointer border border-gray-200 transition-colors"
-                      >
-                        +₹{preset}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Transaction ID / UTR */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[#1a1c1c]">
-                    Transaction ID / UTR / Reference No. <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={transactionId}
-                    onChange={(e) => setTransactionId(e.target.value)}
-                    placeholder="Enter 12-digit UTR (e.g. 423589123456)"
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs font-mono font-bold text-[#1a1c1c] outline-none focus:bg-white focus:border-[#006d36] focus:ring-2 focus:ring-[#006d36]/10 uppercase"
-                  />
-                  <span className="text-[10px] text-gray-400 block">
-                    Found in your GPay / PhonePe / Bank app payment details receipt.
-                  </span>
-                </div>
-
-                {/* Payment Slip Upload */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[#1a1c1c]">
-                    Upload Payment Slip / Screenshot <span className="text-red-500">*</span>
-                  </label>
-
-                  {slipUrl ? (
-                    <div className="relative aspect-[3/2] max-w-sm rounded-2xl bg-gray-50 border-2 border-emerald-300 overflow-hidden p-2 flex items-center justify-center">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={slipUrl}
-                        alt="Uploaded Slip"
-                        className="max-h-full max-w-full rounded-xl object-contain"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setSlipUrl("")}
-                        className="absolute top-2 right-2 p-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-md cursor-pointer"
-                        title="Remove Slip"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="border-2 border-dashed border-gray-200 hover:border-[#006d36] rounded-2xl p-6 flex flex-col items-center justify-center gap-2 bg-gray-50 hover:bg-emerald-50/40 cursor-pointer transition-colors">
-                      {uploadingSlip ? (
-                        <>
-                          <Loader2 className="w-6 h-6 animate-spin text-[#006d36]" />
-                          <span className="text-xs font-bold text-[#006d36]">Uploading Slip...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-6 h-6 text-gray-400" />
-                          <span className="text-xs font-bold text-[#1a1c1c]">Click to upload payment screenshot</span>
-                          <span className="text-[10px] text-gray-400">JPG, PNG, WebP up to 5MB</span>
-                        </>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleSlipUpload}
-                        disabled={uploadingSlip}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
-                </div>
-
-                {/* Submit Button */}
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={submitting || uploadingSlip}
-                    className="w-full py-3 rounded-2xl bg-[#006d36] hover:bg-[#005025] disabled:bg-gray-300 text-white font-black text-xs shadow-md active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-3.5 rounded-2xl bg-[#006d36] hover:bg-[#005025] disabled:bg-slate-300 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md active:scale-98 transition-all cursor-pointer"
                   >
                     {submitting ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Submitting Fund Request...</span>
+                        <span>Opening Razorpay Gateway...</span>
                       </>
                     ) : (
                       <>
-                        <ShieldCheck className="w-4 h-4" />
-                        <span>Submit Fund Request for Approval</span>
+                        <CreditCard className="w-4 h-4" />
+                        <span>Proceed to Pay ₹{amount || "0"} via Razorpay</span>
                       </>
                     )}
                   </button>
                 </div>
-              </form>
-            </div>
+              </div>
+            )}
+
+            {/* OPTION 2: BANK TRANSFER & OFFLINE SLIP UPLOAD */}
+            {depositMethod === "slip" && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fadeIn">
+                {/* Left: Company Bank Account & QR Code */}
+                <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5">
+                  <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#006d36] flex items-center justify-center font-bold">
+                      <Building className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm text-slate-900">Official Company Account</h3>
+                      <span className="text-[11px] text-slate-500 font-mono">Verified Bank & UPI QR</span>
+                    </div>
+                  </div>
+
+                  {/* Dynamic QR Code for Scan & Pay */}
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center space-y-2">
+                    <span className="text-[11px] font-bold text-[#006d36] uppercase tracking-wider">
+                      Scan & Pay via any UPI App
+                    </span>
+                    <div className="w-44 h-44 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+                          `upi://pay?pa=${COMPANY_BANK.upiId}&pn=${COMPANY_BANK.accountName}&cu=INR`
+                        )}`}
+                        alt="Company UPI QR"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1 text-xs font-mono font-bold text-slate-900">
+                      <span>{COMPANY_BANK.upiId}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(COMPANY_BANK.upiId, "upi")}
+                        className="p-1 rounded-md hover:bg-slate-200 text-slate-500 cursor-pointer"
+                        title="Copy UPI ID"
+                      >
+                        {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                    <span className="text-[10px] text-slate-400">GooglePay • PhonePe • Paytm • BHIM</span>
+                  </div>
+
+                  {/* Bank Transfer Details */}
+                  <div className="space-y-2.5 pt-2">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Bank Name</span>
+                        <strong className="text-slate-900">{COMPANY_BANK.bankName}</strong>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Account Holder</span>
+                        <strong className="text-slate-900">{COMPANY_BANK.accountName}</strong>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Account Number</span>
+                        <strong className="text-slate-900 font-mono">{COMPANY_BANK.accountNumber}</strong>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(COMPANY_BANK.accountNumber, "bank")}
+                        className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[#006d36] font-bold text-[10px] hover:bg-emerald-50 cursor-pointer flex items-center gap-1"
+                      >
+                        {copiedBank ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedBank ? "Copied" : "Copy"}</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">IFSC Code</span>
+                        <strong className="text-slate-900 font-mono">{COMPANY_BANK.ifsc}</strong>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(COMPANY_BANK.ifsc, "ifsc")}
+                        className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[#006d36] font-bold text-[10px] hover:bg-emerald-50 cursor-pointer flex items-center gap-1"
+                      >
+                        {copiedIfsc ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedIfsc ? "Copied" : "Copy"}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Submit Offline Transfer Slip Form */}
+                <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+                  <div>
+                    <h3 className="font-black text-base text-slate-900">Submit Offline Transfer Slip</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Submit your Bank UTR or UPI reference along with payment receipt screenshot below.
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleSubmitFundRequest} className="space-y-4">
+                    {/* Amount */}
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-900">
+                        Deposit Amount (₹) <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-3 text-sm font-bold text-slate-400">₹</span>
+                        <input
+                          type="number"
+                          required
+                          min="1"
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          placeholder="e.g. 1000, 2500, 5000"
+                          className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono font-bold text-slate-900 outline-none focus:bg-white focus:border-[#006d36] focus:ring-2 focus:ring-[#006d36]/10"
+                        />
+                      </div>
+                      {/* Quick Presets */}
+                      <div className="flex items-center gap-2 pt-1 flex-wrap">
+                        {[500, 1000, 2000, 5000].map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setAmount(preset.toString())}
+                            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-50 hover:text-[#006d36] text-[10px] font-mono font-bold text-slate-600 cursor-pointer border border-slate-200 transition-colors"
+                          >
+                            +₹{preset}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Transaction ID / UTR */}
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-900">
+                        Transaction ID / UTR / Reference No. <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={transactionId}
+                        onChange={(e) => setTransactionId(e.target.value)}
+                        placeholder="Enter 12-digit UTR (e.g. 423589123456)"
+                        className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold text-slate-900 outline-none focus:bg-white focus:border-[#006d36] focus:ring-2 focus:ring-[#006d36]/10 uppercase"
+                      />
+                      <span className="text-[10px] text-slate-400 block">
+                        Found in your GPay / PhonePe / Bank app payment details receipt.
+                      </span>
+                    </div>
+
+                    {/* Payment Slip Upload */}
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-900">
+                        Upload Payment Slip / Screenshot <span className="text-red-500">*</span>
+                      </label>
+
+                      {slipUrl ? (
+                        <div className="relative aspect-[3/2] max-w-sm rounded-2xl bg-slate-50 border-2 border-emerald-300 overflow-hidden p-2 flex items-center justify-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={slipUrl}
+                            alt="Uploaded Slip"
+                            className="max-h-full max-w-full rounded-xl object-contain"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setSlipUrl("")}
+                            className="absolute top-2 right-2 p-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-md cursor-pointer"
+                            title="Remove Slip"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="border-2 border-dashed border-slate-200 hover:border-[#006d36] rounded-2xl p-6 flex flex-col items-center justify-center gap-2 bg-slate-50 hover:bg-emerald-50/40 cursor-pointer transition-colors">
+                          {uploadingSlip ? (
+                            <>
+                              <Loader2 className="w-6 h-6 animate-spin text-[#006d36]" />
+                              <span className="text-xs font-bold text-[#006d36]">Uploading Slip...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-6 h-6 text-slate-400" />
+                              <span className="text-xs font-bold text-slate-900">Click to upload payment screenshot</span>
+                              <span className="text-[10px] text-slate-400">JPG, PNG, WebP up to 5MB</span>
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleSlipUpload}
+                            disabled={uploadingSlip}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="pt-2">
+                      <button
+                        type="submit"
+                        disabled={submitting || uploadingSlip}
+                        className="w-full py-3 rounded-2xl bg-[#006d36] hover:bg-[#005025] disabled:bg-slate-300 text-white font-black text-xs shadow-md active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {submitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Submitting Fund Request...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="w-4 h-4" />
+                            <span>Submit Fund Request for Approval</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

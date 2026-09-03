@@ -319,86 +319,77 @@ export default function BinaryGenealogyTree({
   return (
     <div className="space-y-4 font-sans select-none">
       {/* 1. Ultra-Clean Neumorphic Control Strip: Path + Search + Total Members + Zoom */}
-      <div className="neo-card rounded-2xl p-3 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        {/* Left: Binary Tree Title Heading */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#006d36] shadow-xs">
-            <Network className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-base font-black text-slate-900 tracking-tight block">
-              Binary Tree
-            </span>
-            <span className="text-[11px] font-mono font-bold text-slate-500">
-              Root: {treeData.memberId}
-            </span>
-          </div>
-        </div>
-
-        {/* Right: Search Bar + Total Members + Parent Button + Zoom Controls */}
-        <div className="flex items-center gap-2.5 flex-wrap self-start lg:self-auto">
-          {/* SEARCH BAR */}
-          <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search ID..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value.toUpperCase());
-                  if (searchError) setSearchError("");
-                }}
-                className="w-32 sm:w-36 neo-input rounded-xl py-1.5 pl-8 pr-2 font-mono font-bold text-xs uppercase text-[#0f172a]"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isSearching}
-              className="neo-btn-primary px-3 py-1.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
-            >
-              {isSearching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Search"}
-            </button>
-            {(isCustomRoot || targetMemberId) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery("");
-                  setTargetMemberId(null);
-                  setSearchError("");
-                  onResetRoot && onResetRoot();
-                }}
-                className="neo-btn-icon p-1.5 rounded-xl cursor-pointer"
-                title="Reset Tree to Root"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-[#006d36]" />
-              </button>
-            )}
-          </form>
-
-          {/* REAL Total Members Badge (Static Network Total, Not Incrementing on Expand) */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl neo-inset text-xs font-bold text-[#1e293b]">
-            <Users className="w-3.5 h-3.5 text-blue-600" />
-            <span className="text-[11px] text-[#64748b]">Total Members:</span>
-            <span className="font-mono font-black text-xs text-[#0f172a]">
-              {displayTotal.toLocaleString("en-IN")}
-            </span>
-          </div>
-
-          {/* Parent Jump Button */}
+      <div className="neo-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 flex flex-col gap-3">
+        {/* Row 1: PATH Badge matching screenshot */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-bold font-mono text-slate-500 uppercase tracking-wider">PATH:</span>
+          <span className="px-3 py-1 rounded-full bg-[#006d36] text-white text-xs font-bold font-mono shadow-xs flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+            <span>{treeData.memberId} ({treeData.fullName})</span>
+          </span>
           {parentMemberId && (
             <button
               type="button"
               onClick={() => onSelectRootId && onSelectRootId(parentMemberId)}
-              className="neo-btn-secondary px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95"
+              className="neo-btn-secondary px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 ml-auto sm:ml-0"
               title="Navigate Up to Parent"
             >
               <ArrowUp className="w-3.5 h-3.5" />
               <span>Parent</span>
             </button>
           )}
+        </div>
 
-          {/* Zoom & Screen Controls */}
+        {/* Row 2: Search Bar */}
+        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 max-w-sm">
+          <div className="relative flex-1">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] pointer-events-none" />
+            <input
+              type="text"
+              placeholder="SEARCH ID..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value.toUpperCase());
+                if (searchError) setSearchError("");
+              }}
+              className="w-full neo-input rounded-xl py-2 pl-9 pr-2 font-mono font-bold text-xs uppercase text-[#0f172a]"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isSearching}
+            className="neo-btn-primary px-4 py-2 rounded-xl font-bold text-xs cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
+          >
+            {isSearching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Search"}
+          </button>
+          {(isCustomRoot || targetMemberId) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setTargetMemberId(null);
+                setSearchError("");
+                onResetRoot && onResetRoot();
+              }}
+              className="neo-btn-icon p-2 rounded-xl cursor-pointer"
+              title="Reset Tree to Root"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-[#006d36]" />
+            </button>
+          )}
+        </form>
+
+        {/* Row 3: Total Members Badge */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl neo-inset text-xs font-bold text-[#1e293b] w-fit">
+          <Users className="w-3.5 h-3.5 text-blue-600" />
+          <span className="text-[11px] text-[#64748b]">Total Members:</span>
+          <span className="font-mono font-black text-xs text-[#0f172a]">
+            {displayTotal.toLocaleString("en-IN")}
+          </span>
+        </div>
+
+        {/* Row 4: Zoom & Screen Controls */}
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center neo-inset rounded-xl p-1 gap-0.5">
             <button
               type="button"
@@ -419,25 +410,25 @@ export default function BinaryGenealogyTree({
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
-            <button
-              type="button"
-              onClick={handleFitToScreen}
-              className="px-2.5 py-1 text-xs font-bold bg-[#006d36] hover:bg-[#00552b] text-white rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-xs active:scale-95 ml-1"
-              title="Auto-Fit entire tree into screen"
-            >
-              <Maximize2 className="w-3 h-3" />
-              <span>Fit</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleResetView}
-              className="px-2.5 py-1 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-xs active:scale-95"
-              title="Center Tree and Reset View"
-            >
-              <RotateCcw className="w-3 h-3 text-[#006d36]" />
-              <span>Center</span>
-            </button>
           </div>
+          <button
+            type="button"
+            onClick={handleFitToScreen}
+            className="px-3 py-1.5 text-xs font-bold bg-[#006d36] hover:bg-[#00552b] text-white rounded-xl transition-all flex items-center gap-1 cursor-pointer shadow-xs active:scale-95"
+            title="Auto-Fit entire tree into screen"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            <span>Fit</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleResetView}
+            className="px-3 py-1.5 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition-all flex items-center gap-1 cursor-pointer shadow-xs active:scale-95"
+            title="Center Tree and Reset View"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-slate-300" />
+            <span>Center</span>
+          </button>
         </div>
       </div>
 
@@ -561,22 +552,14 @@ function RecursiveTreeNode({
       {isExpanded && (
         <div className="flex flex-col items-center animate-fadeIn w-full">
           {/* Connector: Vertical Stem Down */}
-          <div className="w-1 h-8 sm:h-10 neo-tree-line rounded-full" />
+          <div className="w-0.5 h-7 sm:h-9 bg-slate-300 rounded-full" />
 
-          {/* Connector: Horizontal Crossbar with Center Junction */}
-          <div className="w-full flex items-center justify-center relative">
-            <div className="w-1/2 h-1 neo-tree-line rounded-l-full" />
-            <div className="w-1/2 h-1 neo-tree-line rounded-r-full" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-slate-300 shadow-sm flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-            </div>
-          </div>
-
-          {/* Subtree Leaves: Left & Right with responsive adaptive spacing */}
-          <div className={`flex items-start justify-center ${branchGap} pt-0`}>
+          {/* Subtree Leaves: Left & Right */}
+          <div className={`flex items-start justify-center ${branchGap} pt-0 relative`}>
             {/* LEFT CHILD CONTAINER */}
-            <div className="flex flex-col items-center">
-              <div className="w-1 h-6 sm:h-8 neo-tree-line rounded-full mb-1" />
+            <div className="flex flex-col items-center relative">
+              <div className="w-0.5 h-6 sm:h-8 bg-slate-300 rounded-full mb-1" />
+              <div className="absolute top-0 right-0 left-1/2 h-0.5 bg-slate-300" />
               {node.leftChild ? (
                 <RecursiveTreeNode
                   node={node.leftChild}
@@ -601,8 +584,9 @@ function RecursiveTreeNode({
             </div>
 
             {/* RIGHT CHILD CONTAINER */}
-            <div className="flex flex-col items-center">
-              <div className="w-1 h-6 sm:h-8 neo-tree-line rounded-full mb-1" />
+            <div className="flex flex-col items-center relative">
+              <div className="w-0.5 h-6 sm:h-8 bg-slate-300 rounded-full mb-1" />
+              <div className="absolute top-0 left-0 right-1/2 h-0.5 bg-slate-300" />
               {node.rightChild ? (
                 <RecursiveTreeNode
                   node={node.rightChild}
@@ -624,6 +608,11 @@ function RecursiveTreeNode({
                   level={level + 1}
                 />
               )}
+            </div>
+
+            {/* Center Junction Dot */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-slate-300 shadow-sm flex items-center justify-center z-10 pointer-events-none">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
             </div>
           </div>
         </div>
@@ -737,11 +726,7 @@ function NeumorphicNodeDisc({
           disabled={isLoading}
           className={`absolute -bottom-3.5 left-1/2 -translate-x-1/2 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black shadow-md cursor-pointer transition-all duration-200 hover:scale-110 active:scale-95 z-20 ${
             isExpanded
-              ? isRoot
-                ? "bg-blue-600 text-white border-2 border-white shadow-blue-500/30"
-                : isLeft
-                ? "bg-[#006d36] text-white border-2 border-white shadow-emerald-500/30"
-                : "bg-purple-600 text-white border-2 border-white shadow-purple-500/30"
+              ? "bg-[#0f172a] text-white border-2 border-white shadow-slate-900/40 hover:bg-slate-800"
               : isRoot
               ? "bg-white text-blue-600 border-2 border-blue-500 shadow-sm hover:bg-blue-50"
               : isLeft

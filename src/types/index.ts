@@ -21,6 +21,7 @@ export interface User {
   todayEarnings: number;
   joinedDate: string;
   activationDate?: string;
+  createdAt?: string;
   avatarUrl?: string;
 
   // Binary MLM Fields
