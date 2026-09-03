@@ -28,13 +28,13 @@ export async function GET(request: NextRequest) {
 
       const currentUser = userRes.rows[0];
 
-      // 2. Fetch Direct Referrals
+      // 2. Fetch Direct Referrals (matches both user id like usr_... and memberId like AV...)
       const directRes = await client.query(
         `SELECT id, member_id, full_name, mobile, status, personal_pv, daily_capping, binary_position, joined_date
          FROM v_users_full
-         WHERE UPPER(sponsor_id) = UPPER($1)
+         WHERE sponsor_id = $1 OR UPPER(sponsor_id) = UPPER($2) OR sponsor_id = 'usr_' || $2
          ORDER BY created_at DESC`,
-        [currentUser.member_id]
+        [currentUser.id, currentUser.member_id]
       );
 
       // 3. Fetch Left Leg Downlines using Recursive CTE

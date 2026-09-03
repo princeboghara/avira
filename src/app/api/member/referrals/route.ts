@@ -15,9 +15,9 @@ export async function GET(req: NextRequest) {
         `SELECT id, member_id, full_name, mobile, binary_position, personal_pv,
                 joined_date, created_at, status
          FROM v_users_full
-         WHERE UPPER(sponsor_id) = UPPER($1)
+         WHERE sponsor_id = $1 OR UPPER(sponsor_id) = UPPER($2) OR sponsor_id = 'usr_' || $2
          ORDER BY created_at DESC, joined_date DESC`,
-        [session.memberId]
+        [session.userId, session.memberId]
       );
 
       const referrals = res.rows.map((row, idx) => ({

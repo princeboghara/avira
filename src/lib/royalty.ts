@@ -36,7 +36,7 @@ export async function checkRoyaltyQualification(
   const directsRes = await client.query(
     `SELECT id, member_id, full_name, personal_pv, binary_position, binary_parent_id
      FROM v_users_full
-     WHERE UPPER(sponsor_id) = UPPER($1) OR sponsor_id = $2
+     WHERE UPPER(sponsor_id) = UPPER($1) OR sponsor_id = $2 OR sponsor_id = 'usr_' || $1
      ORDER BY created_at ASC`,
     [memberId, userId]
   );
