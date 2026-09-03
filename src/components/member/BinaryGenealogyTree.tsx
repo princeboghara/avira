@@ -149,7 +149,7 @@ export default function BinaryGenealogyTree({
   // Recursively update a node in treeData
   const updateNodeInTree = (
     targetId: string,
-    updatedChildren: { leftChild?: TreeNode | null; rightChild?: TreeNode | null }
+    updatedChildren: { leftChild?: TreeNode | null; rightChild?: TreeNode | null; hasMoreChildren?: boolean }
   ) => {
     const updateRecursive = (current: TreeNode): TreeNode => {
       if (current.id === targetId || current.memberId === targetId) {
@@ -157,7 +157,7 @@ export default function BinaryGenealogyTree({
           ...current,
           leftChild: updatedChildren.leftChild !== undefined ? updatedChildren.leftChild : current.leftChild,
           rightChild: updatedChildren.rightChild !== undefined ? updatedChildren.rightChild : current.rightChild,
-          hasMoreChildren: false,
+          hasMoreChildren: updatedChildren.hasMoreChildren !== undefined ? updatedChildren.hasMoreChildren : false,
         };
       }
       return {

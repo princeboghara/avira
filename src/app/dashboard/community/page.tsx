@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import MemberLayout from "@/components/member/MemberLayout";
-import BinaryGenealogyTree from "@/components/member/BinaryGenealogyTree";
-import { User, BinaryTreeNode } from "@/types";
+import BinaryGenealogyTree, { TreeNode } from "@/components/member/BinaryGenealogyTree";
+import { User } from "@/types";
 import {
   Loader2,
   GitBranch,
@@ -30,7 +30,7 @@ interface MemberItem {
 
 export default function CommunityPage() {
   const [user, setUser] = useState<User | null>(null);
-  const [treeData, setTreeData] = useState<BinaryTreeNode | null>(null);
+  const [treeData, setTreeData] = useState<TreeNode | null>(null);
   const [directList, setDirectList] = useState<MemberItem[]>([]);
   const [leftTeamList, setLeftTeamList] = useState<MemberItem[]>([]);
   const [rightTeamList, setRightTeamList] = useState<MemberItem[]>([]);
@@ -62,10 +62,10 @@ export default function CommunityPage() {
           setUser(userData.user);
 
           // 1. Fetch Tree
-          const treeRes = await fetch(`/api/binary/tree/${userData.user.memberId}`);
+          const treeRes = await fetch("/api/member/tree");
           const treeJson = await treeRes.json();
-          if (treeJson.success) {
-            setTreeData(treeJson.data || treeJson.tree);
+          if (treeJson.success && treeJson.tree) {
+            setTreeData(treeJson.tree);
           }
 
           // 2. Fetch Community Members Data
