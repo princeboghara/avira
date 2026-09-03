@@ -428,68 +428,68 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Card 2: Total Paid Income (Royal Sapphire / Cyan) */}
+          {/* Card 2: Total Paid Income (Electric Cyan / Glacial Ice) */}
           <Link
             href="/dashboard/statement"
-            className="neo-card-sapphire rounded-[32px] p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden group neo-card-hover"
+            className="neo-card-cyan rounded-[32px] p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden group neo-card-hover"
           >
-            <div className="absolute -top-10 -right-10 w-36 h-36 bg-blue-400/20 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+            <div className="absolute -top-10 -right-10 w-36 h-36 bg-cyan-400/20 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
 
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#1d4ed8] to-[#06b6d4] text-white flex items-center justify-center shadow-lg shadow-blue-700/30">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0891b2] to-[#06b6d4] text-white flex items-center justify-center shadow-lg shadow-cyan-700/30">
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-700 border border-blue-500/30 shadow-xs">
+                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-500/20 text-cyan-800 border border-cyan-500/30 shadow-xs">
                   Settled Payout
                 </span>
               </div>
 
-              <span className="text-[11px] font-black uppercase tracking-widest text-[#1e40af] block mb-1">
+              <span className="text-[11px] font-black uppercase tracking-widest text-[#0e7490] block mb-1">
                 Total Paid Income
               </span>
-              <div className="text-3xl sm:text-4xl font-heading font-black text-blue-700 tracking-tight">
+              <div className="text-3xl sm:text-4xl font-heading font-black text-[#0e7490] tracking-tight">
                 ₹{totalPaidIncome.toLocaleString("en-IN")}
               </div>
             </div>
 
-            <div className="pt-4 mt-4 border-t border-blue-500/20 flex items-center justify-between text-xs text-[#1e40af]">
+            <div className="pt-4 mt-4 border-t border-cyan-500/20 flex items-center justify-between text-xs text-[#0e7490]">
               <span className="text-[11px]">Disbursed to Bank</span>
-              <span className="font-bold text-blue-700 flex items-center gap-1 group-hover:underline">
+              <span className="font-bold text-[#0e7490] flex items-center gap-1 group-hover:underline">
                 <span>Statement</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </span>
             </div>
           </Link>
 
-          {/* Card 3: Pending Income (Sunset Amber / Tangerine) */}
+          {/* Card 3: Pending Income (Sunset Coral / Tangerine) */}
           <Link
             href="/dashboard/statement"
-            className="neo-card-amber rounded-[32px] p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden group neo-card-hover"
+            className="neo-card-coral rounded-[32px] p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden group neo-card-hover"
           >
-            <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-400/20 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+            <div className="absolute -top-10 -right-10 w-36 h-36 bg-orange-400/20 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
 
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#d97706] to-[#fbbf24] text-white flex items-center justify-center shadow-lg shadow-amber-600/30">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#ea580c] to-[#fb923c] text-white flex items-center justify-center shadow-lg shadow-orange-600/30">
                   <Clock className="w-6 h-6" />
                 </div>
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-800 border border-amber-500/30 shadow-xs">
+                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-500/20 text-orange-800 border border-orange-500/30 shadow-xs">
                   Scheduled Payout
                 </span>
               </div>
 
-              <span className="text-[11px] font-black uppercase tracking-widest text-[#92400e] block mb-1">
+              <span className="text-[11px] font-black uppercase tracking-widest text-[#c2410c] block mb-1">
                 Pending Income
               </span>
-              <div className="text-3xl sm:text-4xl font-heading font-black text-amber-700 tracking-tight">
+              <div className="text-3xl sm:text-4xl font-heading font-black text-[#c2410c] tracking-tight">
                 ₹{pendingPayoutIncome.toLocaleString("en-IN")}
               </div>
             </div>
 
-            <div className="pt-4 mt-4 border-t border-amber-500/20 flex items-center justify-between text-xs text-[#92400e]">
+            <div className="pt-4 mt-4 border-t border-orange-500/20 flex items-center justify-between text-xs text-[#c2410c]">
               <span className="text-[11px]">Upcoming Cycle</span>
-              <span className="font-bold text-amber-700 flex items-center gap-1 group-hover:underline">
+              <span className="font-bold text-[#ea580c] flex items-center gap-1 group-hover:underline">
                 <span>Details</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </span>
@@ -501,34 +501,34 @@ export default function DashboardPage() {
             4. FOUR DISTINCT COLORFUL VOLUME & ANALYTICS PODS
            ======================================================== */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Card 1: Downline Associates (Emerald) */}
-          <div className="neo-card-emerald rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group neo-card-hover">
+          {/* Card 1: Downline Associates (Royal Fuchsia / Magenta Orchid) */}
+          <div className="neo-card-fuchsia rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group neo-card-hover">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-black uppercase tracking-wider text-[#065f46]">
+                <span className="text-xs font-black uppercase tracking-wider text-[#86198f]">
                   Downline Team
                 </span>
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#006d36] to-[#10b981] text-white flex items-center justify-center shadow-md shadow-emerald-700/25">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#c026d3] to-[#e879f9] text-white flex items-center justify-center shadow-md shadow-fuchsia-600/25">
                   <Users className="w-4 h-4" />
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl neo-inset-emerald text-center my-1">
-                <span className="text-3xl font-heading font-black text-[#006d36] block">
+              <div className="p-4 rounded-2xl neo-inset-fuchsia text-center my-1">
+                <span className="text-3xl font-heading font-black text-[#a21caf] block">
                   {totalTeamCount}
                 </span>
-                <span className="text-[10px] uppercase font-bold text-[#065f46] tracking-wider block mt-0.5">
+                <span className="text-[10px] uppercase font-bold text-[#86198f] tracking-wider block mt-0.5">
                   Total Associates in Network
                 </span>
               </div>
             </div>
 
-            <div className="mt-3 text-center text-xs text-[#065f46] font-bold pt-2 border-t border-emerald-500/20">
+            <div className="mt-3 text-center text-xs text-[#86198f] font-bold pt-2 border-t border-fuchsia-500/20">
               👥 Active Team Size
             </div>
           </div>
 
-          {/* Card 2: Today's Matched PV (Golden Amber) */}
+          {/* Card 2: Today's Matched PV (Solar Amber Topaz) */}
           <div className="neo-card-amber rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group neo-card-hover">
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -555,50 +555,50 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Card 3: Weekly Matched PV (Royal Violet) */}
-          <div className="neo-card-violet rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group neo-card-hover">
+          {/* Card 3: Weekly Matched PV (Caribbean Teal / Aquamarine) */}
+          <div className="neo-card-teal rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group neo-card-hover">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-black uppercase tracking-wider text-[#5b21b6]">
+                <span className="text-xs font-black uppercase tracking-wider text-[#115e59]">
                   Weekly Matched PV
                 </span>
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center shadow-md shadow-purple-600/25">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0d9488] to-[#14b8a6] text-white flex items-center justify-center shadow-md shadow-teal-600/25">
                   <TrendingUp className="w-4 h-4" />
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl neo-inset-purple text-center my-1">
-                <span className="text-3xl font-heading font-black text-[#6d28d9] block">
+              <div className="p-4 rounded-2xl neo-inset-teal text-center my-1">
+                <span className="text-3xl font-heading font-black text-[#0f766e] block">
                   {weeklyMatchedPv}
                 </span>
-                <span className="text-[10px] uppercase font-bold text-[#5b21b6] tracking-wider block mt-0.5">
+                <span className="text-[10px] uppercase font-bold text-[#115e59] tracking-wider block mt-0.5">
                   Matched PV This Week
                 </span>
               </div>
             </div>
 
-            <div className="mt-3 text-center text-xs text-[#5b21b6] font-bold pt-2 border-t border-purple-500/20">
+            <div className="mt-3 text-center text-xs text-[#115e59] font-bold pt-2 border-t border-teal-500/20">
               📅 Current Week Matched Pairs
             </div>
           </div>
 
-          {/* Card 4: Carry Forward PV (Sapphire Cyan) */}
-          <div className="neo-card-sapphire rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group neo-card-hover">
+          {/* Card 4: Carry Forward PV (Twilight Cobalt / Deep Indigo) */}
+          <div className="neo-card-indigo rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group neo-card-hover">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-black uppercase tracking-wider text-[#1e40af]">
+                <span className="text-xs font-black uppercase tracking-wider text-[#3730a3]">
                   Carry Forward PV
                 </span>
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center shadow-md shadow-blue-600/25">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#4338ca] to-[#6366f1] text-white flex items-center justify-center shadow-md shadow-indigo-600/25">
                   <Clock className="w-4 h-4" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2 my-1">
-                <div className="p-3 rounded-2xl neo-inset-emerald text-center">
-                  <span className="text-[10px] font-black uppercase text-[#065f46] block">Left</span>
-                  <span className="text-xl font-heading font-black text-[#006d36]">{carryLeftPv}</span>
-                  <span className="text-[9px] text-[#047857] block font-bold">PV</span>
+                <div className="p-3 rounded-2xl neo-inset-teal text-center">
+                  <span className="text-[10px] font-black uppercase text-[#115e59] block">Left</span>
+                  <span className="text-xl font-heading font-black text-[#0f766e]">{carryLeftPv}</span>
+                  <span className="text-[9px] text-[#0d9488] block font-bold">PV</span>
                 </div>
                 <div className="p-3 rounded-2xl neo-inset-purple text-center">
                   <span className="text-[10px] font-black uppercase text-[#5b21b6] block">Right</span>
@@ -608,8 +608,8 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="mt-3 text-center text-xs text-[#1e40af] font-bold pt-2 border-t border-blue-500/20">
-              Carry Balance Available
+            <div className="mt-3 text-center text-xs text-[#3730a3] font-bold pt-2 border-t border-indigo-500/20">
+              ⚖️ Carry Balance Available
             </div>
           </div>
         </div>
@@ -661,11 +661,11 @@ export default function DashboardPage() {
               <span className="text-[10px] text-[#047857] font-medium">Account Registration</span>
             </div>
 
-            {/* KYC Status */}
-            <div className="p-4 rounded-2xl neo-inset-blue">
+            {/* KYC Status (Glacial Cyan) */}
+            <div className="p-4 rounded-2xl neo-inset-cyan">
               <div className="flex items-center gap-2 mb-1.5">
-                <FileCheck className="w-4 h-4 text-blue-600" />
-                <span className="text-xs font-bold uppercase tracking-wider text-blue-800">KYC Compliance</span>
+                <FileCheck className="w-4 h-4 text-[#0891b2]" />
+                <span className="text-xs font-bold uppercase tracking-wider text-[#0e7490]">KYC Compliance</span>
               </div>
               <div className="mt-1">
                 <span
@@ -683,31 +683,31 @@ export default function DashboardPage() {
                   {user?.kycStatus || "NOT SUBMITTED"}
                 </span>
               </div>
-              <span className="text-[10px] text-blue-700 font-medium block mt-1">Aadhaar, PAN, Bank</span>
+              <span className="text-[10px] text-[#0e7490] font-medium block mt-1">Aadhaar, PAN, Bank</span>
             </div>
 
-            {/* Daily Capping */}
-            <div className="p-4 rounded-2xl neo-inset-purple">
+            {/* Daily Capping (Ruby Rose / Shield) */}
+            <div className="p-4 rounded-2xl neo-inset-rose">
               <div className="flex items-center gap-2 mb-1.5">
-                <ShieldCheck className="w-4 h-4 text-purple-600" />
-                <span className="text-xs font-bold uppercase tracking-wider text-purple-800">Daily Capping</span>
+                <ShieldCheck className="w-4 h-4 text-rose-600" />
+                <span className="text-xs font-bold uppercase tracking-wider text-rose-800">Daily Capping</span>
               </div>
-              <div className="font-mono font-black text-sm text-purple-900 mt-1">
+              <div className="font-mono font-black text-sm text-rose-900 mt-1">
                 ₹{(user?.dailyCapping || (isUserActive ? 1000 : 0)).toLocaleString("en-IN")} / Day
               </div>
-              <span className="text-[10px] text-purple-700 font-medium">Based on PV rank</span>
+              <span className="text-[10px] text-rose-700 font-medium">Based on PV rank</span>
             </div>
 
-            {/* Direct Sponsor */}
-            <div className="p-4 rounded-2xl neo-inset-amber">
+            {/* Direct Sponsor (Royal Violet / Purple) */}
+            <div className="p-4 rounded-2xl neo-inset-purple">
               <div className="flex items-center gap-2 mb-1.5">
-                <Users className="w-4 h-4 text-amber-700" />
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-800">Direct Sponsor</span>
+                <Users className="w-4 h-4 text-[#7c3aed]" />
+                <span className="text-xs font-bold uppercase tracking-wider text-[#6d28d9]">Direct Sponsor</span>
               </div>
-              <div className="font-mono font-black text-sm text-amber-900 mt-1 truncate">
+              <div className="font-mono font-black text-sm text-[#4c1d95] mt-1 truncate">
                 {user?.sponsorId || "DIRECT"}
               </div>
-              <span className="text-[10px] text-amber-700 font-medium truncate block">
+              <span className="text-[10px] text-[#6d28d9] font-medium truncate block">
                 {user?.sponsorName || "Direct Upline Master"}
               </span>
             </div>
@@ -724,7 +724,7 @@ export default function DashboardPage() {
             className="w-full p-6 sm:p-7 flex items-center justify-between text-left hover:bg-white/60 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#006d36] to-[#10b981] text-white flex items-center justify-center font-bold shadow-md shadow-emerald-700/25">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#1e3a8a] via-[#4338ca] to-[#06b6d4] text-white flex items-center justify-center font-bold shadow-md shadow-indigo-700/25">
                 <FileText className="w-6 h-6" />
               </div>
               <div>
@@ -732,7 +732,7 @@ export default function DashboardPage() {
                   <h2 className="text-base sm:text-lg font-heading font-black text-[#0f172a]">
                     Recent Financial Statement
                   </h2>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-[#006d36] border border-emerald-500/30">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/15 text-blue-800 border border-blue-500/25">
                     {transactions.length} entries
                   </span>
                 </div>
@@ -743,12 +743,12 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#006d36] hidden sm:inline">
+              <span className="text-xs font-bold text-blue-700 hidden sm:inline">
                 {isStatementOpen ? "Collapse" : "Open"}
               </span>
               <div
                 className={`neo-btn-icon p-2.5 rounded-xl transition-all duration-300 ${
-                  isStatementOpen ? "rotate-180 text-[#006d36]" : "text-[#64748b]"
+                  isStatementOpen ? "rotate-180 text-blue-700" : "text-[#64748b]"
                 }`}
               >
                 <ChevronDown className="w-4 h-4" />
@@ -764,7 +764,7 @@ export default function DashboardPage() {
                 </span>
                 <Link
                   href="/dashboard/statement"
-                  className="text-xs font-bold text-[#006d36] hover:underline flex items-center gap-1"
+                  className="text-xs font-bold text-blue-700 hover:underline flex items-center gap-1"
                 >
                   <span>View Full Statement Page</span>
                   <ChevronRight className="w-4 h-4" />

@@ -163,61 +163,61 @@ export default function AdminOverviewDashboardPage() {
             2. CRITICAL ACTION PENDING QUEUES (Orders, KYC, Withdrawals)
            ======================================================== */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Pending Orders Alert */}
+          {/* Pending Orders Alert (Sunset Coral) */}
           <Link
             href="/admin/orders/approve"
-            className="p-6 rounded-[32px] neo-card-amber neo-card-hover flex items-center justify-between group"
+            className="p-6 rounded-[32px] neo-card-coral neo-card-hover flex items-center justify-between group"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#d97706] to-[#fbbf24] text-white flex items-center justify-center font-bold shadow-md shadow-amber-600/30 group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#ea580c] to-[#fb923c] text-white flex items-center justify-center font-bold shadow-md shadow-orange-600/30 group-hover:scale-105 transition-transform">
                 <Package className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-[11px] font-black uppercase tracking-wider text-[#92400e] block">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#c2410c] block">
                   Pending Orders
                 </span>
-                <div className="text-2xl font-heading font-black text-amber-800">
+                <div className="text-2xl font-heading font-black text-orange-900">
                   {stats.pendingOrders} Orders
                 </div>
-                <span className="text-[10px] text-amber-700/90 font-medium block">
+                <span className="text-[10px] text-orange-700/90 font-medium block">
                   Awaiting payment slip verification
                 </span>
               </div>
             </div>
-            <span className="text-xs font-bold text-amber-900 bg-amber-200/80 px-3.5 py-1.5 rounded-xl flex items-center gap-1 group-hover:bg-amber-300 transition-colors shadow-xs">
+            <span className="text-xs font-bold text-orange-900 bg-orange-200/80 px-3.5 py-1.5 rounded-xl flex items-center gap-1 group-hover:bg-orange-300 transition-colors shadow-xs">
               <span>Review</span>
               <ChevronRight className="w-4 h-4" />
             </span>
           </Link>
 
-          {/* Pending KYC Alert */}
+          {/* Pending KYC Alert (Royal Fuchsia) */}
           <Link
             href="/admin/kyc"
-            className="p-6 rounded-[32px] neo-card-violet neo-card-hover flex items-center justify-between group"
+            className="p-6 rounded-[32px] neo-card-fuchsia neo-card-hover flex items-center justify-between group"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center font-bold shadow-md shadow-purple-600/30 group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#c026d3] to-[#e879f9] text-white flex items-center justify-center font-bold shadow-md shadow-fuchsia-600/30 group-hover:scale-105 transition-transform">
                 <FileCheck className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-[11px] font-black uppercase tracking-wider text-[#5b21b6] block">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#86198f] block">
                   Pending KYC Submissions
                 </span>
-                <div className="text-2xl font-heading font-black text-[#6d28d9]">
+                <div className="text-2xl font-heading font-black text-[#86198f]">
                   {stats.pendingKyc} Requests
                 </div>
-                <span className="text-[10px] text-purple-700/90 font-medium block">
+                <span className="text-[10px] text-fuchsia-700/90 font-medium block">
                   Aadhaar & Bank verification
                 </span>
               </div>
             </div>
-            <span className="text-xs font-bold text-purple-900 bg-purple-200/80 px-3.5 py-1.5 rounded-xl flex items-center gap-1 group-hover:bg-purple-300 transition-colors shadow-xs">
+            <span className="text-xs font-bold text-fuchsia-900 bg-fuchsia-200/80 px-3.5 py-1.5 rounded-xl flex items-center gap-1 group-hover:bg-fuchsia-300 transition-colors shadow-xs">
               <span>Verify</span>
               <ChevronRight className="w-4 h-4" />
             </span>
           </Link>
 
-          {/* Weekly Payouts Withdraw Master */}
+          {/* Weekly Payouts Withdraw Master (Emerald Mint) */}
           <Link
             href="/admin/withdraw"
             className="p-6 rounded-[32px] neo-card-emerald neo-card-hover flex items-center justify-between group"
@@ -265,43 +265,43 @@ export default function AdminOverviewDashboardPage() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Today Revenue */}
-            <div className="p-6 rounded-[30px] neo-card-emerald neo-card-hover">
+            {/* Today Revenue (Caribbean Teal) */}
+            <div className="p-6 rounded-[30px] neo-card-teal neo-card-hover">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-black uppercase tracking-wider text-[#065f46]">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#115e59]">
                   Today&apos;s Revenue
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#006d36] to-[#10b981] text-white flex items-center justify-center shadow-xs">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0d9488] to-[#14b8a6] text-white flex items-center justify-center shadow-xs">
                   <TrendingUp className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl font-heading font-black text-[#006d36]">
+              <div className="text-2xl font-heading font-black text-[#0f766e]">
                 ₹{stats.todayRevenue.toLocaleString("en-IN")}
               </div>
-              <span className="text-[10px] text-emerald-700 font-bold block mt-1">
+              <span className="text-[10px] text-teal-700 font-bold block mt-1">
                 Gross received today
               </span>
             </div>
 
-            {/* Today PV Generated */}
-            <div className="p-6 rounded-[30px] neo-card-violet neo-card-hover">
+            {/* Today PV Generated (Twilight Indigo) */}
+            <div className="p-6 rounded-[30px] neo-card-indigo neo-card-hover">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-black uppercase tracking-wider text-[#5b21b6]">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#3730a3]">
                   Today&apos;s PV Volume
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center shadow-xs">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#4338ca] to-[#6366f1] text-white flex items-center justify-center shadow-xs">
                   <Zap className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl font-heading font-black text-[#6d28d9]">
+              <div className="text-2xl font-heading font-black text-[#3730a3]">
                 {stats.todayPvRevenue.toLocaleString("en-IN")} PV
               </div>
-              <span className="text-[10px] text-purple-700 font-bold block mt-1">
+              <span className="text-[10px] text-indigo-700 font-bold block mt-1">
                 Volume injected in tree
               </span>
             </div>
 
-            {/* Today New Associates */}
+            {/* Today New Associates (Ruby Rose) */}
             <div className="p-6 rounded-[30px] neo-card-rose neo-card-hover">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[11px] font-black uppercase tracking-wider text-[#9f1239]">
@@ -319,20 +319,20 @@ export default function AdminOverviewDashboardPage() {
               </span>
             </div>
 
-            {/* Today Orders */}
-            <div className="p-6 rounded-[30px] neo-card-sapphire neo-card-hover">
+            {/* Today Orders (Electric Cyan) */}
+            <div className="p-6 rounded-[30px] neo-card-cyan neo-card-hover">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-black uppercase tracking-wider text-[#1e40af]">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#0e7490]">
                   Today&apos;s Total Orders
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center shadow-xs">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0891b2] to-[#06b6d4] text-white flex items-center justify-center shadow-xs">
                   <ShoppingBag className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl font-heading font-black text-blue-700">
+              <div className="text-2xl font-heading font-black text-[#0e7490]">
                 {stats.todayOrders} Orders
               </div>
-              <span className="text-[10px] text-blue-600 font-bold block mt-1">
+              <span className="text-[10px] text-cyan-700 font-bold block mt-1">
                 In-store & member purchases
               </span>
             </div>
@@ -349,7 +349,7 @@ export default function AdminOverviewDashboardPage() {
           </h2>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Total Lifetime Revenue */}
+            {/* Total Lifetime Revenue (Emerald) */}
             <div className="p-6 rounded-[30px] neo-card-emerald neo-card-hover">
               <span className="text-[11px] font-black uppercase tracking-wider text-[#065f46] block">
                 Total Lifetime Revenue
@@ -362,20 +362,20 @@ export default function AdminOverviewDashboardPage() {
               </span>
             </div>
 
-            {/* Total Cumulative PV */}
-            <div className="p-6 rounded-[30px] neo-card-sapphire neo-card-hover">
-              <span className="text-[11px] font-black uppercase tracking-wider text-[#1e40af] block">
+            {/* Total Cumulative PV (Royal Violet) */}
+            <div className="p-6 rounded-[30px] neo-card-violet neo-card-hover">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#5b21b6] block">
                 Total Cumulative PV
               </span>
-              <div className="text-2xl sm:text-3xl font-heading font-black text-blue-700 mt-1">
+              <div className="text-2xl sm:text-3xl font-heading font-black text-[#6d28d9] mt-1">
                 {stats.totalPvRevenue.toLocaleString("en-IN")} PV
               </div>
-              <span className="text-[10px] text-blue-600 font-bold block mt-1">
+              <span className="text-[10px] text-purple-600 font-bold block mt-1">
                 All historical binary points
               </span>
             </div>
 
-            {/* Total Orders Processed */}
+            {/* Total Orders Processed (Solar Amber) */}
             <div className="p-6 rounded-[30px] neo-card-amber neo-card-hover">
               <span className="text-[11px] font-black uppercase tracking-wider text-[#92400e] block">
                 Total Orders Registry
@@ -388,15 +388,15 @@ export default function AdminOverviewDashboardPage() {
               </span>
             </div>
 
-            {/* Total Registered Network */}
-            <div className="p-6 rounded-[30px] neo-card-violet neo-card-hover">
-              <span className="text-[11px] font-black uppercase tracking-wider text-[#5b21b6] block">
+            {/* Total Registered Network (Royal Fuchsia) */}
+            <div className="p-6 rounded-[30px] neo-card-fuchsia neo-card-hover">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#86198f] block">
                 Total Registered Network
               </span>
-              <div className="text-2xl sm:text-3xl font-heading font-black text-[#6d28d9] mt-1">
+              <div className="text-2xl sm:text-3xl font-heading font-black text-[#a21caf] mt-1">
                 {stats.totalMembers.toLocaleString("en-IN")}
               </div>
-              <span className="text-[10px] text-purple-700 font-black block mt-1">
+              <span className="text-[10px] text-fuchsia-700 font-black block mt-1">
                 {stats.activeMembers} Active Associates
               </span>
             </div>

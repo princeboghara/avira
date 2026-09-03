@@ -274,6 +274,36 @@
   border: 1px solid rgba(244, 63, 94, 0.28);
 }
 
+.neo-card-teal {
+  background: linear-gradient(145deg, #f0fdfa 0%, #ccfbf1 100%);
+  box-shadow: 8px 8px 22px rgba(20, 184, 166, 0.16), 4px 4px 10px rgba(140, 165, 185, 0.18), -6px -6px 16px #ffffff;
+  border: 1px solid rgba(20, 184, 166, 0.28);
+}
+
+.neo-card-coral {
+  background: linear-gradient(145deg, #fff7ed 0%, #ffedd5 100%);
+  box-shadow: 8px 8px 22px rgba(249, 115, 22, 0.16), 4px 4px 10px rgba(140, 165, 185, 0.18), -6px -6px 16px #ffffff;
+  border: 1px solid rgba(249, 115, 22, 0.28);
+}
+
+.neo-card-fuchsia {
+  background: linear-gradient(145deg, #fdf4ff 0%, #fae8ff 100%);
+  box-shadow: 8px 8px 22px rgba(217, 70, 239, 0.16), 4px 4px 10px rgba(140, 165, 185, 0.18), -6px -6px 16px #ffffff;
+  border: 1px solid rgba(217, 70, 239, 0.28);
+}
+
+.neo-card-indigo {
+  background: linear-gradient(145deg, #eef2ff 0%, #e0e7ff 100%);
+  box-shadow: 8px 8px 22px rgba(99, 102, 241, 0.18), 4px 4px 10px rgba(140, 165, 185, 0.18), -6px -6px 16px #ffffff;
+  border: 1px solid rgba(99, 102, 241, 0.28);
+}
+
+.neo-card-cyan {
+  background: linear-gradient(145deg, #ecfeff 0%, #cffafe 100%);
+  box-shadow: 8px 8px 22px rgba(6, 182, 212, 0.18), 4px 4px 10px rgba(140, 165, 185, 0.18), -6px -6px 16px #ffffff;
+  border: 1px solid rgba(6, 182, 212, 0.28);
+}
+
 /* Inset Wells with vivid inner tints */
 .neo-inset-emerald {
   background: #e8f8ee;
@@ -297,6 +327,42 @@
   background: #f5edfd;
   box-shadow: inset 3px 3px 7px rgba(168, 85, 247, 0.2), inset -3px -3px 7px #ffffff;
   border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+.neo-inset-rose {
+  background: #fff0f2;
+  box-shadow: inset 3px 3px 7px rgba(244, 63, 94, 0.2), inset -3px -3px 7px #ffffff;
+  border: 1px solid rgba(244, 63, 94, 0.25);
+}
+
+.neo-inset-teal {
+  background: #e6f9f6;
+  box-shadow: inset 3px 3px 7px rgba(20, 184, 166, 0.2), inset -3px -3px 7px #ffffff;
+  border: 1px solid rgba(20, 184, 166, 0.25);
+}
+
+.neo-inset-coral {
+  background: #feede0;
+  box-shadow: inset 3px 3px 7px rgba(249, 115, 22, 0.2), inset -3px -3px 7px #ffffff;
+  border: 1px solid rgba(249, 115, 22, 0.25);
+}
+
+.neo-inset-fuchsia {
+  background: #fdf0fd;
+  box-shadow: inset 3px 3px 7px rgba(217, 70, 239, 0.2), inset -3px -3px 7px #ffffff;
+  border: 1px solid rgba(217, 70, 239, 0.25);
+}
+
+.neo-inset-indigo {
+  background: #eef1fe;
+  box-shadow: inset 3px 3px 7px rgba(99, 102, 241, 0.2), inset -3px -3px 7px #ffffff;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.neo-inset-cyan {
+  background: #e0f8fb;
+  box-shadow: inset 3px 3px 7px rgba(6, 182, 212, 0.2), inset -3px -3px 7px #ffffff;
+  border: 1px solid rgba(6, 182, 212, 0.25);
 }
 
 /* Vivid Neumorphic Buttons */
@@ -332,6 +398,54 @@
   box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.35);
 }
 
+.neo-btn-teal {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  color: #ffffff;
+  box-shadow: 4px 4px 14px rgba(20, 184, 166, 0.35), -2px -2px 8px rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(45, 212, 191, 0.4);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.neo-btn-teal:hover {
+  box-shadow: 2px 2px 8px rgba(20, 184, 166, 0.45), -1px -1px 4px rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+.neo-btn-teal:active {
+  transform: scale(0.97);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+.neo-btn-coral {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  color: #ffffff;
+  box-shadow: 4px 4px 14px rgba(249, 115, 22, 0.35), -2px -2px 8px rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(251, 146, 60, 0.4);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.neo-btn-coral:hover {
+  box-shadow: 2px 2px 8px rgba(249, 115, 22, 0.45), -1px -1px 4px rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+.neo-btn-coral:active {
+  transform: scale(0.97);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+.neo-btn-fuchsia {
+  background: linear-gradient(135deg, #c026d3 0%, #9333ea 100%);
+  color: #ffffff;
+  box-shadow: 4px 4px 14px rgba(217, 70, 239, 0.35), -2px -2px 8px rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(232, 121, 249, 0.4);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.neo-btn-fuchsia:hover {
+  box-shadow: 2px 2px 8px rgba(217, 70, 239, 0.45), -1px -1px 4px rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+.neo-btn-fuchsia:active {
+  transform: scale(0.97);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.35);
+}
+
 /* Gradient Text Utilities */
 .text-gradient-emerald {
   background: linear-gradient(135deg, #006d36 0%, #10b981 100%);
@@ -353,6 +467,36 @@
 
 .text-gradient-purple {
   background: linear-gradient(135deg, #7e22ce 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-teal {
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-coral {
+  background: linear-gradient(135deg, #c2410c 0%, #f97316 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-fuchsia {
+  background: linear-gradient(135deg, #a21caf 0%, #e879f9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-indigo {
+  background: linear-gradient(135deg, #3730a3 0%, #6366f1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-cyan {
+  background: linear-gradient(135deg, #0e7490 0%, #06b6d4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

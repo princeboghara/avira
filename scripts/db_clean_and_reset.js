@@ -49,10 +49,8 @@ async function cleanAndReset() {
       CASCADE;
     `);
 
-    // 3. Seed Main Member (AV0001)
+    // 3. Seed Main Root Member (AV0001 - pass: 156951)
     const memberPasswordHash = bcrypt.hashSync('156951', 10);
-
-    // Main Member (AV0001)
     console.log('Seeding Main Member (AV0001 - pass: 156951)...');
     await client.query(`
       INSERT INTO users (
@@ -61,16 +59,16 @@ async function cleanAndReset() {
       ) VALUES (
         'usr_main_member_001',
         'AV0001',
-        'Avira Principal Member',
-        '9876543210',
+        'Avira LifeCare',
+        '9712326273',
         'member@aviralifecare.com',
         $1,
-        'AV10001',
-        'Avira Enterprise Administrator',
+        NULL,
+        NULL,
         '395001',
         'Surat',
         'Gujarat',
-        'Avira Life Care Associate Residence',
+        'Avira Life Care Headquarters',
         'MEMBER',
         'ACTIVE',
         '2024-01-01',
@@ -84,18 +82,59 @@ async function cleanAndReset() {
       VALUES ('usr_main_member_001', 0.00, 0.00, 0.00, 0.00, 0.00, 0, 0, NOW());
     `);
     await client.query(`
-      INSERT INTO user_binary_pv (user_id, personal_pv, left_pv, right_pv, carry_left_pv, carry_right_pv, daily_capping, updated_at)
-      VALUES ('usr_main_member_001', 1000, 0, 0, 0, 0, 5000, NOW());
+      INSERT INTO user_binary_pv (user_id, personal_pv, left_pv, right_pv, carry_left_pv, carry_right_pv, binary_parent_id, binary_position, left_child_id, right_child_id, daily_capping, updated_at)
+      VALUES ('usr_main_member_001', 1000, 0, 0, 0, 0, NULL, NULL, NULL, NULL, 5000, NOW());
     `);
     await client.query(`
       INSERT INTO user_kyc (user_id, kyc_status, aadhaar_status, pan_status, bank_status, updated_at)
       VALUES ('usr_main_member_001', 'VERIFIED', 'VERIFIED', 'VERIFIED', 'VERIFIED', NOW());
     `);
 
+    // 4. Seed Master Administrator (ADMIN - pass: 123123)
+    const adminPasswordHash = bcrypt.hashSync('123123', 10);
+    console.log('Seeding Master Administrator (ADMIN - pass: 123123)...');
+    await client.query(`
+      INSERT INTO users (
+        id, member_id, full_name, mobile, email, password_hash, sponsor_id, sponsor_name,
+        pincode, city, state, address, role, status, joined_date, created_at, updated_at
+      ) VALUES (
+        'usr_admin_root',
+        'ADMIN',
+        'Avira Enterprise Administrator',
+        '9999999999',
+        'admin@aviralifecare.com',
+        $1,
+        NULL,
+        NULL,
+        '395001',
+        'Surat',
+        'Gujarat',
+        'Avira Executive Control Headquarters',
+        'ADMIN',
+        'ACTIVE',
+        '2024-01-01',
+        NOW(),
+        NOW()
+      );
+    `, [adminPasswordHash]);
+
+    await client.query(`
+      INSERT INTO user_wallets (user_id, wallet_balance, rp_wallet, fund_wallet, total_earnings, today_earnings, direct_referrals_count, total_team_count, updated_at)
+      VALUES ('usr_admin_root', 0.00, 0.00, 0.00, 0.00, 0.00, 0, 0, NOW());
+    `);
+    await client.query(`
+      INSERT INTO user_binary_pv (user_id, personal_pv, left_pv, right_pv, carry_left_pv, carry_right_pv, binary_parent_id, binary_position, left_child_id, right_child_id, daily_capping, updated_at)
+      VALUES ('usr_admin_root', 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, 10000, NOW());
+    `);
+    await client.query(`
+      INSERT INTO user_kyc (user_id, kyc_status, aadhaar_status, pan_status, bank_status, updated_at)
+      VALUES ('usr_admin_root', 'VERIFIED', 'VERIFIED', 'VERIFIED', 'VERIFIED', NOW());
+    `);
+
     await client.query('COMMIT');
     console.log('--- DATABASE CLEANUP & RESET COMPLETED SUCCESSFULLY ---');
 
-    // 4. Verify table counts
+    // 5. Verify table counts
     const tables = await client.query(`
       SELECT table_name 
       FROM information_schema.tables 
