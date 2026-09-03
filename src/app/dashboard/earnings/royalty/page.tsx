@@ -162,32 +162,29 @@ export default function RoyaltyEarningsPage() {
   return (
     <MemberLayout user={user}>
       <div className="space-y-6 max-w-7xl mx-auto pb-16 animate-fadeIn">
-        {/* 1. Executive Banner */}
-        <div className="bg-gradient-to-br from-[#004d25] via-[#006d36] to-[#013317] rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-[#006d36]/20 border border-emerald-500/30 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-emerald-100 text-xs font-black uppercase tracking-wider mb-2 backdrop-blur-md border border-white/20">
-                <Crown className="w-4 h-4 text-amber-300 fill-amber-300" />
-                <span>3rd Income Stream • Monthly Global Royalty Pool</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
-                <span>Royalty Income Club</span>
-                <Sparkles className="w-6 h-6 text-amber-300 fill-amber-300" />
-              </h1>
-              <p className="text-xs sm:text-sm text-emerald-100/90 mt-1 max-w-xl">
-                Earn an equal share of <strong>5% of the Total Company Monthly Activation PV Pool</strong> every single month as a qualified Royalty Club Achiever.
-              </p>
+        {/* 1. Neumorphic Executive Banner */}
+        <div className="neo-card rounded-2xl sm:rounded-3xl p-6 sm:p-7 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2 relative z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-900 text-xs font-black uppercase tracking-wider border border-amber-200">
+              <Crown className="w-4 h-4 text-amber-600 fill-amber-300" />
+              <span>3rd Income Stream • Monthly Global Royalty Pool</span>
             </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2.5">
+              <span>Royalty Income Club</span>
+              <Sparkles className="w-6 h-6 text-amber-500 fill-amber-300" />
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 max-w-xl">
+              Earn an equal share of <strong>5% of the Total Company Monthly Activation PV Pool</strong> every single month as a qualified Royalty Club Achiever.
+            </p>
+          </div>
 
-            <div className="bg-white/15 backdrop-blur-md border border-white/20 p-4 rounded-2xl shrink-0 text-right">
-              <span className="text-[10px] uppercase font-bold text-emerald-200 block">
-                Total Royalty Earned
-              </span>
-              <strong className="text-2xl sm:text-3xl font-black font-mono text-white">
-                ₹{totalGross.toLocaleString("en-IN")}
-              </strong>
-            </div>
+          <div className="neo-inset p-4 rounded-2xl shrink-0 text-center sm:text-right border border-amber-100 bg-amber-50/30 min-w-[170px]">
+            <span className="text-[10px] uppercase font-bold text-amber-800 block">
+              Total Royalty Earned
+            </span>
+            <strong className="text-2xl sm:text-3xl font-black font-mono text-amber-950 block mt-0.5">
+              ₹{totalGross.toLocaleString("en-IN")}
+            </strong>
           </div>
         </div>
 

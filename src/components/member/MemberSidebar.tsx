@@ -38,8 +38,31 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
   const pathname = usePathname();
   const isUserActive = user ? user.personalPv >= 100 : false;
 
-  const menuGroups = [
+  type NavItem =
+    | {
+        type: "link";
+        category: string;
+        name: string;
+        href: string;
+        icon: React.ElementType;
+      }
+    | {
+        type: "group";
+        category: string;
+        icon: React.ElementType;
+        links: Array<{ name: string; href: string; icon: React.ElementType }>;
+      };
+
+  const navItems: NavItem[] = [
     {
+      type: "link",
+      category: "1. Dashboard",
+      name: "1. Dashboard",
+      href: "/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      type: "group",
       category: "2. Shopping Portal",
       icon: ShoppingBag,
       links: [
@@ -49,6 +72,7 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
       ],
     },
     {
+      type: "group",
       category: "3. Fund Manager",
       icon: Wallet,
       links: [
@@ -57,6 +81,7 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
       ],
     },
     {
+      type: "group",
       category: "4. Network",
       icon: Network,
       links: [
@@ -67,17 +92,25 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
       ],
     },
     {
+      type: "group",
       category: "5. Income Report",
       icon: TrendingUp,
       links: [
         { name: "Binary Income", href: "/dashboard/earnings/binary", icon: TrendingUp },
         { name: "Leadership Bonus", href: "/dashboard/earnings/leadership", icon: Award },
         { name: "Royalty Income", href: "/dashboard/earnings/royalty", icon: Crown },
-        { name: "Payout Statement", href: "/dashboard/statement", icon: FileText },
       ],
     },
     {
-      category: "6. Account & Support",
+      type: "link",
+      category: "6. Payout Statement",
+      name: "6. Payout Statement",
+      href: "/dashboard/statement",
+      icon: FileText,
+    },
+    {
+      type: "group",
+      category: "7. Account & Support",
       icon: UserIcon,
       links: [
         { name: "My Profile", href: "/dashboard/profile", icon: UserIcon },
@@ -91,8 +124,10 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const active = menuGroups.find((g) => g.links.some((l) => l.href === pathname));
-    if (active) {
+    const active = navItems.find(
+      (item) => item.type === "group" && item.links.some((l) => l.href === pathname)
+    );
+    if (active && active.type === "group") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpenGroups((prev) => ({ ...prev, [active.category]: true }));
     }
@@ -147,31 +182,37 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
 
       {/* 3. SCROLLABLE MENU LIST */}
       <div className="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar">
-        {/* 1. DASHBOARD DIRECT LINK */}
-        <Link
-          href="/dashboard"
-          onClick={onNavigate}
-          className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-            pathname === "/dashboard"
-              ? "neo-btn-primary font-black"
-              : "text-[#64748b] hover:text-[#0f172a] hover:bg-white/60"
-          }`}
-        >
-          <LayoutDashboard className="w-4 h-4 shrink-0" />
-          <span>1. Dashboard</span>
-        </Link>
+        {navItems.map((item) => {
+          if (item.type === "link") {
+            const isLinkActive = pathname === item.href;
+            const ItemIcon = item.icon;
 
-        {/* 2 to 6 ACCORDION CATEGORIES */}
-        {menuGroups.map((group) => {
-          const isOpen = Boolean(openGroups[group.category]);
-          const isCategoryActive = group.links.some((l) => l.href === pathname);
-          const GroupIcon = group.icon;
+            return (
+              <Link
+                key={item.category}
+                href={item.href}
+                onClick={onNavigate}
+                className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+                  isLinkActive
+                    ? "neo-btn-primary font-black"
+                    : "text-[#0f172a] hover:text-[#006d36] hover:bg-white/60"
+                }`}
+              >
+                <ItemIcon className="w-4 h-4 text-[#006d36] shrink-0" />
+                <span className="truncate">{item.name}</span>
+              </Link>
+            );
+          }
+
+          const isOpen = Boolean(openGroups[item.category]);
+          const isCategoryActive = item.links.some((l) => l.href === pathname);
+          const GroupIcon = item.icon;
 
           return (
-            <div key={group.category} className="space-y-1">
+            <div key={item.category} className="space-y-1">
               <button
                 type="button"
-                onClick={() => toggleGroup(group.category)}
+                onClick={() => toggleGroup(item.category)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                   isCategoryActive
                     ? "text-[#006d36] bg-emerald-500/10 font-black"
@@ -180,7 +221,7 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
               >
                 <div className="flex items-center gap-2.5 truncate">
                   <GroupIcon className="w-4 h-4 text-[#006d36] shrink-0" />
-                  <span className="truncate">{group.category}</span>
+                  <span className="truncate">{item.category}</span>
                 </div>
                 {isOpen ? (
                   <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8]" />
@@ -191,7 +232,7 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
 
               {isOpen && (
                 <div className="pl-5 pr-1 space-y-1 animate-fadeIn">
-                  {group.links.map((link) => {
+                  {item.links.map((link) => {
                     const LinkIcon = link.icon;
                     const isActive = pathname === link.href;
 

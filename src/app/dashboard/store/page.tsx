@@ -47,9 +47,11 @@ export default function CleanAmazonMemberStorePage() {
   const [selectedSort, setSelectedSort] = useState<"featured" | "price_asc" | "price_desc" | "pv_desc" | "discount">("featured");
   const [pvFilter, setPvFilter] = useState<"ALL" | "100PV" | "UNDER50">("ALL");
 
-  // Cart & Toast
+  // Cart, Toast & Button Micro-Animations
   const [cart, setCart] = useState<CartItem[]>([]);
   const [addedToast, setAddedToast] = useState<string | null>(null);
+  const [animatingId, setAnimatingId] = useState<string | null>(null);
+  const [animatingAction, setAnimatingAction] = useState<"cart" | "buy" | null>(null);
 
   // Quick View Product Modal
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
@@ -112,6 +114,13 @@ export default function CleanAmazonMemberStorePage() {
   };
 
   const handleAddToCart = (product: Product, qty: number = 1) => {
+    setAnimatingId(product.id);
+    setAnimatingAction("cart");
+    setTimeout(() => {
+      setAnimatingId(null);
+      setAnimatingAction(null);
+    }, 600);
+
     const existing = cart.find((it) => it.product.id === product.id);
     let updated: CartItem[];
     if (existing) {
@@ -139,13 +148,17 @@ export default function CleanAmazonMemberStorePage() {
     saveCart(updated);
   };
 
-  // Buy Now adds to cart and redirects directly to CART (where Member ID must be entered)
+  // Buy Now adds to cart and redirects directly to CART with smooth feedback
   const handleBuyNow = (product: Product) => {
+    setAnimatingId(product.id);
+    setAnimatingAction("buy");
     handleAddToCart(product, 1);
-    router.push("/dashboard/cart");
+    setTimeout(() => {
+      router.push("/dashboard/cart");
+    }, 300);
   };
 
-  // Filter and Sort Logic
+  // Filter and Sort Logic (Health Care FIRST, Agriculture LAST in All Products)
   const filteredProducts = useMemo(() => {
     let result = products.filter((p) => {
       // Category Filter
@@ -170,8 +183,26 @@ export default function CleanAmazonMemberStorePage() {
       return true;
     });
 
+    // Priority Category Weight Helper:
+    // Health Care = 1 (First), Others = 2 (Middle), Agriculture = 3 (Last)
+    const getCategoryPriority = (cat?: string) => {
+      if (!cat) return 2;
+      if (/health/i.test(cat)) return 1;
+      if (/agri/i.test(cat)) return 3;
+      return 2;
+    };
+
     // Sorting
     return [...result].sort((a, b) => {
+      // When browsing All Products or default featured sort, guarantee Health Care is FIRST and Agriculture is LAST
+      if (selectedCategory === "ALL" && selectedSort === "featured") {
+        const prioA = getCategoryPriority(a.category);
+        const prioB = getCategoryPriority(b.category);
+        if (prioA !== prioB) {
+          return prioA - prioB;
+        }
+      }
+
       const priceA = a.discountPrice || a.mrp || 0;
       const priceB = b.discountPrice || b.mrp || 0;
       if (selectedSort === "price_asc") return priceA - priceB;
@@ -484,16 +515,38 @@ export default function CleanAmazonMemberStorePage() {
                           <button
                             type="button"
                             onClick={() => handleAddToCart(p, 1)}
-                            className="py-2 px-1 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] cursor-pointer shadow-xs active:scale-95 transition-all text-center truncate"
+                            className={`py-2 px-1 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] cursor-pointer shadow-xs transition-all duration-300 text-center truncate flex items-center justify-center gap-1 ${
+                              animatingId === p.id && animatingAction === "cart"
+                                ? "scale-95 ring-4 ring-purple-300 bg-purple-700 shadow-md animate-pulse"
+                                : "active:scale-95 hover:scale-[1.02]"
+                            }`}
                           >
-                            Add to Cart
+                            {animatingId === p.id && animatingAction === "cart" ? (
+                              <>
+                                <Sparkles className="w-3 h-3 animate-spin" />
+                                <span>Added!</span>
+                              </>
+                            ) : (
+                              <span>Add to Cart</span>
+                            )}
                           </button>
                           <button
                             type="button"
                             onClick={() => handleBuyNow(p)}
-                            className="py-2 px-1 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-[11px] cursor-pointer shadow-xs active:scale-95 transition-all text-center truncate"
+                            className={`py-2 px-1 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-[11px] cursor-pointer shadow-xs transition-all duration-300 text-center truncate flex items-center justify-center gap-1 ${
+                              animatingId === p.id && animatingAction === "buy"
+                                ? "scale-95 ring-4 ring-emerald-300 bg-[#005025] shadow-md animate-pulse"
+                                : "active:scale-95 hover:scale-[1.02]"
+                            }`}
                           >
-                            Buy Now
+                            {animatingId === p.id && animatingAction === "buy" ? (
+                              <>
+                                <Zap className="w-3 h-3 animate-bounce" />
+                                <span>Going to Cart...</span>
+                              </>
+                            ) : (
+                              <span>Buy Now</span>
+                            )}
                           </button>
                         </div>
                       )}

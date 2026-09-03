@@ -206,17 +206,17 @@ export default function MemberStatementPage() {
   return (
     <MemberLayout user={user}>
       <div className="space-y-8 max-w-7xl mx-auto pb-16 animate-fadeIn">
-        {/* Header */}
-        <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#006d36] via-[#005a2c] to-[#4f378a] text-white shadow-xl shadow-[#006d36]/15 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-emerald-200 text-xs font-bold font-mono">
-              <FileText className="w-4 h-4" />
+        {/* Neumorphic Header Card */}
+        <div className="neo-card rounded-2xl sm:rounded-3xl p-6 sm:p-7 relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2 relative z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-[#006d36] border border-emerald-200 text-xs font-bold font-mono">
+              <FileText className="w-4 h-4 text-[#006d36]" />
               <span>Weekly Settlement & Bank Statements</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               Weekly Payout Statement
             </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl">
+            <p className="text-xs sm:text-sm text-slate-500 max-w-xl">
               Track your weekly accumulated income, 15% deductions (2% TDS + 8% Admin Charge + 5% RP Wallet), and completed bank transfers.
             </p>
           </div>

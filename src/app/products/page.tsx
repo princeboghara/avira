@@ -47,12 +47,26 @@ export default function AllProductsPage() {
       return matchCategory && matchSearch;
     });
 
+    const getCategoryPriority = (cat?: string) => {
+      if (!cat) return 2;
+      if (/health/i.test(cat)) return 1;
+      if (/agri/i.test(cat)) return 3;
+      return 2;
+    };
+
     if (sortBy === "price-low") {
       result.sort((a, b) => a.discountPrice - b.discountPrice);
     } else if (sortBy === "price-high") {
       result.sort((a, b) => b.discountPrice - a.discountPrice);
     } else if (sortBy === "rating") {
       result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else {
+      // Default: Health Care first, Agriculture last
+      result.sort((a, b) => {
+        const pA = getCategoryPriority(a.category);
+        const pB = getCategoryPriority(b.category);
+        return pA - pB;
+      });
     }
 
     return result;

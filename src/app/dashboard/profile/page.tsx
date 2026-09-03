@@ -41,6 +41,7 @@ export default function MemberProfilePage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
   // Editable Form State (Address, Email, GST, Nominee, Avatar)
@@ -84,11 +85,10 @@ export default function MemberProfilePage() {
       return;
     }
 
+    setUploadingAvatar(true);
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64Data = reader.result as string;
-      setAvatarUrl(base64Data);
-
       try {
         const res = await fetch("/api/upload", {
           method: "POST",
@@ -98,10 +98,18 @@ export default function MemberProfilePage() {
         const data = await res.json();
         if (data.success && data.url) {
           setAvatarUrl(data.url);
+        } else {
+          setAvatarUrl(base64Data);
         }
       } catch (err) {
         console.error("Avatar upload error:", err);
+        setAvatarUrl(base64Data);
+      } finally {
+        setUploadingAvatar(false);
       }
+    };
+    reader.onerror = () => {
+      setUploadingAvatar(false);
     };
     reader.readAsDataURL(file);
   };
@@ -139,20 +147,22 @@ export default function MemberProfilePage() {
     }
   };
 
-  const filledFieldsCount = [
-    avatarUrl,
-    profile?.fullName,
-    profile?.mobile,
-    email,
-    address,
-    profile?.pincode,
-    profile?.city,
-    profile?.state,
-    nomineeName,
-    nomineeRelation,
-  ].filter(Boolean).length;
+  const profileRequirements = [
+    { key: "avatarUrl", label: "Profile Photo", filled: !!avatarUrl },
+    { key: "fullName", label: "Full Name", filled: !!profile?.fullName },
+    { key: "mobile", label: "Mobile Number", filled: !!profile?.mobile },
+    { key: "email", label: "Email Address", filled: !!email },
+    { key: "address", label: "Complete Address", filled: !!address },
+    { key: "city", label: "City", filled: !!profile?.city },
+    { key: "state", label: "State", filled: !!profile?.state },
+    { key: "pincode", label: "Pincode", filled: !!profile?.pincode },
+    { key: "nomineeName", label: "Nominee Name", filled: !!nomineeName },
+    { key: "nomineeRelation", label: "Nominee Relation", filled: !!nomineeRelation },
+  ];
 
-  const profileCompletion = Math.round((filledFieldsCount / 10) * 100);
+  const filledCount = profileRequirements.filter((r) => r.filled).length;
+  const missingRequirements = profileRequirements.filter((r) => !r.filled);
+  const profileCompletion = Math.round((filledCount / profileRequirements.length) * 100);
 
   if (loading) {
     return (
@@ -200,11 +210,21 @@ export default function MemberProfilePage() {
           </div>
         </div>
 
-        {/* Success Alert */}
+        {/* Prominent Profile Updated Sign Notification */}
         {successMessage && (
-          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-[#006d36] text-xs font-bold flex items-center gap-2 animate-fadeIn">
-            <CheckCircle2 className="w-4 h-4 text-[#006d36]" />
-            <span>{successMessage}</span>
+          <div className="p-4 sm:p-5 rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 text-xs sm:text-sm font-black flex items-center justify-between gap-3 animate-fadeIn border border-emerald-400">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-white text-[#006d36] flex items-center justify-center shrink-0 shadow-xs">
+                <CheckCircle2 className="w-5 h-5 fill-emerald-600 text-white" />
+              </div>
+              <div>
+                <span className="block font-black text-sm">Profile Updated Successfully!</span>
+                <span className="block text-[11px] font-medium text-emerald-100">{successMessage}</span>
+              </div>
+            </div>
+            <span className="px-2.5 py-1 rounded-full bg-white/20 text-white font-mono text-[10px] uppercase font-bold tracking-wider">
+              Saved
+            </span>
           </div>
         )}
 
@@ -216,7 +236,7 @@ export default function MemberProfilePage() {
             </h2>
 
             <div className="flex flex-col sm:flex-row items-center gap-6">
-              <div className="relative flex items-center justify-center">
+              <div className="relative flex items-center justify-center shrink-0">
                 {/* Circular Progress SVG Gauge Ring */}
                 <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
                   <circle
@@ -254,20 +274,39 @@ export default function MemberProfilePage() {
                       {profile?.fullName?.charAt(0) || "A"}
                     </div>
                   )}
+
+                  {/* Uploading Overlay */}
+                  {uploadingAvatar && (
+                    <div className="absolute w-24 h-24 rounded-full bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center text-white z-20 p-2 text-center animate-fadeIn shadow-lg">
+                      <Loader2 className="w-6 h-6 animate-spin text-emerald-400 mb-1" />
+                      <span className="text-[8px] font-black uppercase tracking-wider text-emerald-300 leading-tight">Wait, uploading...</span>
+                    </div>
+                  )}
                 </div>
 
-                <label className="absolute bottom-1 right-1 p-2 bg-[#006d36] hover:bg-[#005025] text-white rounded-full cursor-pointer shadow-md transition-transform active:scale-95 z-10">
-                  <Upload className="w-3.5 h-3.5" />
+                <label
+                  className={`absolute bottom-1 right-1 p-2 bg-[#006d36] hover:bg-[#005025] text-white rounded-full shadow-md transition-transform z-10 ${
+                    uploadingAvatar
+                      ? "opacity-50 cursor-not-allowed pointer-events-none"
+                      : "cursor-pointer active:scale-95"
+                  }`}
+                >
+                  {uploadingAvatar ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Upload className="w-3.5 h-3.5" />
+                  )}
                   <input
                     type="file"
                     accept="image/*"
+                    disabled={uploadingAvatar}
                     onChange={handleAvatarUpload}
                     className="hidden"
                   />
                 </label>
               </div>
 
-              <div className="space-y-1.5 text-center sm:text-left">
+              <div className="space-y-2 text-center sm:text-left flex-1">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#006d36] text-xs font-black">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>{profileCompletion}% Profile Complete</span>
@@ -276,9 +315,35 @@ export default function MemberProfilePage() {
                 <p className="text-xs text-[#5f5e5e] font-mono">
                   Member ID: <span className="font-bold text-[#006d36]">{profile?.memberId}</span>
                 </p>
-                <p className="text-[11px] text-gray-400">
-                  Fill in all address, email, and nominee fields below to achieve 100% complete profile.
-                </p>
+
+                {/* Missing Details Checklist */}
+                {missingRequirements.length > 0 ? (
+                  <div className="pt-1 text-left">
+                    <span className="text-[11px] font-bold text-amber-800 block mb-1">
+                      Missing details to reach 100% completion:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {missingRequirements.map((item) => (
+                        <span
+                          key={item.key}
+                          className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold"
+                        >
+                          • {item.label}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-medium block mt-1">
+                      (Note: GSTIN is optional and excluded from the completion score)
+                    </span>
+                  </div>
+                ) : (
+                  <div className="pt-1">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-[#006d36] border border-emerald-300 text-xs font-bold">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>All Required Details Complete! (100%)</span>
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

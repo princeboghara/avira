@@ -499,30 +499,30 @@ export default function DashboardPage() {
               </div>
             </Link>
 
-            {/* Card: Pending Income (Sunset Tangerine Coral) */}
+            {/* Card: Pending Income (Distinct Ruby Rose) */}
             <Link
               href="/dashboard/statement"
-              className="neo-card-coral rounded-[26px] sm:rounded-[32px] p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden group neo-card-hover"
+              className="neo-card-rose rounded-[26px] sm:rounded-[32px] p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden group neo-card-hover"
             >
-              <div className="absolute -top-8 -right-8 w-28 h-28 bg-orange-400/20 rounded-full blur-xl pointer-events-none" />
+              <div className="absolute -top-8 -right-8 w-28 h-28 bg-rose-400/20 rounded-full blur-xl pointer-events-none" />
               <div>
                 <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#ea580c] to-[#fb923c] text-white flex items-center justify-center shadow-md shadow-orange-600/25">
+                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#e11d48] to-[#fb7185] text-white flex items-center justify-center shadow-md shadow-rose-600/25">
                     <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-orange-500/20 text-orange-800 border border-orange-500/30">
+                  <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-rose-500/15 text-rose-800 border border-rose-500/30">
                     Pending
                   </span>
                 </div>
-                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#c2410c] block mb-1">
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-rose-700 block mb-1">
                   Pending Income
                 </span>
-                <div className="text-xl sm:text-3xl font-heading font-black text-[#c2410c] tracking-tight">
+                <div className="text-xl sm:text-3xl font-heading font-black text-rose-800 tracking-tight">
                   ₹{pendingPayoutIncome.toLocaleString("en-IN")}
                 </div>
               </div>
-              <div className="pt-2 sm:pt-3 mt-2 sm:mt-3 border-t border-orange-500/20 text-[10px] sm:text-xs text-[#c2410c] font-bold flex items-center justify-between">
-                <span className="hidden sm:inline">Scheduled</span>
+              <div className="pt-2 sm:pt-3 mt-2 sm:mt-3 border-t border-rose-500/20 text-[10px] sm:text-xs text-rose-700 font-bold flex items-center justify-between">
+                <span className="hidden sm:inline">Scheduled Payout</span>
                 <span className="flex items-center gap-1 group-hover:underline">
                   <span>Details</span>
                   <ArrowRight className="w-3 h-3" />

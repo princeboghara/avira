@@ -50,6 +50,8 @@ export default function MemberKycVerificationPage() {
   const [kyc, setKyc] = useState<KycData | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [submittingSection, setSubmittingSection] = useState<string | null>(null);
+  const [uploadingField, setUploadingField] = useState<"aadhaarFront" | "aadhaarBack" | "panCard" | "bankProof" | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
 
   // Lightbox Document Preview Modal
@@ -117,7 +119,8 @@ export default function MemberKycVerificationPage() {
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    setter: (url: string) => void
+    setter: (url: string) => void,
+    field: "aadhaarFront" | "aadhaarBack" | "panCard" | "bankProof"
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -127,6 +130,7 @@ export default function MemberKycVerificationPage() {
       return;
     }
 
+    setUploadingField(field);
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64Data = reader.result as string;
@@ -144,13 +148,19 @@ export default function MemberKycVerificationPage() {
         }
       } catch {
         setter(base64Data);
+      } finally {
+        setUploadingField(null);
       }
+    };
+    reader.onerror = () => {
+      setUploadingField(null);
     };
     reader.readAsDataURL(file);
   };
 
   const handleSaveSection = async (section: "aadhaar" | "pan" | "bank") => {
     setSubmitting(true);
+    setSubmittingSection(section);
     setSuccessMessage("");
 
     const payload: any = { section };
@@ -186,17 +196,27 @@ export default function MemberKycVerificationPage() {
       alert("Network error submitting KYC.");
     } finally {
       setSubmitting(false);
+      setSubmittingSection(null);
     }
   };
 
-  // Progress Calculation
+  // Progress Calculation: 33% per section for Aadhaar, PAN, and Bank
   const isAadhaarVerified = kyc?.aadhaarStatus === "VERIFIED";
   const isPanVerified = kyc?.panStatus === "VERIFIED";
   const isBankVerified = kyc?.bankStatus === "VERIFIED";
 
+  const isAadhaarSubmitted = isAadhaarVerified || kyc?.aadhaarStatus === "PENDING" || (!!aadhaarNumber && !!aadhaarFrontUrl);
+  const isPanSubmitted = isPanVerified || kyc?.panStatus === "PENDING" || (!!panNumber && !!panCardUrl);
+  const isBankSubmitted = isBankVerified || kyc?.bankStatus === "PENDING" || (!!bankAccountNumber && !!bankProofUrl);
+
   const verifiedCount = (isAadhaarVerified ? 1 : 0) + (isPanVerified ? 1 : 0) + (isBankVerified ? 1 : 0);
-  const progressPercent = Math.round((verifiedCount / 3) * 100);
+  const submittedCount = (isAadhaarSubmitted ? 1 : 0) + (isPanSubmitted ? 1 : 0) + (isBankSubmitted ? 1 : 0);
+  
   const isFullyVerified = verifiedCount === 3;
+  // Base progress on submitted items, with 100% when fully verified
+  const progressPercent = isFullyVerified 
+    ? 100 
+    : Math.round((submittedCount / 3) * 100);
 
   if (loading) {
     return (
@@ -348,22 +368,43 @@ export default function MemberKycVerificationPage() {
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <div>
                     <label className="block text-[10px] font-bold text-[#5f5e5e] mb-1">Front Image:</label>
-                    {aadhaarFrontUrl ? (
+                    {uploadingField === "aadhaarFront" ? (
+                      <div className="h-24 rounded-xl border-2 border-emerald-500 bg-emerald-50/80 flex flex-col items-center justify-center p-2 text-center animate-pulse shadow-xs">
+                        <Loader2 className="w-5 h-5 animate-spin text-[#006d36] mb-1" />
+                        <span className="text-[10px] font-black text-[#006d36]">Wait, uploading...</span>
+                        <span className="text-[8px] font-bold text-slate-500">Processing image</span>
+                      </div>
+                    ) : aadhaarFrontUrl ? (
                       <div className="relative rounded-xl overflow-hidden border border-emerald-200 h-24 bg-white p-1 group">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={aadhaarFrontUrl} alt="Aadhaar Front" className="w-full h-full object-contain" />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setLightboxImage({ url: aadhaarFrontUrl, title: "Aadhaar Front Image" });
-                            setZoomLevel(1);
-                            setRotation(0);
-                          }}
-                          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1 rounded-lg cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>View Full</span>
-                        </button>
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-[10px] font-bold rounded-lg">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLightboxImage({ url: aadhaarFrontUrl, title: "Aadhaar Front Image" });
+                              setZoomLevel(1);
+                              setRotation(0);
+                            }}
+                            className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded flex items-center gap-1 cursor-pointer"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>View</span>
+                          </button>
+                          {!isAadhaarVerified && (
+                            <label className="px-2 py-1 bg-[#006d36] hover:bg-[#005025] rounded flex items-center gap-1 cursor-pointer">
+                              <Upload className="w-3 h-3" />
+                              <span>Change</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                disabled={uploadingField !== null}
+                                onChange={(e) => handleFileUpload(e, setAadhaarFrontUrl, "aadhaarFront")}
+                                className="hidden"
+                              />
+                            </label>
+                          )}
+                        </div>
                       </div>
                     ) : isAadhaarVerified ? (
                       <div className="h-24 rounded-xl border border-emerald-200 bg-emerald-50/50 flex flex-col items-center justify-center p-2 text-center">
@@ -371,32 +412,59 @@ export default function MemberKycVerificationPage() {
                         <span className="text-[10px] font-bold text-[#006d36]">Verified on Record</span>
                       </div>
                     ) : (
-                      <label className="h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#006d36] flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
+                      <label className="h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#006d36] flex flex-col items-center justify-center cursor-pointer bg-gray-50/50 transition-colors">
                         <Upload className="w-4 h-4 text-gray-400" />
                         <span className="text-[9px] text-[#5f5e5e] mt-1 font-bold">Upload Front</span>
-                        <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, setAadhaarFrontUrl)} className="hidden" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingField !== null}
+                          onChange={(e) => handleFileUpload(e, setAadhaarFrontUrl, "aadhaarFront")}
+                          className="hidden"
+                        />
                       </label>
                     )}
                   </div>
 
                   <div>
                     <label className="block text-[10px] font-bold text-[#5f5e5e] mb-1">Back Image:</label>
-                    {aadhaarBackUrl ? (
+                    {uploadingField === "aadhaarBack" ? (
+                      <div className="h-24 rounded-xl border-2 border-emerald-500 bg-emerald-50/80 flex flex-col items-center justify-center p-2 text-center animate-pulse shadow-xs">
+                        <Loader2 className="w-5 h-5 animate-spin text-[#006d36] mb-1" />
+                        <span className="text-[10px] font-black text-[#006d36]">Wait, uploading...</span>
+                        <span className="text-[8px] font-bold text-slate-500">Processing image</span>
+                      </div>
+                    ) : aadhaarBackUrl ? (
                       <div className="relative rounded-xl overflow-hidden border border-emerald-200 h-24 bg-white p-1 group">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={aadhaarBackUrl} alt="Aadhaar Back" className="w-full h-full object-contain" />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setLightboxImage({ url: aadhaarBackUrl, title: "Aadhaar Back Image" });
-                            setZoomLevel(1);
-                            setRotation(0);
-                          }}
-                          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1 rounded-lg cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>View Full</span>
-                        </button>
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-[10px] font-bold rounded-lg">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLightboxImage({ url: aadhaarBackUrl, title: "Aadhaar Back Image" });
+                              setZoomLevel(1);
+                              setRotation(0);
+                            }}
+                            className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded flex items-center gap-1 cursor-pointer"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>View</span>
+                          </button>
+                          {!isAadhaarVerified && (
+                            <label className="px-2 py-1 bg-[#006d36] hover:bg-[#005025] rounded flex items-center gap-1 cursor-pointer">
+                              <Upload className="w-3 h-3" />
+                              <span>Change</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                disabled={uploadingField !== null}
+                                onChange={(e) => handleFileUpload(e, setAadhaarBackUrl, "aadhaarBack")}
+                                className="hidden"
+                              />
+                            </label>
+                          )}
+                        </div>
                       </div>
                     ) : isAadhaarVerified ? (
                       <div className="h-24 rounded-xl border border-emerald-200 bg-emerald-50/50 flex flex-col items-center justify-center p-2 text-center">
@@ -404,10 +472,16 @@ export default function MemberKycVerificationPage() {
                         <span className="text-[10px] font-bold text-[#006d36]">Verified on Record</span>
                       </div>
                     ) : (
-                      <label className="h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#006d36] flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
+                      <label className="h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#006d36] flex flex-col items-center justify-center cursor-pointer bg-gray-50/50 transition-colors">
                         <Upload className="w-4 h-4 text-gray-400" />
                         <span className="text-[9px] text-[#5f5e5e] mt-1 font-bold">Upload Back</span>
-                        <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, setAadhaarBackUrl)} className="hidden" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingField !== null}
+                          onChange={(e) => handleFileUpload(e, setAadhaarBackUrl, "aadhaarBack")}
+                          className="hidden"
+                        />
                       </label>
                     )}
                   </div>
@@ -419,10 +493,20 @@ export default function MemberKycVerificationPage() {
               <button
                 type="button"
                 onClick={() => handleSaveSection("aadhaar")}
-                disabled={submitting || !aadhaarNumber || !aadhaarFrontUrl}
-                className="w-full py-2.5 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs cursor-pointer disabled:opacity-50 transition-all"
+                disabled={submitting || (!aadhaarNumber && !aadhaarFrontUrl)}
+                className="w-full py-2.5 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 shadow-xs"
               >
-                {submitting ? "Saving..." : "Submit Aadhaar"}
+                {submitting && submittingSection === "aadhaar" ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Saving Aadhaar...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{kyc?.aadhaarStatus === "PENDING" ? "Update Aadhaar Details" : "Submit Aadhaar"}</span>
+                  </>
+                )}
               </button>
             )}
           </div>
@@ -474,22 +558,43 @@ export default function MemberKycVerificationPage() {
 
                 <div>
                   <label className="block text-[10px] font-bold text-[#5f5e5e] mb-1">PAN Photo Proof:</label>
-                  {panCardUrl ? (
+                  {uploadingField === "panCard" ? (
+                    <div className="h-28 rounded-xl border-2 border-purple-500 bg-purple-50/80 flex flex-col items-center justify-center p-2 text-center animate-pulse shadow-xs">
+                      <Loader2 className="w-6 h-6 animate-spin text-purple-700 mb-1" />
+                      <span className="text-xs font-black text-purple-800">Wait, uploading...</span>
+                      <span className="text-[9px] font-bold text-slate-500">Processing PAN image</span>
+                    </div>
+                  ) : panCardUrl ? (
                     <div className="relative rounded-xl overflow-hidden border border-emerald-200 h-28 bg-white p-1 group">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={panCardUrl} alt="PAN Card" className="w-full h-full object-contain" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLightboxImage({ url: panCardUrl, title: "PAN Card Document" });
-                          setZoomLevel(1);
-                          setRotation(0);
-                        }}
-                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1 rounded-lg cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>View Full</span>
-                      </button>
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white text-[10px] font-bold rounded-lg">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLightboxImage({ url: panCardUrl, title: "PAN Card Document" });
+                            setZoomLevel(1);
+                            setRotation(0);
+                          }}
+                          className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded flex items-center gap-1 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View</span>
+                        </button>
+                        {!isPanVerified && (
+                          <label className="px-2 py-1 bg-purple-700 hover:bg-purple-800 rounded flex items-center gap-1 cursor-pointer">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Change</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={uploadingField !== null}
+                              onChange={(e) => handleFileUpload(e, setPanCardUrl, "panCard")}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                      </div>
                     </div>
                   ) : isPanVerified ? (
                     <div className="h-28 rounded-xl border border-emerald-200 bg-emerald-50/50 flex flex-col items-center justify-center p-2 text-center">
@@ -497,10 +602,16 @@ export default function MemberKycVerificationPage() {
                       <span className="text-[11px] font-bold text-[#006d36]">Verified on Record</span>
                     </div>
                   ) : (
-                    <label className="h-28 rounded-xl border-2 border-dashed border-gray-300 hover:border-purple-600 flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
+                    <label className="h-28 rounded-xl border-2 border-dashed border-gray-300 hover:border-purple-600 flex flex-col items-center justify-center cursor-pointer bg-gray-50/50 transition-colors">
                       <Upload className="w-5 h-5 text-gray-400" />
                       <span className="text-[10px] text-[#5f5e5e] mt-1 font-bold">Upload PAN Photo</span>
-                      <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, setPanCardUrl)} className="hidden" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={uploadingField !== null}
+                        onChange={(e) => handleFileUpload(e, setPanCardUrl, "panCard")}
+                        className="hidden"
+                      />
                     </label>
                   )}
                 </div>
@@ -511,10 +622,20 @@ export default function MemberKycVerificationPage() {
               <button
                 type="button"
                 onClick={() => handleSaveSection("pan")}
-                disabled={submitting || !panNumber || !panCardUrl}
-                className="w-full py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs cursor-pointer disabled:opacity-50 transition-all"
+                disabled={submitting || (!panNumber && !panCardUrl)}
+                className="w-full py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 shadow-xs"
               >
-                {submitting ? "Saving..." : "Submit PAN"}
+                {submitting && submittingSection === "pan" ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Saving PAN...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{kyc?.panStatus === "PENDING" ? "Update PAN Details" : "Submit PAN"}</span>
+                  </>
+                )}
               </button>
             )}
           </div>
@@ -587,22 +708,43 @@ export default function MemberKycVerificationPage() {
 
                 <div>
                   <label className="block text-[10px] font-bold text-[#5f5e5e] mb-1">Cheque / Passbook Image:</label>
-                  {bankProofUrl ? (
+                  {uploadingField === "bankProof" ? (
+                    <div className="h-24 rounded-xl border-2 border-blue-500 bg-blue-50/80 flex flex-col items-center justify-center p-2 text-center animate-pulse shadow-xs">
+                      <Loader2 className="w-5 h-5 animate-spin text-blue-700 mb-1" />
+                      <span className="text-[11px] font-black text-blue-800">Wait, uploading...</span>
+                      <span className="text-[8px] font-bold text-slate-500">Processing document</span>
+                    </div>
+                  ) : bankProofUrl ? (
                     <div className="relative rounded-xl overflow-hidden border border-emerald-200 h-24 bg-white p-1 group">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={bankProofUrl} alt="Bank Proof" className="w-full h-full object-contain" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLightboxImage({ url: bankProofUrl, title: "Bank Cheque / Passbook Document" });
-                          setZoomLevel(1);
-                          setRotation(0);
-                        }}
-                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1 rounded-lg cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>View Full</span>
-                      </button>
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-[10px] font-bold rounded-lg">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLightboxImage({ url: bankProofUrl, title: "Bank Cheque / Passbook Document" });
+                            setZoomLevel(1);
+                            setRotation(0);
+                          }}
+                          className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded flex items-center gap-1 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View</span>
+                        </button>
+                        {!isBankVerified && (
+                          <label className="px-2 py-1 bg-blue-700 hover:bg-blue-800 rounded flex items-center gap-1 cursor-pointer">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Change</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={uploadingField !== null}
+                              onChange={(e) => handleFileUpload(e, setBankProofUrl, "bankProof")}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                      </div>
                     </div>
                   ) : isBankVerified ? (
                     <div className="h-24 rounded-xl border border-emerald-200 bg-emerald-50/50 flex flex-col items-center justify-center p-2 text-center">
@@ -610,10 +752,16 @@ export default function MemberKycVerificationPage() {
                       <span className="text-[10px] font-bold text-[#006d36]">Verified on Record</span>
                     </div>
                   ) : (
-                    <label className="h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-600 flex flex-col items-center justify-center cursor-pointer bg-gray-50/50">
+                    <label className="h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-600 flex flex-col items-center justify-center cursor-pointer bg-gray-50/50 transition-colors">
                       <Upload className="w-4 h-4 text-gray-400" />
                       <span className="text-[9px] text-[#5f5e5e] mt-0.5 font-bold">Upload Passbook / Cheque</span>
-                      <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, setBankProofUrl)} className="hidden" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={uploadingField !== null}
+                        onChange={(e) => handleFileUpload(e, setBankProofUrl, "bankProof")}
+                        className="hidden"
+                      />
                     </label>
                   )}
                 </div>
@@ -624,10 +772,20 @@ export default function MemberKycVerificationPage() {
               <button
                 type="button"
                 onClick={() => handleSaveSection("bank")}
-                disabled={submitting || !bankAccountNumber || !ifscCode || !bankProofUrl}
-                className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer disabled:opacity-50 transition-all"
+                disabled={submitting || (!bankAccountNumber && !bankProofUrl)}
+                className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 shadow-xs"
               >
-                {submitting ? "Saving..." : "Submit Bank Details"}
+                {submitting && submittingSection === "bank" ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Saving Bank Details...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{kyc?.bankStatus === "PENDING" ? "Update Bank Details" : "Submit Bank Details"}</span>
+                  </>
+                )}
               </button>
             )}
           </div>

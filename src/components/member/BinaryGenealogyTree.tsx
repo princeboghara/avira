@@ -320,9 +320,12 @@ export default function BinaryGenealogyTree({
     <div className="space-y-4 font-sans select-none">
       {/* 1. Ultra-Clean Neumorphic Control Strip: Path + Search + Total Members + Zoom */}
       <div className="neo-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 flex flex-col gap-3">
-        {/* Row 1: PATH Badge matching screenshot */}
+        {/* Row 1: Binary Tree Title and Root Badge */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold font-mono text-slate-500 uppercase tracking-wider">PATH:</span>
+          <span className="text-xs sm:text-sm font-black text-slate-800 tracking-tight flex items-center gap-1.5">
+            <Network className="w-4 h-4 text-[#006d36]" />
+            <span>Binary Tree:</span>
+          </span>
           <span className="px-3 py-1 rounded-full bg-[#006d36] text-white text-xs font-bold font-mono shadow-xs flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
             <span>{treeData.memberId} ({treeData.fullName})</span>

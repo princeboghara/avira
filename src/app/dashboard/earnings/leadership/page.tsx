@@ -198,32 +198,29 @@ export default function LeadershipEarningsPage() {
   return (
     <MemberLayout user={user}>
       <div className="space-y-6 max-w-7xl mx-auto pb-16 animate-fadeIn">
-        {/* 1. Header Banner */}
-        <div className="bg-gradient-to-br from-[#006d36] via-[#00552a] to-[#01381b] rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-[#006d36]/15 border border-emerald-500/30 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-emerald-100 text-xs font-black uppercase tracking-wider mb-2 backdrop-blur-md border border-white/20">
-                <Award className="w-3.5 h-3.5 text-amber-300" />
-                <span>2nd Income Stream • 2-Level Sponsor Bonus</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
-                <span>Leadership Supporting Bonus</span>
-                <Sparkles className="w-6 h-6 text-amber-400 fill-amber-300" />
-              </h1>
-              <p className="text-xs sm:text-sm text-emerald-100/90 mt-1 max-w-xl">
-                Earn <strong>15% on Level 1</strong> direct referrals and <strong>5% on Level 2</strong> indirect referrals whenever they achieve Binary Matching Income.
-              </p>
+        {/* 1. Neumorphic Header Banner */}
+        <div className="neo-card rounded-2xl sm:rounded-3xl p-6 sm:p-7 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2 relative z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-900 text-xs font-black uppercase tracking-wider border border-amber-200">
+              <Award className="w-3.5 h-3.5 text-amber-600" />
+              <span>2nd Income Stream • 2-Level Sponsor Bonus</span>
             </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2.5">
+              <span>Leadership Supporting Bonus</span>
+              <Sparkles className="w-5 h-5 text-amber-500 fill-amber-400" />
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 max-w-xl">
+              Earn <strong>15% on Level 1</strong> direct referrals and <strong>5% on Level 2</strong> indirect referrals whenever they achieve Binary Matching Income.
+            </p>
+          </div>
 
-            <div className="bg-white/15 backdrop-blur-md border border-white/20 p-4 rounded-2xl shrink-0 text-right">
-              <span className="text-[10px] uppercase font-bold text-emerald-200 block">
-                Total Leadership Bonus
-              </span>
-              <strong className="text-2xl sm:text-3xl font-black font-mono text-white">
-                ₹{summary.totalGross.toLocaleString("en-IN")}
-              </strong>
-            </div>
+          <div className="neo-inset p-4 rounded-2xl shrink-0 text-center sm:text-right border border-emerald-100 bg-emerald-50/30 min-w-[170px]">
+            <span className="text-[10px] uppercase font-bold text-emerald-800 block">
+              Total Leadership Bonus
+            </span>
+            <strong className="text-2xl sm:text-3xl font-black font-mono text-[#006d36] block mt-0.5">
+              ₹{summary.totalGross.toLocaleString("en-IN")}
+            </strong>
           </div>
         </div>
 

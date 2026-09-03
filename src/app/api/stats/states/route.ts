@@ -72,15 +72,15 @@ export async function GET(req: NextRequest) {
     const adminSession = await getAdminSession(req);
     const memberSession = await getSession(req);
 
-    // Determine if admin request (Master Map)
+    const isExplicitMember = scopeParam === "member";
     const isAdmin =
-      scopeParam === "admin" ||
-      adminSession !== null ||
-      memberSession?.role === "ADMIN";
+      !isExplicitMember &&
+      (scopeParam === "admin" || adminSession !== null || memberSession?.role === "ADMIN");
 
     let stateRows: any[] = [];
     let cityRows: any[] = [];
-    let isMemberScope = false;
+    let memberRows: any[] = [];
+    let isMemberScope = !isAdmin;
     let targetMemberId: string | null = null;
 
     if (isAdmin) {
@@ -110,10 +110,31 @@ export async function GET(req: NextRequest) {
         ORDER BY raw_state, city_count DESC;
       `);
       cityRows = cityQuery.rows;
+
+      const memberQuery = await client.query(`
+        SELECT 
+          TRIM(u.state) as raw_state,
+          u.id,
+          u.member_id,
+          u.full_name,
+          u.city,
+          u.status,
+          COALESCE(b.personal_pv, 0) as personal_pv
+        FROM users u
+        LEFT JOIN user_binary_pv b ON u.id = b.user_id
+        WHERE u.state IS NOT NULL AND TRIM(u.state) != ''
+        ORDER BY raw_state, personal_pv DESC, u.created_at DESC;
+      `);
+      memberRows = memberQuery.rows;
     } else {
-      // 2. MEMBER SCOPE: Only this logged-in member's downline tree
+      // 2. MEMBER SCOPE: Strictly this logged-in member's downline tree only
       isMemberScope = true;
-      if (!memberSession || !memberSession.memberId) {
+      targetMemberId =
+        (adminSession ? req.nextUrl.searchParams.get("memberId") : null) ||
+        memberSession?.memberId ||
+        req.nextUrl.searchParams.get("memberId");
+
+      if (!targetMemberId) {
         return NextResponse.json({
           success: true,
           scope: "member",
@@ -129,9 +150,7 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      targetMemberId = req.nextUrl.searchParams.get("memberId") || memberSession.memberId;
-
-      // Find root user ID
+      // Find root user record
       const rootRes = await client.query(
         `SELECT id, member_id FROM users WHERE UPPER(member_id) = UPPER($1) OR id = $1 LIMIT 1`,
         [targetMemberId]
@@ -156,28 +175,44 @@ export async function GET(req: NextRequest) {
       const rootId = rootRes.rows[0].id;
       const rootMemberId = rootRes.rows[0].member_id;
 
-      // Recursive CTE to fetch ONLY this user's downline subtree
+      // Recursive CTE to fetch ONLY this user's downline subtree (both binary placement & direct sponsor downline)
+      // Strictly excludes the root user, cross-leg/sibling branches, and upline members
       const stateQuery = await client.query(
         `
-        WITH RECURSIVE downline AS (
-          SELECT user_id
-          FROM user_binary_pv
-          WHERE binary_parent_id = $1 OR binary_parent_id = $2
+        WITH RECURSIVE downline_members AS (
+          -- Seed: Direct binary children or direct sponsored referrals of root (excluding root itself)
+          SELECT u.id, u.member_id, 1 AS depth
+          FROM users u
+          LEFT JOIN user_binary_pv b ON u.id = b.user_id
+          WHERE (u.id != $1 AND u.member_id != $2)
+            AND (
+              (b.binary_parent_id = $1 OR b.binary_parent_id = $2)
+              OR (u.sponsor_id = $1 OR UPPER(u.sponsor_id) = UPPER($2) OR u.sponsor_id = 'usr_' || $2)
+            )
 
-          UNION ALL
+          UNION
 
-          SELECT b.user_id
-          FROM user_binary_pv b
-          INNER JOIN downline d ON b.binary_parent_id = d.user_id
+          -- Recursive downline: binary children or sponsored referrals of downline members
+          SELECT u.id, u.member_id, d.depth + 1
+          FROM users u
+          LEFT JOIN user_binary_pv b ON u.id = b.user_id
+          INNER JOIN downline_members d ON (
+            b.binary_parent_id = d.id
+            OR b.binary_parent_id = d.member_id
+            OR u.sponsor_id = d.id
+            OR UPPER(u.sponsor_id) = UPPER(d.member_id)
+            OR u.sponsor_id = 'usr_' || d.member_id
+          )
+          WHERE d.depth < 50
         )
         SELECT 
           TRIM(u.state) as raw_state,
-          COUNT(*) as total_count,
-          COUNT(CASE WHEN u.status = 'ACTIVE' OR b.personal_pv >= 100 THEN 1 END) as active_count,
+          COUNT(DISTINCT u.id) as total_count,
+          COUNT(DISTINCT CASE WHEN u.status = 'ACTIVE' OR b.personal_pv >= 100 THEN u.id END) as active_count,
           COALESCE(SUM(b.personal_pv), 0) as total_pv
-        FROM downline d
-        JOIN users u ON d.user_id = u.id
-        LEFT JOIN user_binary_pv b ON d.user_id = b.user_id
+        FROM downline_members d
+        JOIN users u ON d.id = u.id
+        LEFT JOIN user_binary_pv b ON d.id = b.user_id
         WHERE u.state IS NOT NULL AND TRIM(u.state) != ''
         GROUP BY raw_state
         ORDER BY total_count DESC;
@@ -188,23 +223,36 @@ export async function GET(req: NextRequest) {
 
       const cityQuery = await client.query(
         `
-        WITH RECURSIVE downline AS (
-          SELECT user_id
-          FROM user_binary_pv
-          WHERE binary_parent_id = $1 OR binary_parent_id = $2
+        WITH RECURSIVE downline_members AS (
+          SELECT u.id, u.member_id, 1 AS depth
+          FROM users u
+          LEFT JOIN user_binary_pv b ON u.id = b.user_id
+          WHERE (u.id != $1 AND u.member_id != $2)
+            AND (
+              (b.binary_parent_id = $1 OR b.binary_parent_id = $2)
+              OR (u.sponsor_id = $1 OR UPPER(u.sponsor_id) = UPPER($2) OR u.sponsor_id = 'usr_' || $2)
+            )
 
-          UNION ALL
+          UNION
 
-          SELECT b.user_id
-          FROM user_binary_pv b
-          INNER JOIN downline d ON b.binary_parent_id = d.user_id
+          SELECT u.id, u.member_id, d.depth + 1
+          FROM users u
+          LEFT JOIN user_binary_pv b ON u.id = b.user_id
+          INNER JOIN downline_members d ON (
+            b.binary_parent_id = d.id
+            OR b.binary_parent_id = d.member_id
+            OR u.sponsor_id = d.id
+            OR UPPER(u.sponsor_id) = UPPER(d.member_id)
+            OR u.sponsor_id = 'usr_' || d.member_id
+          )
+          WHERE d.depth < 50
         )
         SELECT 
           TRIM(u.state) as raw_state,
           TRIM(u.city) as raw_city,
-          COUNT(*) as city_count
-        FROM downline d
-        JOIN users u ON d.user_id = u.id
+          COUNT(DISTINCT u.id) as city_count
+        FROM downline_members d
+        JOIN users u ON d.id = u.id
         WHERE u.state IS NOT NULL AND TRIM(u.state) != '' AND u.city IS NOT NULL AND TRIM(u.city) != ''
         GROUP BY raw_state, raw_city
         ORDER BY raw_state, city_count DESC;
@@ -212,6 +260,50 @@ export async function GET(req: NextRequest) {
         [rootId, rootMemberId]
       );
       cityRows = cityQuery.rows;
+
+      const memberQuery = await client.query(
+        `
+        WITH RECURSIVE downline_members AS (
+          SELECT u.id, u.member_id, 1 AS depth
+          FROM users u
+          LEFT JOIN user_binary_pv b ON u.id = b.user_id
+          WHERE (u.id != $1 AND u.member_id != $2)
+            AND (
+              (b.binary_parent_id = $1 OR b.binary_parent_id = $2)
+              OR (u.sponsor_id = $1 OR UPPER(u.sponsor_id) = UPPER($2) OR u.sponsor_id = 'usr_' || $2)
+            )
+
+          UNION
+
+          SELECT u.id, u.member_id, d.depth + 1
+          FROM users u
+          LEFT JOIN user_binary_pv b ON u.id = b.user_id
+          INNER JOIN downline_members d ON (
+            b.binary_parent_id = d.id
+            OR b.binary_parent_id = d.member_id
+            OR u.sponsor_id = d.id
+            OR UPPER(u.sponsor_id) = UPPER(d.member_id)
+            OR u.sponsor_id = 'usr_' || d.member_id
+          )
+          WHERE d.depth < 50
+        )
+        SELECT 
+          TRIM(u.state) as raw_state,
+          u.id,
+          u.member_id,
+          u.full_name,
+          u.city,
+          u.status,
+          COALESCE(b.personal_pv, 0) as personal_pv
+        FROM downline_members d
+        JOIN users u ON d.id = u.id
+        LEFT JOIN user_binary_pv b ON d.id = b.user_id
+        WHERE u.state IS NOT NULL AND TRIM(u.state) != ''
+        ORDER BY raw_state, personal_pv DESC, u.created_at DESC;
+      `,
+        [rootId, rootMemberId]
+      );
+      memberRows = memberQuery.rows;
     }
 
     // Process cities by state
@@ -230,6 +322,29 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Process downline members by state
+    const membersByState: Record<
+      string,
+      Array<{ id: string; memberId: string; fullName: string; city: string; status: string; pv: number }>
+    > = {};
+    for (const mrow of memberRows) {
+      const stateName = (mrow.raw_state || "").trim().toLowerCase();
+      if (!stateName) continue;
+      if (!membersByState[stateName]) {
+        membersByState[stateName] = [];
+      }
+      if (membersByState[stateName].length < 20) {
+        membersByState[stateName].push({
+          id: mrow.id,
+          memberId: mrow.member_id,
+          fullName: mrow.full_name,
+          city: mrow.city || "",
+          status: mrow.status || "INACTIVE",
+          pv: Number(mrow.personal_pv || 0),
+        });
+      }
+    }
+
     const aggregated: Record<
       string,
       {
@@ -239,6 +354,7 @@ export async function GET(req: NextRequest) {
         active: number;
         totalPv: number;
         topCities: Array<{ city: string; count: number }>;
+        members: Array<{ id: string; memberId: string; fullName: string; city: string; status: string; pv: number }>;
       }
     > = {};
 
@@ -265,6 +381,7 @@ export async function GET(req: NextRequest) {
       };
 
       const matchedCities = citiesByState[lower] || [];
+      const matchedMembers = membersByState[lower] || [];
 
       if (!aggregated[standard.code]) {
         aggregated[standard.code] = {
@@ -274,6 +391,7 @@ export async function GET(req: NextRequest) {
           active: 0,
           totalPv: 0,
           topCities: matchedCities,
+          members: matchedMembers,
         };
       }
 
@@ -293,6 +411,7 @@ export async function GET(req: NextRequest) {
         percentage: grandTotal > 0 ? Number(((st.total / grandTotal) * 100).toFixed(1)) : 0,
         activePercentage: st.total > 0 ? Number(((st.active / st.total) * 100).toFixed(1)) : 0,
         topCities: st.topCities || [],
+        members: st.members || [],
       }))
       .sort((a, b) => b.total - a.total);
 

@@ -197,62 +197,62 @@ export default function BinaryEarningsPage() {
   return (
     <MemberLayout user={user}>
       <div className="space-y-8 max-w-6xl mx-auto pb-12">
-        {/* Header */}
-        <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#006d36] via-[#005a2c] to-[#4f378a] text-white shadow-xl shadow-[#006d36]/15 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-emerald-200 text-xs font-bold font-mono">
-              <TrendingUp className="w-4 h-4" />
+        {/* Neumorphic Header Card */}
+        <div className="neo-card rounded-2xl sm:rounded-3xl p-6 sm:p-7 relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2 relative z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-[#006d36] border border-emerald-200 text-xs font-bold font-mono">
+              <TrendingUp className="w-4 h-4 text-[#006d36]" />
               <span>Income Statement & Commission Ledger</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               1:1 Binary PV Income Statement
             </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl">
+            <p className="text-xs sm:text-sm text-slate-500 max-w-xl">
               Daily binary matching commissions credited after standard statutory deductions: 2% TDS, 8% Admin Charge, and 5% RP Wallet.
             </p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl text-center shrink-0 min-w-[140px]">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-200 block">
+          <div className="neo-inset p-4 rounded-2xl text-center shrink-0 min-w-[150px] border border-purple-100 bg-purple-50/30">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700 block">
               RP Repurchase Wallet
             </span>
-            <span className="text-2xl font-black font-mono text-white block mt-0.5">
+            <span className="text-2xl font-black font-mono text-purple-900 block mt-0.5">
               ₹{summary.rpWalletBalance.toLocaleString("en-IN")}
             </span>
           </div>
         </div>
 
-        {/* 5 KEY DEDUCTION METRICS CARDS */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-1">
-            <span className="text-[10px] font-bold text-[#5f5e5e] uppercase block">1. Gross Earnings</span>
-            <span className="text-lg font-black font-mono text-[#1a1c1c] block">
+        {/* 5 KEY DEDUCTION METRICS CARDS (NEUMORPHIC) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+          <div className="neo-card rounded-2xl p-4 border border-slate-100 space-y-1">
+            <span className="text-[10px] font-bold text-slate-500 uppercase block">1. Gross Earnings</span>
+            <span className="text-lg font-black font-mono text-slate-900 block">
               ₹{summary.totalGross.toLocaleString("en-IN")}
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-red-100 bg-red-50/20 shadow-sm space-y-1">
+          <div className="neo-card rounded-2xl p-4 border border-red-100 bg-red-50/20 space-y-1">
             <span className="text-[10px] font-bold text-red-600 uppercase block">2. TDS (2%)</span>
             <span className="text-lg font-black font-mono text-red-600 block">
               - ₹{summary.totalTds.toLocaleString("en-IN")}
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-amber-100 bg-amber-50/20 shadow-sm space-y-1">
+          <div className="neo-card rounded-2xl p-4 border border-amber-100 bg-amber-50/20 space-y-1">
             <span className="text-[10px] font-bold text-amber-700 uppercase block">3. Admin Fee (8%)</span>
             <span className="text-lg font-black font-mono text-amber-700 block">
               - ₹{summary.totalAdmin.toLocaleString("en-IN")}
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-purple-100 bg-purple-50/20 shadow-sm space-y-1">
+          <div className="neo-card rounded-2xl p-4 border border-purple-100 bg-purple-50/20 space-y-1">
             <span className="text-[10px] font-bold text-purple-700 uppercase block">4. RP Wallet (5%)</span>
             <span className="text-lg font-black font-mono text-purple-700 block">
               + ₹{summary.totalRp.toLocaleString("en-IN")}
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-emerald-200 bg-emerald-50/40 shadow-sm space-y-1 col-span-2 sm:col-span-1">
+          <div className="neo-card rounded-2xl p-4 border border-emerald-200 bg-emerald-50/40 space-y-1 col-span-2 sm:col-span-1">
             <span className="text-[10px] font-black text-[#006d36] uppercase block">5. Net Paid Out (85%)</span>
             <span className="text-lg font-black font-mono text-[#006d36] block">
               ₹{summary.totalNet.toLocaleString("en-IN")}

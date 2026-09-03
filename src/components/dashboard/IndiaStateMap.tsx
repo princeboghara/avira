@@ -34,6 +34,7 @@ interface StateStat {
   activePercentage: number;
   rank: number;
   topCities: Array<{ city: string; count: number }>;
+  members?: Array<{ id: string; memberId: string; fullName: string; city: string; status: string; pv: number }>;
 }
 
 interface StateSummary {
@@ -203,6 +204,7 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
         activePercentage: 0,
         rank: 99,
         topCities: [],
+        members: [],
       }
     );
   };
@@ -799,6 +801,59 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
                 ) : (
                   <p className="text-xs text-stone-400 italic py-1 font-bold">
                     No city distribution recorded yet for this state.
+                  </p>
+                )}
+              </div>
+
+              {/* Downline Associates in Selected State */}
+              <div className="bg-white p-3.5 rounded-2xl border border-stone-200 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-stone-900">
+                  <span className="flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-[#059669]" />
+                    <span>
+                      {scope === "member" ? "Downline Associates" : "Associates in Region"} ({selectedState.members?.length || 0})
+                    </span>
+                  </span>
+                  <span className="text-[10px] text-stone-400 font-bold">Network Roster</span>
+                </div>
+                {selectedState.members && selectedState.members.length > 0 ? (
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    {selectedState.members.map((mbr) => (
+                      <div
+                        key={mbr.id}
+                        className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-stone-100 text-xs"
+                      >
+                        <div className="min-w-0 pr-2">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-stone-900 truncate block">
+                              {mbr.fullName}
+                            </span>
+                            <span
+                              className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase ${
+                                mbr.status === "ACTIVE" || mbr.pv >= 100
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : "bg-rose-100 text-rose-700"
+                              }`}
+                            >
+                              {mbr.status === "ACTIVE" || mbr.pv >= 100 ? "Active" : "Red"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] text-stone-400 font-mono mt-0.5">
+                            <span className="font-bold text-[#059669]">{mbr.memberId}</span>
+                            {mbr.city && <span>• {mbr.city}</span>}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-[10px] font-bold text-stone-700 block font-mono">
+                            {mbr.pv} PV
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-stone-400 italic py-1 font-bold">
+                    No downline members located in this region yet.
                   </p>
                 )}
               </div>
