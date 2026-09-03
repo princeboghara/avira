@@ -16,6 +16,7 @@ import {
   User as UserIcon,
   Search,
   RotateCcw,
+  Network,
 } from "lucide-react";
 
 export interface TreeNode {
@@ -319,36 +320,19 @@ export default function BinaryGenealogyTree({
     <div className="space-y-4 font-sans select-none">
       {/* 1. Ultra-Clean Neumorphic Control Strip: Path + Search + Total Members + Zoom */}
       <div className="neo-card rounded-2xl p-3 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        {/* Left: Breadcrumbs Trail */}
-        <div className="flex items-center gap-1.5 flex-wrap text-xs">
-          <span className="text-[#64748b] font-black mr-1 text-[11px] uppercase tracking-wider">
-            Path:
-          </span>
-          {breadcrumbs.length > 0 ? (
-            breadcrumbs.map((b, idx) => {
-              const isLast = idx === breadcrumbs.length - 1;
-              return (
-                <React.Fragment key={b.memberId}>
-                  {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />}
-                  <button
-                    type="button"
-                    onClick={() => onSelectRootId && onSelectRootId(b.memberId)}
-                    className={`px-2.5 py-1 rounded-xl font-mono text-xs font-bold transition-all cursor-pointer ${
-                      isLast ? "neo-btn-primary font-black" : "neo-btn-secondary"
-                    }`}
-                    title={`Jump to ${b.fullName} (${b.memberId})`}
-                  >
-                    <span>{b.memberId}</span>
-                    <span className="text-[10px] opacity-80 font-normal ml-1">({b.fullName})</span>
-                  </button>
-                </React.Fragment>
-              );
-            })
-          ) : (
-            <div className="px-3 py-1 rounded-xl neo-inset font-mono text-xs font-black text-[#006d36]">
-              {treeData.memberId} ({treeData.fullName})
-            </div>
-          )}
+        {/* Left: Binary Tree Title Heading */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#006d36] shadow-xs">
+            <Network className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-base font-black text-slate-900 tracking-tight block">
+              Binary Tree
+            </span>
+            <span className="text-[11px] font-mono font-bold text-slate-500">
+              Root: {treeData.memberId}
+            </span>
+          </div>
         </div>
 
         {/* Right: Search Bar + Total Members + Parent Button + Zoom Controls */}
@@ -677,36 +661,32 @@ function NeumorphicNodeDisc({
   const isRight = leg === "RIGHT";
   const isRoot = leg === "ROOT";
 
-  // MAIN ID BLUE, LEFT SIDE GREEN, RIGHT SIDE PURPLE
+  // MAIN ID BLUE, LEFT SIDE GREEN, RIGHT SIDE PURPLE - CRISP WHITE THEME
   const idColor = isRoot
-    ? "text-blue-600 dark:text-blue-400"
+    ? "text-blue-600"
     : isLeft
-    ? "text-[#006d36] dark:text-emerald-400"
-    : "text-purple-600 dark:text-purple-400";
+    ? "text-[#006d36]"
+    : "text-purple-600";
 
-  const labelColor = isRoot
-    ? "text-blue-800 dark:text-blue-300"
-    : isLeft
-    ? "text-emerald-800 dark:text-emerald-300"
-    : "text-purple-800 dark:text-purple-300";
+  const labelColor = "text-slate-900";
 
   const discClass = isRoot
-    ? "neo-disc-blue border-blue-200 dark:border-blue-800"
+    ? "neo-disc-blue"
     : isLeft
-    ? "neo-disc-mint border-emerald-200 dark:border-emerald-800"
-    : "neo-disc-purple border-purple-200 dark:border-purple-800";
+    ? "neo-disc-mint"
+    : "neo-disc-purple";
 
   const avatarBg = isRoot
-    ? "bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-800"
+    ? "bg-blue-50 text-blue-600 border border-blue-200 shadow-xs"
     : isLeft
-    ? "bg-emerald-100 text-[#006d36] border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800"
-    : "bg-purple-100 text-purple-600 border-purple-200 dark:bg-purple-950/60 dark:text-purple-400 dark:border-purple-800";
+    ? "bg-emerald-50 text-[#006d36] border border-emerald-200 shadow-xs"
+    : "bg-purple-50 text-purple-600 border border-purple-200 shadow-xs";
 
   const iconColor = isRoot
-    ? "text-blue-600 dark:text-blue-400"
+    ? "text-blue-600"
     : isLeft
-    ? "text-[#006d36] dark:text-emerald-400"
-    : "text-purple-600 dark:text-purple-400";
+    ? "text-[#006d36]"
+    : "text-purple-600";
 
   const label = node.fullName;
   const sublabel = node.memberId;
@@ -724,7 +704,7 @@ function NeumorphicNodeDisc({
       >
         {/* Circular Avatar / Icon */}
         <div
-          className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border-2 flex items-center justify-center shadow-xs mb-1 ${avatarBg}`}
+          className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border flex items-center justify-center shadow-xs mb-1 ${avatarBg}`}
         >
           {node.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -743,7 +723,7 @@ function NeumorphicNodeDisc({
           {label}
         </span>
         {/* Member ID Number */}
-        <span className={`text-[9.5px] sm:text-[10px] font-mono font-bold ${idColor} block truncate max-w-[90px] sm:max-w-[100px] text-center mt-0.5`}>
+        <span className={`text-[9.5px] sm:text-[10px] font-mono font-black ${idColor} block truncate max-w-[90px] sm:max-w-[100px] text-center mt-0.5`}>
           {sublabel}
         </span>
 
@@ -755,14 +735,18 @@ function NeumorphicNodeDisc({
             onToggleExpand();
           }}
           disabled={isLoading}
-          className={`absolute -bottom-3.5 left-1/2 -translate-x-1/2 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black shadow-md cursor-pointer transition-all duration-300 hover:scale-115 active:scale-90 z-20 ${
+          className={`absolute -bottom-3.5 left-1/2 -translate-x-1/2 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black shadow-md cursor-pointer transition-all duration-200 hover:scale-110 active:scale-95 z-20 ${
             isExpanded
-              ? "bg-[#0f172a] text-white border-2 border-white shadow-slate-900/30"
+              ? isRoot
+                ? "bg-blue-600 text-white border-2 border-white shadow-blue-500/30"
+                : isLeft
+                ? "bg-[#006d36] text-white border-2 border-white shadow-emerald-500/30"
+                : "bg-purple-600 text-white border-2 border-white shadow-purple-500/30"
               : isRoot
-              ? "bg-white text-blue-600 border-2 border-blue-400 shadow-[2px_3px_8px_rgba(59,130,246,0.35)]"
+              ? "bg-white text-blue-600 border-2 border-blue-500 shadow-sm hover:bg-blue-50"
               : isLeft
-              ? "bg-white text-[#006d36] border-2 border-emerald-400 shadow-[2px_3px_8px_rgba(16,185,129,0.35)]"
-              : "bg-white text-purple-600 border-2 border-purple-400 shadow-[2px_3px_8px_rgba(168,85,247,0.35)]"
+              ? "bg-white text-[#006d36] border-2 border-emerald-500 shadow-sm hover:bg-emerald-50"
+              : "bg-white text-purple-600 border-2 border-purple-500 shadow-sm hover:bg-purple-50"
           }`}
           title={isExpanded ? "Collapse Branch (-)" : "Open Downline Tree (+)"}
           aria-label="Expand or collapse tree branch"
@@ -797,25 +781,30 @@ function VacantNeumorphicSlot({
   const isLeft = position === "LEFT";
   const legColor = isLeft ? "text-[#006d36]" : "text-purple-600";
   const hoverText = isLeft ? "group-hover:text-[#006d36]" : "group-hover:text-purple-600";
-  const borderHover = isLeft ? "hover:border-emerald-300" : "hover:border-purple-300";
+  const borderClass = isLeft
+    ? "border-2 border-dashed border-emerald-400 hover:border-emerald-600 hover:bg-emerald-50/50"
+    : "border-2 border-dashed border-purple-400 hover:border-purple-600 hover:bg-purple-50/50";
+  const iconBg = isLeft
+    ? "bg-emerald-50 text-[#006d36] border border-emerald-200"
+    : "bg-purple-50 text-purple-600 border border-purple-200";
 
   return (
     <div className="flex flex-col items-center">
       <Link
         href={`/register?sponsor=${encodeURIComponent(sponsorId)}&ref=${encodeURIComponent(sponsorId)}&parent=${encodeURIComponent(parentId)}&pos=${position}`}
-        className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full neo-disc-vacant flex flex-col items-center justify-center p-2 cursor-pointer group transition-all duration-200 hover:scale-105 active:scale-95 shadow-xs hover:shadow-md ${borderHover}`}
+        className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-white flex flex-col items-center justify-center p-2 cursor-pointer group transition-all duration-200 hover:scale-105 active:scale-95 shadow-xs hover:shadow-md ${borderClass}`}
         title={`Register new member on ${position} leg\nSponsor: ${sponsorId}\nParent: ${parentId}`}
       >
-        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full neo-inset flex items-center justify-center ${legColor} mb-1 group-hover:scale-110 transition-transform`}>
+        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${iconBg} mb-1 group-hover:scale-110 transition-transform`}>
           <Plus className="w-4 h-4 stroke-[3]" />
         </div>
-        <span className={`font-extrabold text-[11px] text-[#334155] dark:text-slate-200 ${hoverText} transition-colors leading-tight`}>
+        <span className={`font-extrabold text-[11px] text-slate-800 ${hoverText} transition-colors leading-tight`}>
           + Add
         </span>
         <span className={`text-[9px] font-mono font-black ${legColor} uppercase tracking-wider`}>
           {position} Leg
         </span>
-        <span className="text-[8px] font-mono font-bold text-[#64748b] dark:text-slate-400 truncate max-w-[85px] mt-0.5" title={`Sponsor ID: ${sponsorId}`}>
+        <span className="text-[8px] font-mono font-bold text-slate-500 truncate max-w-[85px] mt-0.5" title={`Sponsor ID: ${sponsorId}`}>
           Sp: {sponsorId}
         </span>
       </Link>
