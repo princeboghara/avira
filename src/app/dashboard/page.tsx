@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { User, Transaction } from "@/types";
 import MemberLayout from "@/components/member/MemberLayout";
+import IndiaStateMap from "@/components/dashboard/IndiaStateMap";
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -49,6 +50,8 @@ export default function DashboardPage() {
   // Payout Statement summaries
   const [totalPaidIncome, setTotalPaidIncome] = useState(0);
   const [pendingPayoutIncome, setPendingPayoutIncome] = useState(0);
+  const [todayIncome, setTodayIncome] = useState(0);
+  const [thisWeekIncome, setThisWeekIncome] = useState(0);
 
   // Accordion state for Recent Statement
   const [isStatementOpen, setIsStatementOpen] = useState(false);
@@ -65,13 +68,40 @@ export default function DashboardPage() {
     async function loadDashboardData() {
       try {
         // 1. Fetch authenticated user profile first for instant screen render
-        const meRes = await fetch("/api/auth/me", { cache: "no-store" });
+        const meRes = await fetch("/api/auth/me?tx=true", { cache: "no-store" });
         if (meRes.ok) {
           const meData = await meRes.json();
           if (meData.success && meData.user) {
             setUser(meData.user);
-            setTransactions(meData.transactions || []);
+            const txList: Transaction[] = meData.transactions || [];
+            setTransactions(txList);
             setTotalTeamCount(meData.user.totalTeamCount || 0);
+
+            // Compute Today's & This Week's Income from transactions
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            const dayOfWeek = now.getDay();
+            const diffToMonday = (dayOfWeek + 6) % 7;
+            const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMonday).getTime();
+
+            const tIncome = txList
+              .filter((tx: any) => {
+                if (tx.type === "WITHDRAWAL") return false;
+                const time = new Date(tx.date || tx.created_at).getTime();
+                return time >= startOfToday;
+              })
+              .reduce((sum: number, tx: any) => sum + Number(tx.amount || 0), 0);
+
+            const wIncome = txList
+              .filter((tx: any) => {
+                if (tx.type === "WITHDRAWAL") return false;
+                const time = new Date(tx.date || tx.created_at).getTime();
+                return time >= startOfWeek;
+              })
+              .reduce((sum: number, tx: any) => sum + Number(tx.amount || 0), 0);
+
+            setTodayIncome(tIncome);
+            setThisWeekIncome(wIncome);
           }
         }
         setLoading(false);
@@ -391,36 +421,30 @@ export default function DashboardPage() {
         </div>
 
         {/* ========================================================
-            3. THREE HERO INCOME STAT CARDS (JEWEL TONES)
+            3. INCOME CARDS (MOBILE OPTIMIZED: PAID & PENDING SIDE-BY-SIDE)
            ======================================================== */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Card 1: Total Lifetime Earnings (Emerald / Jade) */}
-          <div className="neo-card-emerald rounded-[32px] p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden group neo-card-hover">
+        <div className="space-y-4 sm:space-y-5">
+          {/* Top: Total Lifetime Earnings Card */}
+          <div className="neo-card-emerald rounded-[32px] p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden group neo-card-hover">
             <div className="absolute -top-10 -right-10 w-36 h-36 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
-
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#006d36] to-[#10b981] text-white flex items-center justify-center shadow-lg shadow-emerald-700/30">
-                  <Wallet className="w-6 h-6" />
-                </div>
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-[#006d36] border border-emerald-500/30 shadow-xs">
-                  Lifetime Earnings
-                </span>
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#006d36] to-[#10b981] text-white flex items-center justify-center shadow-lg shadow-emerald-700/30 shrink-0">
+                <Wallet className="w-7 h-7" />
               </div>
-
-              <span className="text-[11px] font-black uppercase tracking-widest text-[#065f46] block mb-1">
-                Total Income
-              </span>
-              <div className="text-3xl sm:text-4xl font-heading font-black text-[#006d36] tracking-tight">
-                ₹{user?.totalEarnings?.toLocaleString("en-IN") || 0}
+              <div>
+                <span className="text-[11px] font-black uppercase tracking-widest text-[#065f46] block mb-0.5">
+                  Total Lifetime Earnings
+                </span>
+                <div className="text-3xl sm:text-4xl font-heading font-black text-[#006d36] tracking-tight">
+                  ₹{user?.totalEarnings?.toLocaleString("en-IN") || 0}
+                </div>
               </div>
             </div>
-
-            <div className="pt-4 mt-4 border-t border-emerald-500/20 flex items-center justify-between text-xs text-[#065f46]">
-              <span>Withdrawable: <strong className="text-[#006d36] font-mono font-black">₹{user?.walletBalance?.toLocaleString("en-IN") || 0}</strong></span>
+            <div className="flex items-center gap-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-emerald-500/20 text-xs text-[#065f46]">
+              <span>Withdrawable: <strong className="text-[#006d36] font-mono font-black text-sm">₹{user?.walletBalance?.toLocaleString("en-IN") || 0}</strong></span>
               <Link
                 href="/dashboard/statement"
-                className="hover:underline flex items-center gap-1 font-bold text-[#006d36]"
+                className="hover:underline flex items-center gap-1 font-bold text-[#006d36] neo-btn-secondary px-3.5 py-1.5 rounded-xl bg-white/80"
               >
                 <span>Payouts</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -428,79 +452,118 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Card 2: Total Paid Income (Electric Cyan / Glacial Ice) */}
-          <Link
-            href="/dashboard/statement"
-            className="neo-card-cyan rounded-[32px] p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden group neo-card-hover"
-          >
-            <div className="absolute -top-10 -right-10 w-36 h-36 bg-cyan-400/20 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
-
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0891b2] to-[#06b6d4] text-white flex items-center justify-center shadow-lg shadow-cyan-700/30">
-                  <CheckCircle2 className="w-6 h-6" />
+          {/* Row 1: Total Paid Income & Pending Income Side-by-Side (grid-cols-2 on Mobile!) */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-5">
+            {/* Card: Total Paid Income (Glacial Ice Cyan) */}
+            <Link
+              href="/dashboard/statement"
+              className="neo-card-cyan rounded-[26px] sm:rounded-[32px] p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden group neo-card-hover"
+            >
+              <div className="absolute -top-8 -right-8 w-28 h-28 bg-cyan-400/20 rounded-full blur-xl pointer-events-none" />
+              <div>
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#0891b2] to-[#06b6d4] text-white flex items-center justify-center shadow-md shadow-cyan-700/25">
+                    <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-cyan-500/20 text-cyan-800 border border-cyan-500/30">
+                    Paid
+                  </span>
                 </div>
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-500/20 text-cyan-800 border border-cyan-500/30 shadow-xs">
-                  Settled Payout
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#0e7490] block mb-1">
+                  Total Paid Income
+                </span>
+                <div className="text-xl sm:text-3xl font-heading font-black text-[#0e7490] tracking-tight">
+                  ₹{totalPaidIncome.toLocaleString("en-IN")}
+                </div>
+              </div>
+              <div className="pt-2 sm:pt-3 mt-2 sm:mt-3 border-t border-cyan-500/20 text-[10px] sm:text-xs text-[#0e7490] font-bold flex items-center justify-between">
+                <span className="hidden sm:inline">Disbursed</span>
+                <span className="flex items-center gap-1 group-hover:underline">
+                  <span>Statement</span>
+                  <ArrowRight className="w-3 h-3" />
                 </span>
               </div>
+            </Link>
 
-              <span className="text-[11px] font-black uppercase tracking-widest text-[#0e7490] block mb-1">
-                Total Paid Income
-              </span>
-              <div className="text-3xl sm:text-4xl font-heading font-black text-[#0e7490] tracking-tight">
-                ₹{totalPaidIncome.toLocaleString("en-IN")}
-              </div>
-            </div>
-
-            <div className="pt-4 mt-4 border-t border-cyan-500/20 flex items-center justify-between text-xs text-[#0e7490]">
-              <span className="text-[11px]">Disbursed to Bank</span>
-              <span className="font-bold text-[#0e7490] flex items-center gap-1 group-hover:underline">
-                <span>Statement</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </span>
-            </div>
-          </Link>
-
-          {/* Card 3: Pending Income (Sunset Coral / Tangerine) */}
-          <Link
-            href="/dashboard/statement"
-            className="neo-card-coral rounded-[32px] p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden group neo-card-hover"
-          >
-            <div className="absolute -top-10 -right-10 w-36 h-36 bg-orange-400/20 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
-
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#ea580c] to-[#fb923c] text-white flex items-center justify-center shadow-lg shadow-orange-600/30">
-                  <Clock className="w-6 h-6" />
+            {/* Card: Pending Income (Sunset Tangerine Coral) */}
+            <Link
+              href="/dashboard/statement"
+              className="neo-card-coral rounded-[26px] sm:rounded-[32px] p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden group neo-card-hover"
+            >
+              <div className="absolute -top-8 -right-8 w-28 h-28 bg-orange-400/20 rounded-full blur-xl pointer-events-none" />
+              <div>
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#ea580c] to-[#fb923c] text-white flex items-center justify-center shadow-md shadow-orange-600/25">
+                    <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-orange-500/20 text-orange-800 border border-orange-500/30">
+                    Pending
+                  </span>
                 </div>
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-500/20 text-orange-800 border border-orange-500/30 shadow-xs">
-                  Scheduled Payout
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#c2410c] block mb-1">
+                  Pending Income
+                </span>
+                <div className="text-xl sm:text-3xl font-heading font-black text-[#c2410c] tracking-tight">
+                  ₹{pendingPayoutIncome.toLocaleString("en-IN")}
+                </div>
+              </div>
+              <div className="pt-2 sm:pt-3 mt-2 sm:mt-3 border-t border-orange-500/20 text-[10px] sm:text-xs text-[#c2410c] font-bold flex items-center justify-between">
+                <span className="hidden sm:inline">Scheduled</span>
+                <span className="flex items-center gap-1 group-hover:underline">
+                  <span>Details</span>
+                  <ArrowRight className="w-3 h-3" />
                 </span>
               </div>
+            </Link>
+          </div>
 
-              <span className="text-[11px] font-black uppercase tracking-widest text-[#c2410c] block mb-1">
-                Pending Income
-              </span>
-              <div className="text-3xl sm:text-4xl font-heading font-black text-[#c2410c] tracking-tight">
-                ₹{pendingPayoutIncome.toLocaleString("en-IN")}
+          {/* Row 2: Today's Income Card (Directly Below Paid & Pending) */}
+          <div className="neo-card-amber rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 flex items-center justify-between relative overflow-hidden group neo-card-hover">
+            <div className="absolute -top-8 -right-8 w-32 h-32 bg-amber-400/20 rounded-full blur-xl pointer-events-none" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#d97706] to-[#f59e0b] text-white flex items-center justify-center shadow-md shadow-amber-600/30 shrink-0">
+                <Zap className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[11px] font-black uppercase tracking-widest text-[#92400e] block mb-0.5">
+                  Today&apos;s Income
+                </span>
+                <div className="text-2xl sm:text-3xl font-heading font-black text-amber-800 tracking-tight">
+                  ₹{todayIncome.toLocaleString("en-IN")}
+                </div>
               </div>
             </div>
+            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-900 border border-amber-500/30 shadow-xs">
+              ⚡ Today&apos;s Earnings
+            </span>
+          </div>
 
-            <div className="pt-4 mt-4 border-t border-orange-500/20 flex items-center justify-between text-xs text-[#c2410c]">
-              <span className="text-[11px]">Upcoming Cycle</span>
-              <span className="font-bold text-[#ea580c] flex items-center gap-1 group-hover:underline">
-                <span>Details</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </span>
+          {/* Row 3: This Week's Income Card (Directly Below Today's Income) */}
+          <div className="neo-card-violet rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 flex items-center justify-between relative overflow-hidden group neo-card-hover">
+            <div className="absolute -top-8 -right-8 w-32 h-32 bg-purple-400/20 rounded-full blur-xl pointer-events-none" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center shadow-md shadow-purple-600/30 shrink-0">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[11px] font-black uppercase tracking-widest text-[#5b21b6] block mb-0.5">
+                  This Week&apos;s Income
+                </span>
+                <div className="text-2xl sm:text-3xl font-heading font-black text-[#5b21b6] tracking-tight">
+                  ₹{thisWeekIncome.toLocaleString("en-IN")}
+                </div>
+              </div>
             </div>
-          </Link>
+            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-900 border border-purple-500/30 shadow-xs">
+              📅 Current Cycle
+            </span>
+          </div>
         </div>
 
         {/* ========================================================
-            4. FOUR DISTINCT COLORFUL VOLUME & ANALYTICS PODS
+            4. VOLUME & TEAM PODS (MATCHED PV REMOVED)
            ======================================================== */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Card 1: Downline Associates (Royal Fuchsia / Magenta Orchid) */}
           <div className="neo-card-fuchsia rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group neo-card-hover">
             <div>
@@ -528,61 +591,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Card 2: Today's Matched PV (Solar Amber Topaz) */}
-          <div className="neo-card-amber rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group neo-card-hover">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-black uppercase tracking-wider text-[#92400e]">
-                  Today&apos;s Matched PV
-                </span>
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#d97706] to-[#f59e0b] text-white flex items-center justify-center shadow-md shadow-amber-600/25">
-                  <Zap className="w-4 h-4" />
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl neo-inset-amber text-center my-1">
-                <span className="text-3xl font-heading font-black text-amber-700 block">
-                  {todayMatchedPv}
-                </span>
-                <span className="text-[10px] uppercase font-bold text-[#92400e] tracking-wider block mt-0.5">
-                  Matched PV Today
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-3 text-center text-xs text-[#92400e] font-bold pt-2 border-t border-amber-500/20">
-              ⚡ Today&apos;s 1:1 Matched Pairs
-            </div>
-          </div>
-
-          {/* Card 3: Weekly Matched PV (Caribbean Teal / Aquamarine) */}
-          <div className="neo-card-teal rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group neo-card-hover">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-black uppercase tracking-wider text-[#115e59]">
-                  Weekly Matched PV
-                </span>
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0d9488] to-[#14b8a6] text-white flex items-center justify-center shadow-md shadow-teal-600/25">
-                  <TrendingUp className="w-4 h-4" />
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl neo-inset-teal text-center my-1">
-                <span className="text-3xl font-heading font-black text-[#0f766e] block">
-                  {weeklyMatchedPv}
-                </span>
-                <span className="text-[10px] uppercase font-bold text-[#115e59] tracking-wider block mt-0.5">
-                  Matched PV This Week
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-3 text-center text-xs text-[#115e59] font-bold pt-2 border-t border-teal-500/20">
-              📅 Current Week Matched Pairs
-            </div>
-          </div>
-
-          {/* Card 4: Carry Forward PV (Twilight Cobalt / Deep Indigo) */}
+          {/* Card 2: Carry Forward PV (Twilight Cobalt / Deep Indigo) */}
           <div className="neo-card-indigo rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group neo-card-hover">
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -838,6 +847,11 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* ========================================================
+            7. PAN-INDIA ASSOCIATES GEOGRAPHIC DISTRIBUTION MAP
+           ======================================================== */}
+        <IndiaStateMap scope="member" />
       </div>
     </MemberLayout>
   );

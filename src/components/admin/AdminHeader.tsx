@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Menu, RefreshCw } from "lucide-react";
 import { User } from "@/types";
+import { ThemeToggle } from "@/components/providers/ThemeProvider";
 
 interface AdminHeaderProps {
   user: User | null;
@@ -55,8 +56,11 @@ export default function AdminHeader({
           </Link>
         </div>
 
-        {/* Right: Pending Alert + Live Refresh + Profile Chip */}
+        {/* Right: Theme Toggle + Pending Alert + Live Refresh + Profile Chip */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Dark / Light Theme Toggle */}
+          <ThemeToggle />
+
           {pendingOrdersCount > 0 && (
             <Link
               href="/admin/orders/approve"

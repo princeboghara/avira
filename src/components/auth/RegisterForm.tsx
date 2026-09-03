@@ -237,11 +237,8 @@ export default function RegisterForm() {
 
   return (
     <div className="w-full flex items-center justify-center py-4 sm:py-8">
-      {/* Neumorphic Glass Squircle Card */}
-      <div className="relative w-full max-w-[94vw] sm:max-w-[500px] lg:max-w-[540px] rounded-[38px] sm:rounded-[44px] glass-card p-7 sm:p-10 lg:p-11 flex flex-col items-center justify-center text-center shadow-[0_20px_50px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.02)] transition-all duration-300">
-        
-        {/* Ambient Inner Glow */}
-        <div className="absolute inset-0 rounded-[38px] sm:rounded-[44px] bg-gradient-to-b from-white/60 via-transparent to-emerald-500/5 pointer-events-none" />
+      {/* Neumorphic Card Container */}
+      <div className="relative w-full max-w-[94vw] sm:max-w-[500px] lg:max-w-[540px] rounded-[38px] sm:rounded-[44px] neo-card p-8 sm:p-10 lg:p-11 flex flex-col items-center justify-center text-center border-4 border-white shadow-[12px_12px_28px_rgba(160,178,202,0.45),-12px_-12px_28px_#ffffff] transition-all duration-300">
 
         {/* Content Container */}
         <div className="relative z-10 w-full flex flex-col items-center justify-center space-y-4 my-auto">
@@ -273,7 +270,7 @@ export default function RegisterForm() {
           <form onSubmit={handleSubmit} className="w-full space-y-3.5 pt-1 text-left">
             
             {/* 1. Sponsor ID */}
-            <div className="glass-panel p-3.5 rounded-2xl space-y-1.5">
+            <div className="neo-card-flat border border-white/80 p-3.5 rounded-2xl space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-[11px] font-bold text-[#475569] uppercase tracking-wider flex items-center gap-1.5">
                   <BadgeCheck className="w-3.5 h-3.5 text-[#006d36]" />
@@ -365,7 +362,7 @@ export default function RegisterForm() {
             </div>
 
             {/* 4. Placement Leg */}
-            <div className="glass-panel p-3.5 rounded-2xl space-y-2">
+            <div className="neo-card-flat border border-white/80 p-3.5 rounded-2xl space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-[11px] font-bold text-[#475569] uppercase tracking-wider flex items-center gap-1.5">
                   <Network className="w-3.5 h-3.5 text-[#006d36]" />
@@ -407,7 +404,7 @@ export default function RegisterForm() {
             </div>
 
             {/* 5. Pincode */}
-            <div className="glass-panel p-3.5 rounded-2xl space-y-1.5">
+            <div className="neo-card-flat border border-white/80 p-3.5 rounded-2xl space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-[11px] font-bold text-[#475569] uppercase tracking-wider flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-[#006d36]" />
@@ -517,7 +514,7 @@ export default function RegisterForm() {
       {/* COMPACT CREDENTIALS POPUP */}
       {registeredMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-md rounded-[38px] sm:rounded-[44px] glass-card p-7 sm:p-9 text-center shadow-2xl border border-white space-y-4 animate-slideRight">
+          <div className="relative w-full max-w-md rounded-[38px] sm:rounded-[44px] neo-card p-8 sm:p-10 text-center shadow-2xl border-4 border-white space-y-4 animate-slideRight">
             
             <button
               type="button"

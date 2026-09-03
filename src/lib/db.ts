@@ -67,6 +67,8 @@ export const pool: Pool =
     allowExitOnIdle: false,
   }));
 
+pool.setMaxListeners(50);
+
 pool.on("error", (err) => {
   console.error("Unexpected error on idle PostgreSQL client in pool:", err);
 });

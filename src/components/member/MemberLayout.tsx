@@ -50,7 +50,7 @@ export default function MemberLayout({ user: initialUser, children }: MemberLayo
     }
   }
 
-  // Validate User freshly from /api/auth/me in background
+  // Validate User freshly from /api/auth/me in background once per route change
   useEffect(() => {
     let active = true;
     fetch("/api/auth/me", { cache: "no-store" })
@@ -62,19 +62,18 @@ export default function MemberLayout({ user: initialUser, children }: MemberLayo
           if (typeof window !== "undefined") {
             sessionStorage.setItem("avira_user", JSON.stringify(data.user));
           }
-        } else if (!currentUser) {
+        } else {
           router.push("/login");
         }
       })
       .catch((err) => {
         console.error("Error verifying user in layout:", err);
-        if (active && !currentUser) router.push("/login");
       });
 
     return () => {
       active = false;
     };
-  }, [currentUser, router]);
+  }, [pathname, router]);
 
   // Close menu drawer on route change
   useEffect(() => {
@@ -160,13 +159,8 @@ export default function MemberLayout({ user: initialUser, children }: MemberLayo
       </div>
 
       {/* 4. MINIMALIST FROSTED FOOTER */}
-      <footer className="mt-auto py-5 px-4 sm:px-6 lg:px-8 glass-header border-t border-white/80 text-center text-xs text-[#64748b] flex flex-col sm:flex-row items-center justify-between gap-3">
+      <footer className="mt-auto py-5 px-4 sm:px-6 lg:px-8 glass-header border-t border-white/80 text-center text-xs text-[#64748b] flex flex-col sm:flex-row items-center justify-center gap-3">
         <p>© 2026 Avira Lifecare Global Private Limited. All rights reserved.</p>
-        <div className="flex items-center gap-4 text-[11px] font-mono text-[#94a3b8]">
-          <span>1:1 Pair Matching Engine</span>
-          <span>•</span>
-          <span>Repurchase Portal</span>
-        </div>
       </footer>
     </div>
   );

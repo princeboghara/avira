@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const res = await client.query(
       `SELECT id, member_id, full_name, mobile, status, personal_pv, daily_capping, wallet_balance, created_at
        FROM v_users_full 
-       WHERE UPPER(member_id) = $1 LIMIT 1`,
+       WHERE UPPER(member_id) = $1 AND role != 'ADMIN' LIMIT 1`,
       [memberId]
     );
 
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
 
     // Lookup member in v_users_full
     const userRes = await client.query(
-      "SELECT id, member_id, full_name, personal_pv FROM v_users_full WHERE UPPER(member_id) = $1 LIMIT 1",
+      "SELECT id, member_id, full_name, personal_pv FROM v_users_full WHERE UPPER(member_id) = $1 AND role != 'ADMIN' LIMIT 1",
       [memberIdClean]
     );
 

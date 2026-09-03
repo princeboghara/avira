@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/components/providers/QueryProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import AviraPageLoader from "@/components/common/AviraPageLoader";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -46,15 +47,30 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${outfit.variable} ${plusJakarta.variable} ${inter.variable} h-full antialiased font-sans`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function() {
+              try {
+                localStorage.removeItem('avira_theme');
+                document.documentElement.classList.remove('dark');
+              } catch (e) {}
+            })();`,
+          }}
+        />
+      </head>
       <body
-        className="min-h-full flex flex-col bio-canvas-bg text-[#0f172a] selection:bg-[#006d36] selection:text-white"
+        className="min-h-full flex flex-col bio-canvas-bg text-[#0f172a] selection:bg-[#006d36] selection:text-white transition-colors duration-200"
       >
         {/* Animated Brand Preloader on Page Load / Reload */}
         <AviraPageLoader />
 
-        <QueryProvider>{children}</QueryProvider>
+        <ThemeProvider>
+          <QueryProvider>{children}</QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

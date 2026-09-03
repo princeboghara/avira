@@ -25,6 +25,7 @@ export interface TreeNodeData {
   hasRightChild: boolean;
   hasMoreChildren: boolean;
   parentMemberId?: string | null;
+  totalTeamCount?: number;
 }
 
 export async function GET(req: NextRequest) {
@@ -36,11 +37,55 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const nodeParam = searchParams.get("node");
-    const targetRoot = (nodeParam || searchParams.get("root") || session.memberId).trim().toUpperCase();
+    let targetRoot = (
+      nodeParam ||
+      searchParams.get("root") ||
+      searchParams.get("rootId") ||
+      searchParams.get("id") ||
+      (session.role === "ADMIN" ? "AV0001" : session.memberId)
+    ).trim().toUpperCase();
+
+    if (targetRoot === "ADMIN") {
+      targetRoot = "AV0001";
+    }
+
     const requestedDepth = Math.min(Math.max(Number(searchParams.get("depth") || 3), 1), 5);
 
     const client = await pool.connect();
     try {
+      // 0. Enforce Downline Access Control: Non-admin members can only search/view members in their own downline
+      if (session.role !== "ADMIN" && targetRoot !== session.memberId) {
+        const downlineCheck = await client.query(
+          `
+          WITH RECURSIVE my_downline AS (
+            SELECT u.id, u.member_id, b.left_child_id, b.right_child_id
+            FROM users u
+            JOIN user_binary_pv b ON u.id = b.user_id
+            WHERE UPPER(u.member_id) = UPPER($1)
+
+            UNION ALL
+
+            SELECT u.id, u.member_id, b.left_child_id, b.right_child_id
+            FROM users u
+            JOIN user_binary_pv b ON u.id = b.user_id
+            INNER JOIN my_downline md ON (u.id = md.left_child_id OR u.id = md.right_child_id)
+          )
+          SELECT 1 FROM my_downline WHERE UPPER(member_id) = UPPER($2) LIMIT 1;
+        `,
+          [session.memberId, targetRoot]
+        );
+
+        if (downlineCheck.rows.length === 0) {
+          return NextResponse.json(
+            {
+              success: false,
+              message: `Member ID "${targetRoot}" is not in your downline network. You can only search members within your team.`,
+            },
+            { status: 403 }
+          );
+        }
+      }
+
       // 1. Single high-performance recursive query to fetch entire tree up to requestedDepth
       const treeRes = await client.query(
         `
@@ -49,11 +94,13 @@ export async function GET(req: NextRequest) {
             u.id, u.member_id, u.full_name, u.avatar_url, u.status, u.sponsor_id, u.sponsor_name, u.joined_date, u.created_at,
             b.personal_pv, b.left_pv, b.right_pv, b.carry_left_pv, b.carry_right_pv, b.binary_position, b.binary_parent_id, b.left_child_id, b.right_child_id,
             p.member_id as parent_member_id,
+            COALESCE(w.total_team_count, 0) AS total_team_count,
             1 AS depth
           FROM users u
           JOIN user_binary_pv b ON u.id = b.user_id
           LEFT JOIN users p ON b.binary_parent_id = p.id
-          WHERE UPPER(u.member_id) = UPPER($1) OR u.id = $1
+          LEFT JOIN user_wallets w ON u.id = w.user_id
+          WHERE (UPPER(u.member_id) = UPPER($1) OR u.id = $1) AND u.role != 'ADMIN'
 
           UNION ALL
 
@@ -61,11 +108,13 @@ export async function GET(req: NextRequest) {
             u.id, u.member_id, u.full_name, u.avatar_url, u.status, u.sponsor_id, u.sponsor_name, u.joined_date, u.created_at,
             b.personal_pv, b.left_pv, b.right_pv, b.carry_left_pv, b.carry_right_pv, b.binary_position, b.binary_parent_id, b.left_child_id, b.right_child_id,
             tn.member_id as parent_member_id,
+            COALESCE(w.total_team_count, 0) AS total_team_count,
             tn.depth + 1
           FROM users u
           JOIN user_binary_pv b ON u.id = b.user_id
+          LEFT JOIN user_wallets w ON u.id = w.user_id
           INNER JOIN tree_nodes tn ON (u.id = tn.left_child_id OR u.id = tn.right_child_id)
-          WHERE tn.depth < $2
+          WHERE tn.depth < $2 AND u.role != 'ADMIN'
         )
         SELECT * FROM tree_nodes;
       `,
@@ -100,6 +149,7 @@ export async function GET(req: NextRequest) {
           carryRightPv: parseFloat(row.carry_right_pv || "0"),
           leftTeamCount: row.left_pv ? Math.round(parseFloat(row.left_pv) / 100) : 0,
           rightTeamCount: row.right_pv ? Math.round(parseFloat(row.right_pv) / 100) : 0,
+          totalTeamCount: Number(row.total_team_count || 0),
           sponsorId: row.sponsor_id || "AV0001",
           sponsorName: row.sponsor_name || "Avira LifeCare",
           activationDate: row.joined_date || (row.created_at ? new Date(row.created_at).toISOString() : "Recent"),
@@ -142,6 +192,7 @@ export async function GET(req: NextRequest) {
           carryRightPv: item.carryRightPv,
           leftTeamCount: item.leftTeamCount,
           rightTeamCount: item.rightTeamCount,
+          totalTeamCount: item.totalTeamCount,
           sponsorId: item.sponsorId,
           sponsorName: item.sponsorName,
           activationDate: item.activationDate,
@@ -165,7 +216,7 @@ export async function GET(req: NextRequest) {
           SELECT u.id, u.member_id, u.full_name, b.binary_parent_id, b.binary_position, 1 as depth
           FROM users u
           JOIN user_binary_pv b ON u.id = b.user_id
-          WHERE UPPER(u.member_id) = UPPER($1) OR u.id = $1
+          WHERE (UPPER(u.member_id) = UPPER($1) OR u.id = $1) AND u.role != 'ADMIN'
 
           UNION ALL
 
@@ -173,6 +224,7 @@ export async function GET(req: NextRequest) {
           FROM users u
           JOIN user_binary_pv b ON u.id = b.user_id
           INNER JOIN ancestors a ON u.id = a.binary_parent_id
+          WHERE u.role != 'ADMIN'
         )
         SELECT member_id, full_name, binary_position, depth 
         FROM ancestors 
@@ -196,6 +248,7 @@ export async function GET(req: NextRequest) {
         tree,
         breadcrumbs,
         parentMemberId: tree.parentMemberId || null,
+        totalTeamCount: Number(rootRow.total_team_count || 0),
       });
     } finally {
       client.release();

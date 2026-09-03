@@ -15,7 +15,7 @@ export async function GET(
 
   try {
     const res = await client.query(
-      `SELECT * FROM v_users_full WHERE id = $1 OR UPPER(member_id) = UPPER($1) LIMIT 1`,
+      `SELECT * FROM v_users_full WHERE (id = $1 OR UPPER(member_id) = UPPER($1)) AND role != 'ADMIN' LIMIT 1`,
       [id.trim()]
     );
 
@@ -80,7 +80,7 @@ export async function POST(
 
     // Get user id and current details
     const uRes = await client.query(
-      "SELECT id FROM users WHERE id = $1 OR UPPER(member_id) = UPPER($1) LIMIT 1",
+      "SELECT id FROM users WHERE (id = $1 OR UPPER(member_id) = UPPER($1)) AND role != 'ADMIN' LIMIT 1",
       [id.trim()]
     );
 

@@ -11,6 +11,7 @@ import {
   Phone,
   Truck,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/providers/ThemeProvider";
 
 export default function HomeNavbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -130,6 +131,9 @@ export default function HomeNavbar() {
 
             {/* Right Action Bar */}
             <div className="flex items-center gap-3">
+              {/* Dark / Light Mode Switcher */}
+              <ThemeToggle />
+
               <Link
                 href="/products"
                 className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-2xl neo-inset text-[#64748b] text-xs font-medium transition-all"

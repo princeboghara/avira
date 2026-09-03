@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     const res = await client.query(
       `SELECT id, member_id, full_name, mobile, status, personal_pv, left_pv, right_pv, carry_left_pv, carry_right_pv
        FROM v_users_full 
-       WHERE UPPER(member_id) = $1 LIMIT 1`,
+       WHERE UPPER(member_id) = $1 AND role != 'ADMIN' LIMIT 1`,
       [memberId]
     );
 
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
       `SELECT u.id, u.member_id, u.full_name, b.left_pv, b.right_pv, b.binary_parent_id, b.binary_position 
        FROM users u
        JOIN user_binary_pv b ON u.id = b.user_id
-       WHERE UPPER(u.member_id) = $1 FOR UPDATE`,
+       WHERE UPPER(u.member_id) = $1 AND u.role != 'ADMIN' FOR UPDATE`,
       [memberIdClean]
     );
 

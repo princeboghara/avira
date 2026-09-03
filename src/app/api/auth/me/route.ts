@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const transactions = await getTransactionsForUser(user.id);
+    const includeTx = request.nextUrl.searchParams.get("tx") === "true";
+    const transactions = includeTx ? await getTransactionsForUser(user.id) : [];
     const { passwordHash: _, ...safeUser } = user;
 
     return NextResponse.json({

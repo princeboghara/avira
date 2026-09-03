@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Menu, Wallet, ShoppingCart } from "lucide-react";
 import { User } from "@/types";
+import { ThemeToggle } from "@/components/providers/ThemeProvider";
 
 interface MemberHeaderProps {
   user: User | null;
@@ -49,8 +50,11 @@ export default function MemberHeader({
           </Link>
         </div>
 
-        {/* Right: Quick Cart + Wallet Pills + User Identity */}
+        {/* Right: Theme Toggle + Quick Cart + Wallet Pills + User Identity */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Dark / Light Mode Switcher */}
+          <ThemeToggle />
+
           {user && (
             <>
               {/* Quick View Cart Button */}

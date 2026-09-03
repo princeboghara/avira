@@ -21,10 +21,12 @@ export async function GET(req: NextRequest) {
         k.kyc_submitted_at, k.kyc_verified_at, k.kyc_rejection_reason
       FROM users u
       LEFT JOIN user_kyc k ON u.id = k.user_id
-      WHERE (k.kyc_status IS NOT NULL AND k.kyc_status != 'NOT_SUBMITTED')
-         OR (k.aadhaar_number IS NOT NULL AND k.aadhaar_number != '')
-         OR (k.pan_number IS NOT NULL AND k.pan_number != '')
-         OR (k.bank_account_number IS NOT NULL AND k.bank_account_number != '')
+      WHERE u.role != 'ADMIN' AND (
+        (k.kyc_status IS NOT NULL AND k.kyc_status != 'NOT_SUBMITTED')
+        OR (k.aadhaar_number IS NOT NULL AND k.aadhaar_number != '')
+        OR (k.pan_number IS NOT NULL AND k.pan_number != '')
+        OR (k.bank_account_number IS NOT NULL AND k.bank_account_number != '')
+      )
     `;
 
     const params: unknown[] = [];
@@ -126,7 +128,7 @@ async function handleKycUpdate(req: NextRequest) {
 
     // Get user id
     const uRes = await client.query(
-      "SELECT id FROM users WHERE UPPER(member_id) = UPPER($1) OR id = $1 LIMIT 1",
+      "SELECT id FROM users WHERE (UPPER(member_id) = UPPER($1) OR id = $1) AND role != 'ADMIN' LIMIT 1",
       [memberId]
     );
 

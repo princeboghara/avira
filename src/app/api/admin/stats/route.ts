@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
       SELECT 
         COALESCE((SELECT SUM(amount) FROM orders WHERE status != 'REJECTED' AND created_at >= CURRENT_DATE), 0) as today_revenue,
         COALESCE((SELECT SUM(pv) FROM orders WHERE status != 'REJECTED' AND created_at >= CURRENT_DATE), 0) as today_pv,
-        (SELECT COUNT(*) FROM users WHERE created_at >= CURRENT_DATE) as today_new_members,
+        (SELECT COUNT(*) FROM users WHERE role != 'ADMIN' AND created_at >= CURRENT_DATE) as today_new_members,
         (SELECT COUNT(*) FROM orders WHERE created_at >= CURRENT_DATE) as today_orders;
     `);
 
@@ -30,8 +30,8 @@ export async function GET(req: NextRequest) {
         COALESCE((SELECT SUM(amount) FROM orders WHERE status != 'REJECTED'), 0) as total_revenue,
         COALESCE((SELECT SUM(pv) FROM orders WHERE status != 'REJECTED'), 0) as total_pv,
         (SELECT COUNT(*) FROM orders) as total_orders,
-        (SELECT COUNT(*) FROM users) as total_members,
-        (SELECT COUNT(*) FROM v_users_full WHERE status = 'ACTIVE' OR personal_pv >= 100) as active_members,
+        (SELECT COUNT(*) FROM users WHERE role != 'ADMIN') as total_members,
+        (SELECT COUNT(*) FROM v_users_full WHERE role != 'ADMIN' AND (status = 'ACTIVE' OR personal_pv >= 100)) as active_members,
         COALESCE((SELECT SUM(wallet_balance) FROM user_wallets), 0) as total_wallet_liability,
         COALESCE((SELECT SUM(total_earnings) FROM user_wallets), 0) as total_earnings_distributed;
     `);

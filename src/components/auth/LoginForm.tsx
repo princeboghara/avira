@@ -80,11 +80,8 @@ export default function LoginForm() {
 
   return (
     <div className="w-full flex items-center justify-center py-4 sm:py-8">
-      {/* Neumorphic Glass Card Container */}
-      <div className="relative w-full max-w-[94vw] sm:max-w-[440px] lg:max-w-[460px] rounded-[36px] sm:rounded-[40px] glass-card p-7 sm:p-9 flex flex-col items-center justify-center text-center shadow-[0_20px_50px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.02)] transition-all duration-300">
-        
-        {/* Soft Ambient Inner Highlight */}
-        <div className="absolute inset-0 rounded-[36px] sm:rounded-[40px] bg-gradient-to-b from-white/60 via-transparent to-emerald-500/5 pointer-events-none" />
+      {/* Neumorphic Card Container */}
+      <div className="relative w-full max-w-[94vw] sm:max-w-[440px] lg:max-w-[460px] rounded-[38px] sm:rounded-[42px] neo-card p-8 sm:p-10 flex flex-col items-center justify-center text-center border-4 border-white shadow-[12px_12px_28px_rgba(160,178,202,0.45),-12px_-12px_28px_#ffffff] transition-all duration-300">
 
         {/* Content Container */}
         <div className="relative z-10 w-full flex flex-col items-center justify-center space-y-4 my-auto">

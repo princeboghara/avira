@@ -26,13 +26,18 @@ export async function GET(req: NextRequest) {
     const params: any[] = [];
     if (search.trim()) {
       query += `
-        WHERE member_id ILIKE $1 
-           OR full_name ILIKE $1 
-           OR mobile ILIKE $1 
-           OR city ILIKE $1 
-           OR sponsor_id ILIKE $1
+        WHERE (role IS NULL OR role != 'ADMIN')
+          AND (
+            member_id ILIKE $1 
+            OR full_name ILIKE $1 
+            OR mobile ILIKE $1 
+            OR city ILIKE $1 
+            OR sponsor_id ILIKE $1
+          )
       `;
       params.push(`%${search.trim()}%`);
+    } else {
+      query += ` WHERE (role IS NULL OR role != 'ADMIN') `;
     }
 
     const limitParam = searchParams.get("limit");
@@ -137,7 +142,7 @@ export async function PATCH(req: NextRequest) {
 
     // 1. Find user by ID or member_id
     const userRes = await client.query(
-      "SELECT id, member_id FROM users WHERE UPPER(member_id) = UPPER($1) OR id = $1 LIMIT 1",
+      "SELECT id, member_id FROM users WHERE (UPPER(member_id) = UPPER($1) OR id = $1) AND role != 'ADMIN' LIMIT 1",
       [targetIdentifier]
     );
 

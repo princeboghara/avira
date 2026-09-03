@@ -47,14 +47,14 @@ export default function AviraPageLoader() {
 
   return (
     <div
-      className={`fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#f4f7f6]/90 backdrop-blur-xl select-none transition-all duration-300 ease-out ${
+      className={`fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#eef3f8]/95 backdrop-blur-md select-none transition-all duration-300 ease-out ${
         isFadingOut
           ? "opacity-0 pointer-events-none scale-105"
           : "opacity-100 scale-100"
       }`}
     >
       {/* Soft Ambient Spotlight Glow */}
-      <div className="absolute w-96 h-96 bg-gradient-to-tr from-emerald-400/20 via-teal-300/15 to-white/80 rounded-full blur-3xl pointer-events-none animate-pulse" />
+      <div className="absolute w-96 h-96 bg-gradient-to-tr from-emerald-400/15 via-teal-300/10 to-white/90 rounded-full blur-3xl pointer-events-none animate-pulse" />
 
       {/* Main 3D Animated Logo Stage */}
       <div className="relative flex flex-col items-center justify-center z-10 font-sans">
@@ -69,17 +69,16 @@ export default function AviraPageLoader() {
           <div className="absolute inset-2 sm:inset-3 rounded-full border-2 border-[#50c878]/30 animate-[spin_3.5s_linear_infinite_reverse]" />
           
           {/* Golden Pulse Orbit */}
-          <div className="absolute inset-4 sm:inset-5 rounded-full border border-amber-400/30 animate-ping opacity-25" />
+          <div className="absolute inset-4 sm:inset-5 rounded-full border border-amber-400/25 animate-ping opacity-20" />
 
-          {/* 3D Glass Disc Backdrop */}
-          <div className="relative w-24 h-24 sm:w-30 sm:h-30 rounded-full glass-card shadow-[0_12px_30px_rgba(0,109,54,0.15)] flex items-center justify-center p-3">
-            
+          {/* 3D Neumorphic Disc Backdrop */}
+          <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-white border-4 border-white shadow-[8px_8px_20px_rgba(160,178,202,0.45),-8px_-8px_20px_#ffffff] flex items-center justify-center p-3">
             {/* The Avira Logo with Smooth Breathing Zoom */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/avira-logo.png"
               alt="Avira Life Care"
-              className="h-14 sm:h-18 w-auto object-contain drop-shadow-md animate-[pulse_1.2s_ease-in-out_infinite]"
+              className="h-14 sm:h-16 w-auto object-contain drop-shadow-sm animate-[pulse_1.2s_ease-in-out_infinite]"
             />
           </div>
 
@@ -102,7 +101,7 @@ export default function AviraPageLoader() {
         </div>
 
         {/* Slim Progress Bar */}
-        <div className="w-40 sm:w-48 h-1.5 neo-inset rounded-full overflow-hidden mt-3.5 relative">
+        <div className="w-40 sm:w-48 h-2 neo-inset rounded-full overflow-hidden mt-3.5 relative">
           <div
             className="h-full bg-gradient-to-r from-[#006d36] via-[#10b981] to-[#50c878] rounded-full transition-all duration-150 ease-out shadow-[0_0_8px_rgba(80,200,120,0.5)]"
             style={{ width: `${progress}%` }}

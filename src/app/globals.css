@@ -511,13 +511,25 @@
   background: rgba(244, 247, 246, 0.6);
 }
 
+html.dark ::-webkit-scrollbar-track {
+  background: rgba(10, 20, 16, 0.6);
+}
+
 ::-webkit-scrollbar-thumb {
   background: rgba(166, 180, 200, 0.45);
   border-radius: 9999px;
 }
 
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 109, 54, 0.5);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.5);
 }
 
 /* Hide Next.js Dev Indicator Badge ("N" logo in bottom left) */
@@ -525,9 +537,462 @@ nextjs-portal,
 [data-nextjs-dev-tools-button],
 [data-nextjs-indicator],
 [data-nextjs-toast],
-div[data-nextjs-dev-tools-button] {
+[data-nextjs-dev-tools-button] {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
   opacity: 0 !important;
 }
+
+/* ==========================================================
+   7. COMPREHENSIVE NOCTURNAL LUXURY DARK MODE SYSTEM (DISABLED TEMPORARILY)
+   ========================================================== */
+/* DISABLED FOR NOW AS REQUESTED:
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark,
+html.dark body {
+  background-color: #070d0b !important;
+  color: #f1f5f9 !important;
+}
+
+/* Ambient Canvas Glow in Dark Mode */
+html.dark .bio-canvas-bg {
+  background-color: #070d0b !important;
+  background-image: 
+    radial-gradient(at 15% 15%, rgba(16, 185, 129, 0.12) 0px, transparent 50%),
+    radial-gradient(at 85% 20%, rgba(5, 150, 105, 0.08) 0px, transparent 50%),
+    radial-gradient(at 50% 80%, rgba(14, 165, 233, 0.07) 0px, transparent 50%) !important;
+}
+
+/* Glassmorphism Dark Mode */
+html.dark .glass-card {
+  background: rgba(14, 25, 21, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .glass-panel {
+  background: rgba(17, 30, 25, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark .glass-header {
+  background: rgba(10, 18, 15, 0.90) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+}
+
+html.dark .glass-pill {
+  background: rgba(18, 32, 27, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Neumorphism Dark Mode */
+html.dark .neo-card {
+  background: #0e1a16 !important;
+  box-shadow: 8px 8px 22px rgba(0, 0, 0, 0.5), -6px -6px 18px rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark .neo-card-flat {
+  background: #0e1a16 !important;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.4), -3px -3px 8px rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+html.dark .neo-inset {
+  background: #08110e !important;
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.65), inset -2px -2px 5px rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+html.dark .neo-input {
+  background: #08110e !important;
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.65), inset -2px -2px 5px rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark .neo-btn-secondary {
+  background: #14231d !important;
+  color: #34d399 !important;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.45), -3px -3px 8px rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+
+html.dark .neo-btn-secondary:hover {
+  background: #1b2f27 !important;
+  color: #6ee7b7 !important;
+}
+
+html.dark .neo-btn-icon {
+  background: #14231d !important;
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.4), -2px -2px 6px rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  color: #cbd5e1 !important;
+}
+
+/* Colorful Cards Nocturnal Luminous Gradients */
+html.dark .neo-card-emerald {
+  background: linear-gradient(145deg, #092318 0%, #051610 100%) !important;
+  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px rgba(16, 185, 129, 0.14) !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+}
+
+html.dark .neo-card-cyan {
+  background: linear-gradient(145deg, #07252f 0%, #04181f 100%) !important;
+  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px rgba(6, 182, 212, 0.14) !important;
+  border: 1px solid rgba(6, 182, 212, 0.35) !important;
+}
+
+html.dark .neo-card-coral {
+  background: linear-gradient(145deg, #2b1407 0%, #1a0a03 100%) !important;
+  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px rgba(249, 115, 22, 0.14) !important;
+  border: 1px solid rgba(249, 115, 22, 0.35) !important;
+}
+
+html.dark .neo-card-fuchsia {
+  background: linear-gradient(145deg, #27092c 0%, #17041b 100%) !important;
+  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px rgba(217, 70, 239, 0.14) !important;
+  border: 1px solid rgba(217, 70, 239, 0.35) !important;
+}
+
+html.dark .neo-card-amber {
+  background: linear-gradient(145deg, #271803 0%, #190f02 100%) !important;
+  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px rgba(245, 158, 11, 0.14) !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+html.dark .neo-card-teal {
+  background: linear-gradient(145deg, #072522 0%, #041816 100%) !important;
+  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px rgba(20, 184, 166, 0.14) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+html.dark .neo-card-indigo {
+  background: linear-gradient(145deg, #101639 0%, #090e26 100%) !important;
+  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px rgba(99, 102, 241, 0.14) !important;
+  border: 1px solid rgba(99, 102, 241, 0.35) !important;
+}
+
+html.dark .neo-card-violet {
+  background: linear-gradient(145deg, #1c0e33 0%, #110722 100%) !important;
+  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px rgba(168, 85, 247, 0.14) !important;
+  border: 1px solid rgba(168, 85, 247, 0.35) !important;
+}
+
+html.dark .neo-card-rose {
+  background: linear-gradient(145deg, #2a0711 0%, #1c040b 100%) !important;
+  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px rgba(244, 63, 94, 0.14) !important;
+  border: 1px solid rgba(244, 63, 94, 0.35) !important;
+}
+
+html.dark .neo-card-sapphire {
+  background: linear-gradient(145deg, #091937 0%, #050f24 100%) !important;
+  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px rgba(59, 130, 246, 0.14) !important;
+  border: 1px solid rgba(59, 130, 246, 0.35) !important;
+}
+
+/* Insets Dark Mode */
+html.dark .neo-inset-emerald {
+  background: #051811 !important;
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.75) !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+html.dark .neo-inset-cyan,
+html.dark .neo-inset-blue {
+  background: #041822 !important;
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.75) !important;
+  border: 1px solid rgba(6, 182, 212, 0.3) !important;
+}
+
+html.dark .neo-inset-amber {
+  background: #1b1203 !important;
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.75) !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+html.dark .neo-inset-purple {
+  background: #140825 !important;
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.75) !important;
+  border: 1px solid rgba(168, 85, 247, 0.3) !important;
+}
+
+html.dark .neo-inset-rose {
+  background: #1e060c !important;
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.75) !important;
+  border: 1px solid rgba(244, 63, 94, 0.3) !important;
+}
+
+html.dark .neo-inset-teal {
+  background: #051816 !important;
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.75) !important;
+  border: 1px solid rgba(20, 184, 166, 0.3) !important;
+}
+
+html.dark .neo-inset-coral {
+  background: #1e0c03 !important;
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.75) !important;
+  border: 1px solid rgba(249, 115, 22, 0.3) !important;
+}
+
+html.dark .neo-inset-fuchsia {
+  background: #19051d !important;
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.75) !important;
+  border: 1px solid rgba(217, 70, 239, 0.3) !important;
+}
+
+html.dark .neo-inset-indigo {
+  background: #0c102a !important;
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.75) !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+}
+
+/* Typography & Contrast Overrides in Dark Mode */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+  color: #f8fafc;
+}
+
+html.dark .text-\[\#0f172a\] {
+  color: #f8fafc !important;
+}
+
+html.dark .text-\[\#64748b\] {
+  color: #94a3b8 !important;
+}
+
+html.dark .text-\[\#475569\] {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-\[\#065f46\],
+html.dark .text-\[\#047857\] {
+  color: #6ee7b7 !important;
+}
+
+html.dark .text-\[\#064e3b\] {
+  color: #a7f3d0 !important;
+}
+
+html.dark .text-\[\#006d36\] {
+  color: #34d399 !important;
+}
+
+html.dark .text-\[\#0e7490\] {
+  color: #38bdf8 !important;
+}
+
+html.dark .text-\[\#c2410c\] {
+  color: #fb923c !important;
+}
+
+html.dark .text-\[\#ea580c\] {
+  color: #fdba74 !important;
+}
+
+html.dark .text-\[\#86198f\] {
+  color: #f472b6 !important;
+}
+
+html.dark .text-\[\#a21caf\] {
+  color: #e879f9 !important;
+}
+
+html.dark .text-\[\#92400e\] {
+  color: #fcd34d !important;
+}
+
+html.dark .text-\[\#115e59\],
+html.dark .text-\[\#0f766e\] {
+  color: #5eead4 !important;
+}
+
+html.dark .text-\[\#3730a3\] {
+  color: #a5b4fc !important;
+}
+
+html.dark .text-\[\#5b21b6\],
+html.dark .text-\[\#6d28d9\],
+html.dark .text-\[\#4c1d95\] {
+  color: #c084fc !important;
+}
+
+html.dark .text-rose-900,
+html.dark .text-rose-800,
+html.dark .text-rose-700 {
+  color: #fda4af !important;
+}
+
+html.dark .text-blue-700,
+html.dark .text-blue-800,
+html.dark .text-blue-900 {
+  color: #60a5fa !important;
+}
+
+html.dark .text-amber-700,
+html.dark .text-amber-800,
+html.dark .text-amber-900 {
+  color: #fbbf24 !important;
+}
+
+html.dark .border-gray-200\/80,
+html.dark .border-gray-200\/70,
+html.dark .border-gray-100 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark .bg-white\/90,
+html.dark .bg-white {
+  background-color: #12221d !important;
+}
+
+html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+html.dark .hover\:bg-white\/60:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+*/
+
+/* ==========================================================
+   8. MLM BINARY NEUMORPHIC CIRCULAR TREE DESIGN SYSTEM
+   ========================================================== */
+.neo-tree-canvas {
+  background: #eef3f8;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: inset 5px 5px 14px rgba(160, 178, 202, 0.45), inset -5px -5px 14px #ffffff;
+}
+html.dark .neo-tree-canvas {
+  background: #091319;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 5px 5px 16px rgba(0, 0, 0, 0.7), inset -4px -4px 12px rgba(255, 255, 255, 0.03);
+}
+
+.neo-disc-base {
+  background: #ffffff;
+  border-radius: 9999px;
+  border: 4px solid #ffffff;
+  box-shadow: 8px 8px 20px rgba(150, 169, 194, 0.45), -8px -8px 20px #ffffff;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neo-disc-base:hover {
+  transform: translateY(-2px);
+  box-shadow: 10px 10px 24px rgba(150, 169, 194, 0.55), -10px -10px 24px #ffffff;
+}
+
+html.dark .neo-disc-base {
+  background: #0d161d;
+  box-shadow: 10px 10px 24px rgba(0, 0, 0, 0.65), -6px -6px 18px rgba(255, 255, 255, 0.03);
+  border: 4px solid rgba(255, 255, 255, 0.08);
+}
+
+html.dark .neo-disc-base:hover {
+  box-shadow: 12px 12px 30px rgba(0, 0, 0, 0.75), -8px -8px 22px rgba(255, 255, 255, 0.04);
+}
+
+/* Level 0: You / Root (Blue) */
+.neo-disc-blue {
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #eff6ff 55%, #dbeafe 100%);
+  border-color: #ffffff;
+  box-shadow: 8px 8px 22px rgba(59, 130, 246, 0.22), 6px 6px 18px rgba(150, 169, 194, 0.45), -8px -8px 20px #ffffff;
+}
+html.dark .neo-disc-blue {
+  background: radial-gradient(circle at 35% 35%, #1e293b 0%, #0f172a 70%, #081020 100%);
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 10px 10px 24px rgba(0, 0, 0, 0.75), 0 0 22px rgba(59, 130, 246, 0.25);
+}
+
+/* Level 1: Directs (Purple / Violet) */
+.neo-disc-purple {
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f5f3ff 55%, #ede9fe 100%);
+  border-color: #ffffff;
+  box-shadow: 8px 8px 22px rgba(139, 92, 246, 0.22), 6px 6px 18px rgba(150, 169, 194, 0.45), -8px -8px 20px #ffffff;
+}
+html.dark .neo-disc-purple {
+  background: radial-gradient(circle at 35% 35%, #24143d 0%, #150a26 70%, #0c0517 100%);
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow: 10px 10px 24px rgba(0, 0, 0, 0.75), 0 0 22px rgba(168, 85, 247, 0.25);
+}
+
+/* Level 2: Grandchildren (Mint / Emerald) */
+.neo-disc-mint {
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #ecfdf5 55%, #d1fae5 100%);
+  border-color: #ffffff;
+  box-shadow: 8px 8px 22px rgba(16, 185, 129, 0.22), 6px 6px 18px rgba(150, 169, 194, 0.45), -8px -8px 20px #ffffff;
+}
+html.dark .neo-disc-mint {
+  background: radial-gradient(circle at 35% 35%, #062b1e 0%, #041a12 70%, #02100b 100%);
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 10px 10px 24px rgba(0, 0, 0, 0.75), 0 0 22px rgba(16, 185, 129, 0.25);
+}
+
+/* Level 3: Level 3 (Coral / Rose / Pink) */
+.neo-disc-rose {
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #fff1f2 55%, #ffe4e6 100%);
+  border-color: #ffffff;
+  box-shadow: 8px 8px 22px rgba(244, 63, 94, 0.22), 6px 6px 18px rgba(150, 169, 194, 0.45), -8px -8px 20px #ffffff;
+}
+html.dark .neo-disc-rose {
+  background: radial-gradient(circle at 35% 35%, #380d19 0%, #22060e 70%, #140308 100%);
+  border-color: rgba(244, 63, 94, 0.5);
+  box-shadow: 10px 10px 24px rgba(0, 0, 0, 0.75), 0 0 22px rgba(244, 63, 94, 0.25);
+}
+
+/* Level 4+: Level 4+ (Amber / Gold) */
+.neo-disc-amber {
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #fffbeb 55%, #fef3c7 100%);
+  border-color: #ffffff;
+  box-shadow: 8px 8px 22px rgba(245, 158, 11, 0.22), 6px 6px 18px rgba(150, 169, 194, 0.45), -8px -8px 20px #ffffff;
+}
+html.dark .neo-disc-amber {
+  background: radial-gradient(circle at 35% 35%, #382404 0%, #201402 70%, #130c01 100%);
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 10px 10px 24px rgba(0, 0, 0, 0.75), 0 0 22px rgba(245, 158, 11, 0.25);
+}
+
+/* Vacant Slot */
+.neo-disc-vacant {
+  background: #f1f5f9;
+  border: 2px dashed #94a3b8;
+  box-shadow: inset 4px 4px 10px rgba(150, 169, 194, 0.4), inset -4px -4px 10px #ffffff;
+  transition: all 0.25s ease;
+}
+.neo-disc-vacant:hover {
+  border-color: #006d36;
+  background: #f0fdf4;
+  box-shadow: inset 2px 2px 6px rgba(0, 109, 54, 0.2), inset -2px -2px 6px #ffffff;
+  transform: scale(1.04);
+}
+html.dark .neo-disc-vacant {
+  background: #081219;
+  border: 2px dashed #334155;
+  box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.6), inset -2px -2px 6px rgba(255, 255, 255, 0.02);
+}
+html.dark .neo-disc-vacant:hover {
+  border-color: #34d399;
+  background: #062217;
+}
+
+/* Branching Connector Line */
+.neo-tree-line {
+  background: linear-gradient(180deg, #94a3b8 0%, #cbd5e1 100%);
+  box-shadow: 0 1px 3px rgba(150, 169, 194, 0.35);
+}
+html.dark .neo-tree-line {
+  background: linear-gradient(180deg, #475569 0%, #334155 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+

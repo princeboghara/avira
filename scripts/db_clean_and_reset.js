@@ -118,19 +118,6 @@ async function cleanAndReset() {
       );
     `, [adminPasswordHash]);
 
-    await client.query(`
-      INSERT INTO user_wallets (user_id, wallet_balance, rp_wallet, fund_wallet, total_earnings, today_earnings, direct_referrals_count, total_team_count, updated_at)
-      VALUES ('usr_admin_root', 0.00, 0.00, 0.00, 0.00, 0.00, 0, 0, NOW());
-    `);
-    await client.query(`
-      INSERT INTO user_binary_pv (user_id, personal_pv, left_pv, right_pv, carry_left_pv, carry_right_pv, binary_parent_id, binary_position, left_child_id, right_child_id, daily_capping, updated_at)
-      VALUES ('usr_admin_root', 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, 10000, NOW());
-    `);
-    await client.query(`
-      INSERT INTO user_kyc (user_id, kyc_status, aadhaar_status, pan_status, bank_status, updated_at)
-      VALUES ('usr_admin_root', 'VERIFIED', 'VERIFIED', 'VERIFIED', 'VERIFIED', NOW());
-    `);
-
     await client.query('COMMIT');
     console.log('--- DATABASE CLEANUP & RESET COMPLETED SUCCESSFULLY ---');
 

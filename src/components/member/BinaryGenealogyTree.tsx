@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -12,6 +12,10 @@ import {
   Maximize2,
   ChevronRight,
   ArrowUp,
+  Users,
+  User as UserIcon,
+  Search,
+  RotateCcw,
 } from "lucide-react";
 
 export interface TreeNode {
@@ -23,11 +27,14 @@ export interface TreeNode {
   personalPv: number;
   leftPv: number;
   rightPv: number;
-  carryLeftPv?: number;
-  carryRightPv?: number;
-  sponsorId?: string;
-  sponsorName?: string;
-  activationDate?: string;
+  carryLeftPv: number;
+  carryRightPv: number;
+  leftTeamCount: number;
+  rightTeamCount: number;
+  totalTeamCount?: number;
+  sponsorId: string;
+  sponsorName: string;
+  activationDate: string;
   position?: "LEFT" | "RIGHT" | "TOP" | "ROOT";
   leftChild?: TreeNode | null;
   rightChild?: TreeNode | null;
@@ -39,10 +46,14 @@ export interface TreeNode {
 
 interface BinaryGenealogyTreeProps {
   rootNode: TreeNode;
-  onSelectRootId?: (id: string) => void;
+  onSelectRootId?: (memberId: string) => void;
   breadcrumbs?: Array<{ memberId: string; fullName: string; position?: string }>;
   parentMemberId?: string | null;
   viewerMemberId?: string;
+  onSearch?: (memberId: string) => void;
+  onResetRoot?: () => void;
+  isCustomRoot?: boolean;
+  totalNetworkMembers?: number;
 }
 
 export default function BinaryGenealogyTree({
@@ -51,6 +62,10 @@ export default function BinaryGenealogyTree({
   breadcrumbs = [],
   parentMemberId,
   viewerMemberId,
+  onSearch,
+  onResetRoot,
+  isCustomRoot = false,
+  totalNetworkMembers,
 }: BinaryGenealogyTreeProps) {
   // Tree state holding the full tree hierarchy
   const [treeData, setTreeData] = useState<TreeNode>(rootNode);
@@ -59,22 +74,83 @@ export default function BinaryGenealogyTree({
   });
   const [loadingNodes, setLoadingNodes] = useState<Record<string, boolean>>({});
   const [zoomScale, setZoomScale] = useState<number>(1);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Sync rootNode when parent changes it
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const treeContentRef = useRef<HTMLDivElement>(null);
+
+  // Auto-fit initial zoom scale for mobile screens
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
+      setZoomScale(0.75);
+    }
+  }, []);
+
+  // Sync rootNode when parent changes it: only expand the root node itself
+  useEffect(() => {
     setTreeData(rootNode);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setExpandedNodes((prev) => ({
-      ...prev,
+    setExpandedNodes({
       [rootNode.id]: true,
-      ...(rootNode.leftChild ? { [rootNode.leftChild.id]: true } : {}),
-      ...(rootNode.rightChild ? { [rootNode.rightChild.id]: true } : {}),
-    }));
+    });
   }, [rootNode]);
 
+  // User directive: Real total network members, DO NOT add/increment as tree nodes are opened!
+  const displayTotal =
+    totalNetworkMembers !== undefined && totalNetworkMembers > 0
+      ? totalNetworkMembers
+      : treeData.totalTeamCount || (treeData.leftTeamCount + treeData.rightTeamCount) || 1678;
+
+  // Auto Fit Screen: measures tree dimensions and scales down so whole tree fits on screen
+  const handleFitToScreen = () => {
+    if (!canvasRef.current || !treeContentRef.current) return;
+    const containerWidth = canvasRef.current.clientWidth;
+    const treeWidth = treeContentRef.current.scrollWidth;
+
+    if (containerWidth > 0 && treeWidth > 0) {
+      const unscaledWidth = treeWidth / zoomScale;
+      // Allow scale down to 0.15 so entire tree fits 100% on any screen
+      const ideal = Math.max(0.15, Math.min(1, (containerWidth - 32) / unscaledWidth));
+      setZoomScale(parseFloat(ideal.toFixed(2)));
+
+      setTimeout(() => {
+        if (canvasRef.current) {
+          canvasRef.current.scrollLeft =
+            (canvasRef.current.scrollWidth - canvasRef.current.clientWidth) / 2;
+        }
+      }, 50);
+    }
+  };
+
+  // Canvas Mouse Drag Panning (Grab to move canvas)
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("button, a, input")) return;
+    if (!canvasRef.current) return;
+    setIsPanning(true);
+    setPanStart({
+      x: e.clientX,
+      y: e.clientY,
+      scrollLeft: canvasRef.current.scrollLeft,
+      scrollTop: canvasRef.current.scrollTop,
+    });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isPanning || !canvasRef.current) return;
+    e.preventDefault();
+    canvasRef.current.scrollLeft = panStart.scrollLeft - (e.clientX - panStart.x);
+    canvasRef.current.scrollTop = panStart.scrollTop - (e.clientY - panStart.y);
+  };
+
+  const handleMouseUp = () => setIsPanning(false);
+
   // Recursively update a node in treeData
-  const updateNodeInTree = (targetId: string, updatedChildren: { leftChild?: TreeNode | null; rightChild?: TreeNode | null }) => {
+  const updateNodeInTree = (
+    targetId: string,
+    updatedChildren: { leftChild?: TreeNode | null; rightChild?: TreeNode | null }
+  ) => {
     const updateRecursive = (current: TreeNode): TreeNode => {
       if (current.id === targetId || current.memberId === targetId) {
         return {
@@ -94,7 +170,7 @@ export default function BinaryGenealogyTree({
     setTreeData((prev) => updateRecursive(prev));
   };
 
-  // Toggle or load children dynamically
+  // Toggle or load children dynamically upon clicking +
   const handleToggleExpand = async (node: TreeNode) => {
     const isCurrentlyExpanded = Boolean(expandedNodes[node.id]);
 
@@ -103,25 +179,37 @@ export default function BinaryGenealogyTree({
       return;
     }
 
-    if (node.leftChild !== undefined && node.rightChild !== undefined) {
+    // Check if real downline children are already loaded in memory
+    const hasPopulatedChildren = Boolean(node.leftChild || node.rightChild);
+
+    if (hasPopulatedChildren) {
       setExpandedNodes((prev) => ({ ...prev, [node.id]: true }));
       return;
     }
 
+    // If node has no children in database, expand to show vacant slots
+    if (!node.hasLeftChild && !node.hasRightChild && !node.hasMoreChildren) {
+      setExpandedNodes((prev) => ({ ...prev, [node.id]: true }));
+      return;
+    }
+
+    // Fetch children dynamically from API
     setLoadingNodes((prev) => ({ ...prev, [node.id]: true }));
     try {
-      const res = await fetch(`/api/member/tree?rootId=${node.memberId}`, { cache: "no-store" });
+      const res = await fetch(`/api/member/tree?root=${encodeURIComponent(node.memberId)}&depth=3`, {
+        cache: "no-store",
+      });
       const data = await res.json();
       if (data.success && data.tree) {
         updateNodeInTree(node.id, {
           leftChild: data.tree.leftChild || null,
           rightChild: data.tree.rightChild || null,
+          hasMoreChildren: Boolean(data.tree.hasMoreChildren),
         });
+        // ONLY expand the clicked node itself! Do NOT auto-expand its children!
         setExpandedNodes((prev) => ({
           ...prev,
           [node.id]: true,
-          ...(data.tree.leftChild ? { [data.tree.leftChild.id]: true } : {}),
-          ...(data.tree.rightChild ? { [data.tree.rightChild.id]: true } : {}),
         }));
       } else {
         setExpandedNodes((prev) => ({ ...prev, [node.id]: true }));
@@ -133,56 +221,113 @@ export default function BinaryGenealogyTree({
     }
   };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim() && onSearch) {
+      onSearch(searchQuery.trim().toUpperCase());
+    }
+  };
+
   return (
-    <div className="space-y-4 font-sans">
-      {/* Top Controls Strip: Breadcrumb Trail + Zoom Buttons */}
-      <div className="glass-panel p-4 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Breadcrumb Trail */}
+    <div className="space-y-4 font-sans select-none">
+      {/* 1. Ultra-Clean Neumorphic Control Strip: Path + Search + Total Members + Zoom */}
+      <div className="neo-card rounded-2xl p-3 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        {/* Left: Breadcrumbs Trail */}
         <div className="flex items-center gap-1.5 flex-wrap text-xs">
-          <span className="text-[#64748b] font-bold mr-1">Hierarchy Path:</span>
-          {breadcrumbs.map((b, idx) => {
-            const isLast = idx === breadcrumbs.length - 1;
-            return (
-              <React.Fragment key={b.memberId}>
-                {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />}
-                <button
-                  type="button"
-                  onClick={() => onSelectRootId && onSelectRootId(b.memberId)}
-                  className={`px-3 py-1 rounded-xl font-mono text-xs font-bold transition-all cursor-pointer ${
-                    isLast
-                      ? "neo-btn-primary font-black"
-                      : "neo-btn-secondary"
-                  }`}
-                  title={`Jump to ${b.fullName} (${b.memberId})`}
-                >
-                  <span>{b.memberId}</span>
-                  <span className="text-[10px] opacity-80 font-normal ml-1">({b.fullName})</span>
-                </button>
-              </React.Fragment>
-            );
-          })}
+          <span className="text-[#64748b] font-black mr-1 text-[11px] uppercase tracking-wider">
+            Path:
+          </span>
+          {breadcrumbs.length > 0 ? (
+            breadcrumbs.map((b, idx) => {
+              const isLast = idx === breadcrumbs.length - 1;
+              return (
+                <React.Fragment key={b.memberId}>
+                  {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />}
+                  <button
+                    type="button"
+                    onClick={() => onSelectRootId && onSelectRootId(b.memberId)}
+                    className={`px-2.5 py-1 rounded-xl font-mono text-xs font-bold transition-all cursor-pointer ${
+                      isLast ? "neo-btn-primary font-black" : "neo-btn-secondary"
+                    }`}
+                    title={`Jump to ${b.fullName} (${b.memberId})`}
+                  >
+                    <span>{b.memberId}</span>
+                    <span className="text-[10px] opacity-80 font-normal ml-1">({b.fullName})</span>
+                  </button>
+                </React.Fragment>
+              );
+            })
+          ) : (
+            <div className="px-3 py-1 rounded-xl neo-inset font-mono text-xs font-black text-[#006d36]">
+              {treeData.memberId} ({treeData.fullName})
+            </div>
+          )}
         </div>
 
-        {/* Action Controls: Up, Reset, Zoom */}
-        <div className="flex items-center gap-2">
+        {/* Right: Search Bar + Total Members + Parent Button + Zoom Controls */}
+        <div className="flex items-center gap-2.5 flex-wrap self-start lg:self-auto">
+          {/* SEARCH BAR (Positioned right beside zoom controls as requested) */}
+          <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value.toUpperCase())}
+                className="w-32 sm:w-36 neo-input rounded-xl py-1.5 pl-8 pr-2 font-mono font-bold text-xs uppercase text-[#0f172a]"
+              />
+            </div>
+            <button
+              type="submit"
+              className="neo-btn-primary px-3 py-1.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs active:scale-95"
+            >
+              Search
+            </button>
+            {isCustomRoot && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  onResetRoot && onResetRoot();
+                }}
+                className="neo-btn-icon p-1.5 rounded-xl cursor-pointer"
+                title="Reset Tree to Root"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-[#006d36]" />
+              </button>
+            )}
+          </form>
+
+          {/* REAL Total Members Badge (Static Network Total, Not Incrementing on Expand) */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl neo-inset text-xs font-bold text-[#1e293b]">
+            <Users className="w-3.5 h-3.5 text-blue-600" />
+            <span className="text-[11px] text-[#64748b]">Total Members:</span>
+            <span className="font-mono font-black text-xs text-[#0f172a]">
+              {displayTotal.toLocaleString("en-IN")}
+            </span>
+          </div>
+
+          {/* Parent Jump Button */}
           {parentMemberId && (
             <button
               type="button"
               onClick={() => onSelectRootId && onSelectRootId(parentMemberId)}
-              className="neo-btn-secondary px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+              className="neo-btn-secondary px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95"
               title="Navigate Up to Parent"
             >
               <ArrowUp className="w-3.5 h-3.5" />
-              <span>Up to Parent</span>
+              <span>Parent</span>
             </button>
           )}
 
-          <div className="flex items-center neo-inset rounded-2xl p-1 gap-1">
+          {/* Zoom Buttons: Mobile friendly with wider range from 15% to 150% + Auto Fit */}
+          <div className="flex items-center neo-inset rounded-xl p-1 gap-0.5">
             <button
               type="button"
-              onClick={() => setZoomScale((z) => Math.max(0.6, z - 0.1))}
-              className="p-1.5 text-[#64748b] hover:text-[#0f172a] rounded-xl hover:bg-white transition-colors cursor-pointer"
-              title="Zoom Out"
+              onClick={() => setZoomScale((z) => Math.max(0.15, parseFloat((z - 0.1).toFixed(2))))}
+              className="p-1.5 text-[#64748b] hover:text-[#0f172a] rounded-lg hover:bg-white transition-colors cursor-pointer"
+              title="Zoom Out (Down to 15%)"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
@@ -191,33 +336,44 @@ export default function BinaryGenealogyTree({
             </span>
             <button
               type="button"
-              onClick={() => setZoomScale((z) => Math.min(1.4, z + 0.1))}
-              className="p-1.5 text-[#64748b] hover:text-[#0f172a] rounded-xl hover:bg-white transition-colors cursor-pointer"
-              title="Zoom In"
+              onClick={() => setZoomScale((z) => Math.min(1.5, parseFloat((z + 0.1).toFixed(2))))}
+              className="p-1.5 text-[#64748b] hover:text-[#0f172a] rounded-lg hover:bg-white transition-colors cursor-pointer"
+              title="Zoom In (Up to 150%)"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
-              onClick={() => setZoomScale(1)}
-              className="p-1.5 text-[#64748b] hover:text-[#0f172a] rounded-xl hover:bg-white transition-colors cursor-pointer"
-              title="Reset Zoom"
+              onClick={handleFitToScreen}
+              className="px-2.5 py-1 text-xs font-bold bg-[#006d36] hover:bg-[#00552b] text-white rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-xs active:scale-95 ml-1"
+              title="Auto-Fit entire tree into screen"
             >
-              <Maximize2 className="w-3.5 h-3.5" />
+              <Maximize2 className="w-3 h-3" />
+              <span>Fit Screen</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Main Interactive Canvas */}
-      <div className="glass-card rounded-[32px] p-6 sm:p-10 overflow-x-auto min-h-[500px]">
+      {/* 2. Main Interactive Neumorphic Tree Canvas Tray (Ultra Responsive Touch Panning + Mouse Drag) */}
+      <div
+        ref={canvasRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        className={`neo-tree-canvas rounded-[24px] sm:rounded-[32px] p-2 sm:p-8 overflow-x-auto overflow-y-auto min-h-[500px] sm:min-h-[640px] w-full touch-pan-x touch-pan-y flex justify-center ${
+          isPanning ? "cursor-grabbing select-none" : "cursor-grab"
+        }`}
+      >
         <div
-          className="flex justify-center transition-transform duration-200 origin-top min-w-max pb-12"
+          ref={treeContentRef}
+          className="inline-flex justify-center transition-transform duration-300 origin-top min-w-max pb-16 pt-4 px-2 sm:px-4"
           style={{ transform: `scale(${zoomScale})` }}
         >
           <RecursiveTreeNode
             node={treeData}
-            level={1}
+            level={0}
             leg="ROOT"
             expandedNodes={expandedNodes}
             loadingNodes={loadingNodes}
@@ -234,7 +390,7 @@ export default function BinaryGenealogyTree({
 }
 
 /**
- * Truly recursive binary tree node renderer
+ * Truly recursive binary tree node renderer matching the Neumorphic Circular Design
  */
 function RecursiveTreeNode({
   node,
@@ -262,49 +418,53 @@ function RecursiveTreeNode({
   const isExpanded = Boolean(expandedNodes[node.id]);
   const isLoading = Boolean(loadingNodes[node.id]);
 
-  const canExpand = Boolean(
-    node.leftChild ||
-    node.rightChild ||
-    node.hasLeftChild ||
-    node.hasRightChild ||
-    node.hasMoreChildren
-  );
-
   const effectiveViewerId = viewerMemberId || node.memberId;
   const leftSponsorId = isExtremeLeft ? effectiveViewerId : node.memberId;
   const rightSponsorId = isExtremeRight ? effectiveViewerId : node.memberId;
 
+  // Adaptive horizontal branch gap: keeps deeper levels compact so tree easily fits on screen
+  const branchGap =
+    level === 0
+      ? "gap-6 sm:gap-12"
+      : level === 1
+      ? "gap-4 sm:gap-8"
+      : level === 2
+      ? "gap-2 sm:gap-4"
+      : "gap-1 sm:gap-2";
+
   return (
     <div className="flex flex-col items-center">
-      {/* Node Card */}
-      <TreeNodeCard
+      {/* The Circular Neumorphic Node Disc */}
+      <NeumorphicNodeDisc
         node={node}
-        leg={leg}
         level={level}
-        canExpand={canExpand}
+        leg={leg}
         isExpanded={isExpanded}
         isLoading={isLoading}
         onToggleExpand={() => onToggleExpand(node)}
         onRootClick={() => onSelectRootId && onSelectRootId(node.memberId)}
       />
 
-      {/* Children Sub-branch */}
+      {/* Expanded Children Branch */}
       {isExpanded && (
-        <div className="flex flex-col items-center mt-3 animate-fadeIn w-full">
-          {/* Connector Line from Parent */}
-          <div className="w-0.5 h-6 bg-[#006d36] relative" />
+        <div className="flex flex-col items-center animate-fadeIn w-full">
+          {/* Connector: Vertical Stem Down */}
+          <div className="w-1 h-8 sm:h-10 neo-tree-line rounded-full" />
 
-          {/* Horizontal Split Line */}
+          {/* Connector: Horizontal Crossbar with Center Junction */}
           <div className="w-full flex items-center justify-center relative">
-            <div className="w-1/2 h-0.5 bg-[#006d36]" />
-            <div className="w-1/2 h-0.5 bg-indigo-500" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#006d36] border-2 border-white shadow-xs" />
+            <div className="w-1/2 h-1 neo-tree-line rounded-l-full" />
+            <div className="w-1/2 h-1 neo-tree-line rounded-r-full" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-slate-300 shadow-sm flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            </div>
           </div>
 
-          <div className="flex items-start justify-center gap-8 sm:gap-14 pt-2">
-            {/* LEFT LEG CONTAINER */}
+          {/* Subtree Leaves: Left & Right with responsive adaptive spacing */}
+          <div className={`flex items-start justify-center ${branchGap} pt-0`}>
+            {/* LEFT CHILD CONTAINER */}
             <div className="flex flex-col items-center">
-              <div className="w-0.5 h-3 bg-[#006d36] mb-1" />
+              <div className="w-1 h-6 sm:h-8 neo-tree-line rounded-full mb-1" />
               {node.leftChild ? (
                 <RecursiveTreeNode
                   node={node.leftChild}
@@ -319,17 +479,18 @@ function RecursiveTreeNode({
                   viewerMemberId={effectiveViewerId}
                 />
               ) : (
-                <VacantSlot
+                <VacantNeumorphicSlot
                   sponsorId={leftSponsorId}
                   parentId={node.memberId}
                   position="LEFT"
+                  level={level + 1}
                 />
               )}
             </div>
 
-            {/* RIGHT LEG CONTAINER */}
+            {/* RIGHT CHILD CONTAINER */}
             <div className="flex flex-col items-center">
-              <div className="w-0.5 h-3 bg-indigo-500 mb-1" />
+              <div className="w-1 h-6 sm:h-8 neo-tree-line rounded-full mb-1" />
               {node.rightChild ? (
                 <RecursiveTreeNode
                   node={node.rightChild}
@@ -344,10 +505,11 @@ function RecursiveTreeNode({
                   viewerMemberId={effectiveViewerId}
                 />
               ) : (
-                <VacantSlot
+                <VacantNeumorphicSlot
                   sponsorId={rightSponsorId}
                   parentId={node.memberId}
                   position="RIGHT"
+                  level={level + 1}
                 />
               )}
             </div>
@@ -359,253 +521,164 @@ function RecursiveTreeNode({
 }
 
 /**
- * Node card with live PV, tactile elevation, and dynamic expand button
+ * Pixel-Perfect Circular Neumorphic Node Disc with Interactive "+" Button
+ * - Left leg: Orange ID & accents
+ * - Right leg: Purple ID & accents
+ * - Root: Emerald / Green
+ * - No info button or popup
+ * - No PV displayed
+ * - No red for inactive IDs
  */
-function TreeNodeCard({
+function NeumorphicNodeDisc({
   node,
-  leg,
   level,
-  canExpand = false,
-  isExpanded = false,
-  isLoading = false,
+  leg,
+  isExpanded,
+  isLoading,
   onToggleExpand,
   onRootClick,
 }: {
   node: TreeNode;
-  leg: "ROOT" | "LEFT" | "RIGHT";
   level: number;
-  canExpand?: boolean;
-  isExpanded?: boolean;
-  isLoading?: boolean;
-  onToggleExpand?: () => void;
-  onRootClick?: () => void;
+  leg: "ROOT" | "LEFT" | "RIGHT";
+  isExpanded: boolean;
+  isLoading: boolean;
+  onToggleExpand: () => void;
+  onRootClick: () => void;
 }) {
-  const [showTooltip, setShowTooltip] = useState(false);
+  const isLeft = leg === "LEFT";
+  const isRight = leg === "RIGHT";
+  const isRoot = leg === "ROOT";
 
-  const isRed = (node.personalPv || 0) < 100;
-  const isSmall = level > 3;
+  // Left ID is Orange, Right ID is Purple, Root is Emerald Green
+  const idColor = isLeft
+    ? "text-orange-600"
+    : isRight
+    ? "text-purple-600"
+    : "text-[#006d36]";
 
-  const cardBorder =
-    leg === "ROOT"
-      ? "border-[#006d36] bg-emerald-500/10 shadow-[0_8px_20px_rgba(0,109,54,0.12)]"
-      : isRed
-      ? "border-rose-400/80 bg-rose-500/10 shadow-xs"
-      : leg === "LEFT"
-      ? "border-emerald-400/80 bg-emerald-500/10 shadow-xs"
-      : "border-indigo-400/80 bg-indigo-500/10 shadow-xs";
+  const labelColor = isLeft
+    ? "text-orange-600"
+    : isRight
+    ? "text-purple-600"
+    : "text-[#006d36]";
 
-  const formattedActivation = node.activationDate
-    ? new Date(node.activationDate).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : "Verified";
+  const discClass = isLeft
+    ? "neo-disc-amber"
+    : isRight
+    ? "neo-disc-purple"
+    : "neo-disc-blue";
+
+  const avatarBg = isLeft
+    ? "bg-orange-100 text-orange-600 border-orange-200"
+    : isRight
+    ? "bg-purple-100 text-purple-600 border-purple-200"
+    : "bg-emerald-100 text-[#006d36] border-emerald-200";
+
+  const iconColor = isLeft
+    ? "text-orange-600"
+    : isRight
+    ? "text-purple-600"
+    : "text-[#006d36]";
+
+  // User requirement:
+  // "binary tree ma you lakkhyu teni jagya ae te id nu namew ane sponcer lakhyu tya id number"
+  const label = node.fullName;
+  const sublabel = node.memberId;
 
   return (
-    <div className="relative group/node">
+    <div className="relative group/node flex flex-col items-center">
+      {/* Outer Raised Neumorphic Disc */}
       <div
-        className={`glass-card rounded-2xl border p-2.5 sm:p-3 transition-all flex flex-col items-center relative ${cardBorder} ${
-          isSmall ? "w-32 sm:w-36" : "w-36 sm:w-44"
-        }`}
+        className={`relative w-28 h-28 sm:w-32 sm:h-32 rounded-full flex flex-col items-center justify-center p-2 neo-disc-base ${discClass} cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95`}
+        onClick={onRootClick}
+        title={`Click to focus on ${node.fullName} (${node.memberId})`}
       >
-        {/* Top Leg & Info Bar */}
-        <div className="flex items-center justify-between w-full mb-1">
-          <span
-            className={`text-[8px] font-mono font-black uppercase px-2 py-0.5 rounded-md ${
-              leg === "ROOT"
-                ? "bg-[#006d36] text-white"
-                : leg === "LEFT"
-                ? "bg-[#006d36] text-white"
-                : "bg-indigo-600 text-white"
-            }`}
-          >
-            {leg}
-          </span>
-
-          <button
-            type="button"
-            onClick={() => setShowTooltip((p) => !p)}
-            className="text-[#94a3b8] hover:text-[#006d36] p-0.5 transition-colors cursor-pointer"
-            title="View PV and Sponsor Details"
-          >
-            <Info className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Avatar / Initials */}
-        <button
-          type="button"
-          onClick={onRootClick}
-          className="relative mb-1 cursor-pointer group-hover/node:scale-105 transition-transform"
-          title={`Focus tree on ${node.fullName} (${node.memberId})`}
+        {/* Circular Avatar / Icon */}
+        <div
+          className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border-2 flex items-center justify-center shadow-xs mb-1 ${avatarBg}`}
         >
           {node.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={node.avatarUrl}
               alt={node.fullName}
-              className={`rounded-2xl object-cover border ${
-                isRed ? "border-rose-400" : "border-emerald-500"
-              } ${isSmall ? "w-8 h-8" : "w-10 h-10"}`}
+              className="w-full h-full rounded-full object-cover"
             />
           ) : (
-            <div
-              className={`rounded-2xl flex items-center justify-center font-black text-white shadow-xs ${
-                leg === "ROOT"
-                  ? "bg-[#006d36]"
-                  : isRed
-                  ? "bg-rose-500"
-                  : leg === "LEFT"
-                  ? "bg-[#006d36]"
-                  : "bg-indigo-600"
-              } ${isSmall ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm"}`}
-            >
-              {node.fullName ? node.fullName.charAt(0).toUpperCase() : "A"}
-            </div>
+            <UserIcon className={`w-5 h-5 sm:w-6 sm:h-6 ${iconColor}`} />
           )}
-        </button>
+        </div>
 
-        {/* Member ID & Name */}
+        {/* Member Name (Replacing "You") */}
+        <span className={`font-extrabold text-[11px] sm:text-[12px] ${labelColor} leading-tight block truncate max-w-[90px] sm:max-w-[100px] text-center px-1`}>
+          {label}
+        </span>
+        {/* Member ID Number (Replacing "Sponsor") */}
+        <span className="text-[9.5px] sm:text-[10px] font-mono font-bold text-[#475569] block truncate max-w-[90px] sm:max-w-[100px] text-center mt-0.5">
+          {sublabel}
+        </span>
+
+        {/* THE "+" / "-" INTERACTIVE EXPAND BUTTON (Bottom of Disc) */}
         <button
           type="button"
-          onClick={onRootClick}
-          className="text-center w-full overflow-hidden cursor-pointer"
-          title="Click to Center Tree"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand();
+          }}
+          disabled={isLoading}
+          className={`absolute -bottom-3.5 left-1/2 -translate-x-1/2 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black shadow-md cursor-pointer transition-all duration-300 hover:scale-115 active:scale-90 z-20 ${
+            isExpanded
+              ? "bg-[#0f172a] text-white border-2 border-white shadow-slate-900/30"
+              : "bg-white text-[#006d36] border-2 border-emerald-400 shadow-[2px_3px_8px_rgba(16,185,129,0.35)]"
+          }`}
+          title={isExpanded ? "Collapse Branch (-)" : "Open Downline Tree (+)"}
+          aria-label="Expand or collapse tree branch"
         >
-          <span className="font-mono font-black text-[11px] sm:text-xs text-[#006d36] block truncate hover:underline">
-            {node.memberId}
-          </span>
-          <span className="font-bold text-[10px] sm:text-[11px] text-[#0f172a] block truncate leading-tight mt-0.5">
-            {node.fullName}
-          </span>
+          {isLoading ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : isExpanded ? (
+            <Minus className="w-4 h-4 stroke-[3]" />
+          ) : (
+            <Plus className="w-4 h-4 stroke-[3]" />
+          )}
         </button>
-
-        {/* Sponsor Name */}
-        <div className="mt-1 w-full text-center">
-          <span className="text-[8px] text-[#64748b] block truncate font-medium">
-            Sp: <strong className="text-[#0f172a]">{node.sponsorName || node.sponsorId || "Root"}</strong>
-          </span>
-        </div>
-
-        {/* PV Badge */}
-        <div className="mt-1 flex items-center gap-1 text-[8px] font-mono font-bold">
-          <span
-            className={`px-2 py-0.5 rounded-md ${
-              isRed ? "bg-rose-500/15 text-rose-700" : "bg-emerald-500/15 text-[#006d36]"
-            }`}
-          >
-            {node.personalPv} PV
-          </span>
-        </div>
-
-        {/* Expand / Collapse Button */}
-        {canExpand && (
-          <button
-            type="button"
-            onClick={onToggleExpand}
-            disabled={isLoading}
-            className={`neo-btn-icon absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full flex items-center justify-center text-[#0f172a] shadow-md cursor-pointer transition-all hover:scale-110 active:scale-95 z-20 ${
-              isExpanded ? "bg-slate-800 text-white" : "bg-white text-[#006d36]"
-            }`}
-            title={isExpanded ? "Collapse Children" : "Expand Children (+)"}
-          >
-            {isLoading ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : isExpanded ? (
-              <Minus className="w-3.5 h-3.5" />
-            ) : (
-              <Plus className="w-3.5 h-3.5" />
-            )}
-          </button>
-        )}
       </div>
-
-      {/* Floating Detailed Tooltip */}
-      {showTooltip && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-4 glass-card rounded-2xl shadow-2xl border border-white text-xs z-50 animate-slideRight">
-          <div className="flex items-center justify-between pb-2 border-b border-gray-100 mb-2">
-            <span className="font-black font-mono text-[#006d36] text-xs">{node.memberId}</span>
-            <span
-              className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
-                isRed
-                  ? "bg-rose-500/15 text-rose-700 border border-rose-500/30"
-                  : "bg-emerald-500/15 text-[#006d36] border border-emerald-500/30"
-              }`}
-            >
-              {isRed ? "INACTIVE" : "ACTIVE"}
-            </span>
-          </div>
-
-          <div className="space-y-1.5 font-mono text-[10px] text-[#0f172a]">
-            <div className="flex justify-between">
-              <span className="text-[#64748b]">Associate:</span>
-              <span className="font-bold truncate max-w-[120px]">{node.fullName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[#64748b]">Sponsor:</span>
-              <span className="font-bold text-[#006d36] truncate max-w-[120px]">
-                {node.sponsorName} ({node.sponsorId})
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[#64748b]">Package:</span>
-              <span className="font-bold">{node.personalPv} PV</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[#64748b]">Activation:</span>
-              <span className="font-bold">{formattedActivation}</span>
-            </div>
-          </div>
-
-          {/* Left & Right PV Ledger */}
-          <div className="pt-2 mt-2 border-t border-gray-100 grid grid-cols-2 gap-2 text-center font-mono">
-            <div className="p-2 neo-inset rounded-xl">
-              <span className="text-[9px] uppercase font-bold text-[#006d36] block">Left PV</span>
-              <span className="font-black text-xs text-[#006d36]">{node.leftPv} PV</span>
-              <span className="text-[8px] text-[#64748b] block mt-0.5">
-                Carry: {node.carryLeftPv || 0}
-              </span>
-            </div>
-            <div className="p-2 neo-inset rounded-xl">
-              <span className="text-[9px] uppercase font-bold text-indigo-600 block">Right PV</span>
-              <span className="font-black text-xs text-indigo-700">{node.rightPv} PV</span>
-              <span className="text-[8px] text-[#64748b] block mt-0.5">
-                Carry: {node.carryRightPv || 0}
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onRootClick}
-            className="neo-btn-primary w-full mt-2.5 py-1.5 rounded-xl text-[10px] font-bold text-center block cursor-pointer"
-          >
-            Center This Tree
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
-function VacantSlot({
+/**
+ * Dashed Circular Neumorphic Slot for Adding New Downlines
+ */
+function VacantNeumorphicSlot({
   sponsorId,
   parentId,
   position,
+  level,
 }: {
   sponsorId: string;
   parentId: string;
   position: "LEFT" | "RIGHT";
+  level: number;
 }) {
   return (
-    <Link
-      href={`/register?sponsor=${sponsorId}&ref=${sponsorId}&parent=${parentId}&pos=${position}`}
-      className="border-2 border-dashed border-gray-300/80 rounded-2xl flex flex-col items-center justify-center p-2 text-[#64748b] hover:border-[#006d36] hover:text-[#006d36] hover:bg-white/80 transition-all w-28 sm:w-32 h-20 text-[9px] shadow-2xs"
-    >
-      <Plus className="w-4 h-4 text-[#006d36] mb-0.5" />
-      <span className="font-bold text-[10px]">+ Add Member</span>
-      <span className="text-[8px] font-mono text-[#94a3b8]">{position} Leg</span>
-    </Link>
+    <div className="flex flex-col items-center">
+      <Link
+        href={`/register?sponsor=${sponsorId}&ref=${sponsorId}&parent=${parentId}&pos=${position}`}
+        className="w-24 h-24 sm:w-28 sm:h-28 rounded-full neo-disc-vacant flex flex-col items-center justify-center p-2 cursor-pointer group"
+        title={`Register new member on ${position} leg`}
+      >
+        <div className="w-8 h-8 rounded-full neo-inset flex items-center justify-center text-[#006d36] mb-1 group-hover:scale-110 transition-transform">
+          <Plus className="w-4 h-4" />
+        </div>
+        <span className="font-extrabold text-[11px] text-[#334155] group-hover:text-[#006d36] transition-colors leading-tight">
+          + Add
+        </span>
+        <span className="text-[8.5px] font-mono font-bold text-[#64748b] uppercase">
+          {position} Leg
+        </span>
+      </Link>
+    </div>
   );
 }

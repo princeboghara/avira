@@ -43,9 +43,9 @@ export async function POST(request: NextRequest) {
 
     // 2. Check if sponsor exists in database
     const sponsor = await findUserByMemberId(sponsorId);
-    if (!sponsor) {
+    if (!sponsor || sponsor.role === "ADMIN") {
       return NextResponse.json(
-        { success: false, message: `Sponsor ID "${sponsorId}" does not exist in the Avira network.` },
+        { success: false, message: `Sponsor ID "${sponsorId}" does not exist in the Avira member network.` },
         { status: 400 }
       );
     }
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     if (parentId && parentId.trim()) {
       const parentUser = await findUserByMemberId(parentId.trim());
-      if (parentUser) {
+      if (parentUser && parentUser.role !== "ADMIN") {
         binarySpot = await findAvailableBinarySpot(parentUser.memberId, targetLeg);
       } else {
         binarySpot = await findAvailableBinarySpot(sponsor.memberId, targetLeg);

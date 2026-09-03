@@ -34,7 +34,7 @@ export async function findAvailableBinarySpot(
       `SELECT u.id, u.member_id, b.left_child_id, b.right_child_id 
        FROM users u
        LEFT JOIN user_binary_pv b ON u.id = b.user_id
-       WHERE UPPER(u.member_id) = UPPER($1) LIMIT 1`,
+       WHERE UPPER(u.member_id) = UPPER($1) AND u.role != 'ADMIN' LIMIT 1`,
       [sponsorMemberId]
     );
 
