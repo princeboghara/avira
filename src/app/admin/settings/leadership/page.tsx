@@ -14,6 +14,9 @@ import {
   TrendingUp,
   ShieldCheck,
   Zap,
+  Lock,
+  Unlock,
+  KeyRound,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 
@@ -21,6 +24,10 @@ export default function AdminLeadershipSettingsPage() {
   const [level1, setLevel1] = useState<number>(15);
   const [level2, setLevel2] = useState<number>(5);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+
+  // Lock State & Password
+  const [isLocked, setIsLocked] = useState<boolean>(true);
+  const [adminPassword, setAdminPassword] = useState<string>("");
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -56,6 +63,11 @@ export default function AdminLeadershipSettingsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!adminPassword.trim()) {
+      setErrorMessage("Please enter the Admin Password to unlock and save changes.");
+      return;
+    }
+
     setSaving(true);
     setSuccessMessage("");
     setErrorMessage("");
@@ -64,12 +76,14 @@ export default function AdminLeadershipSettingsPage() {
       const res = await fetch("/api/admin/settings/leadership", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ level1, level2 }),
+        body: JSON.stringify({ level1, level2, adminPassword: adminPassword.trim() }),
       });
 
       const data = await res.json();
       if (data.success) {
         setSuccessMessage(data.message);
+        setIsLocked(true); // Re-lock after successful update for security
+        setAdminPassword("");
         if (data.settings) {
           setLevel1(data.settings.level1);
           setLevel2(data.settings.level2);
@@ -86,6 +100,7 @@ export default function AdminLeadershipSettingsPage() {
   };
 
   const applyPreset = (l1: number, l2: number) => {
+    if (isLocked) return;
     setLevel1(l1);
     setLevel2(l2);
     setSuccessMessage("");
@@ -172,8 +187,71 @@ export default function AdminLeadershipSettingsPage() {
               </div>
             ) : (
               <form onSubmit={handleSave} className="space-y-6">
+                {/* Security Lock Banner */}
+                {isLocked ? (
+                  <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-300 text-amber-900 space-y-3 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 font-bold text-xs">
+                        <div className="w-6 h-6 rounded-lg bg-amber-200 text-amber-900 flex items-center justify-center">
+                          <Lock className="w-3.5 h-3.5" />
+                        </div>
+                        <span>Percentages Locked for Security</span>
+                      </div>
+                      <span className="text-[10px] uppercase font-mono font-bold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded">
+                        LOCKED
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-amber-800 leading-relaxed">
+                      To prevent accidental or unauthorized modifications to compensation payout percentages, enter the <strong>Admin Password</strong> to unlock and edit these values.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2 max-w-md pt-1">
+                      <div className="relative flex-1">
+                        <input
+                          type="password"
+                          placeholder="Enter Admin Password..."
+                          value={adminPassword}
+                          onChange={(e) => setAdminPassword(e.target.value)}
+                          className="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 outline-hidden focus:border-amber-600 focus:ring-1 focus:ring-amber-500"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!adminPassword.trim()) {
+                            setErrorMessage("Please enter the Admin Password to unlock editing.");
+                            return;
+                          }
+                          setIsLocked(false);
+                          setErrorMessage("");
+                        }}
+                        className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+                      >
+                        <Unlock className="w-3.5 h-3.5" />
+                        <span>Unlock to Edit</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-[#006d36] flex items-center justify-between shadow-2xs">
+                    <div className="flex items-center gap-2 text-xs font-bold">
+                      <Unlock className="w-4 h-4" />
+                      <span>Editing Unlocked with Admin Password</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsLocked(true);
+                        setAdminPassword("");
+                      }}
+                      className="text-[11px] font-bold text-emerald-800 hover:text-emerald-900 underline cursor-pointer"
+                    >
+                      Re-lock
+                    </button>
+                  </div>
+                )}
+
                 {/* Level 1 Direct Sponsor Percentage */}
-                <div className="p-5 rounded-2xl bg-amber-50/50 border border-amber-200/80 space-y-3">
+                <div className={`p-5 rounded-2xl bg-amber-50/50 border border-amber-200/80 space-y-3 ${isLocked ? "opacity-75 pointer-events-none select-none" : ""}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="w-7 h-7 rounded-xl bg-amber-100 text-amber-900 font-black text-xs flex items-center justify-center shadow-2xs">
@@ -199,9 +277,10 @@ export default function AdminLeadershipSettingsPage() {
                       min="0"
                       max="50"
                       step="0.5"
+                      disabled={isLocked}
                       value={level1}
                       onChange={(e) => setLevel1(parseFloat(e.target.value) || 0)}
-                      className="flex-1 accent-amber-600 cursor-pointer"
+                      className="flex-1 accent-amber-600 cursor-pointer disabled:cursor-not-allowed"
                     />
                     <div className="w-24 relative">
                       <input
@@ -209,9 +288,10 @@ export default function AdminLeadershipSettingsPage() {
                         min="0"
                         max="100"
                         step="0.1"
+                        disabled={isLocked}
                         value={level1}
                         onChange={(e) => setLevel1(parseFloat(e.target.value) || 0)}
-                        className="w-full text-center font-mono font-bold text-sm bg-white border border-amber-300 rounded-xl py-1.5 px-2 pr-6 outline-hidden"
+                        className="w-full text-center font-mono font-bold text-sm bg-white border border-amber-300 rounded-xl py-1.5 px-2 pr-6 outline-hidden disabled:bg-slate-100 disabled:text-slate-500"
                       />
                       <Percent className="w-3.5 h-3.5 text-amber-700 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                     </div>
@@ -219,7 +299,7 @@ export default function AdminLeadershipSettingsPage() {
                 </div>
 
                 {/* Level 2 Sponsor Percentage */}
-                <div className="p-5 rounded-2xl bg-blue-50/50 border border-blue-200/80 space-y-3">
+                <div className={`p-5 rounded-2xl bg-blue-50/50 border border-blue-200/80 space-y-3 ${isLocked ? "opacity-75 pointer-events-none select-none" : ""}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="w-7 h-7 rounded-xl bg-blue-100 text-blue-900 font-black text-xs flex items-center justify-center shadow-2xs">
@@ -245,9 +325,10 @@ export default function AdminLeadershipSettingsPage() {
                       min="0"
                       max="30"
                       step="0.5"
+                      disabled={isLocked}
                       value={level2}
                       onChange={(e) => setLevel2(parseFloat(e.target.value) || 0)}
-                      className="flex-1 accent-blue-600 cursor-pointer"
+                      className="flex-1 accent-blue-600 cursor-pointer disabled:cursor-not-allowed"
                     />
                     <div className="w-24 relative">
                       <input
@@ -255,9 +336,10 @@ export default function AdminLeadershipSettingsPage() {
                         min="0"
                         max="100"
                         step="0.1"
+                        disabled={isLocked}
                         value={level2}
                         onChange={(e) => setLevel2(parseFloat(e.target.value) || 0)}
-                        className="w-full text-center font-mono font-bold text-sm bg-white border border-blue-300 rounded-xl py-1.5 px-2 pr-6 outline-hidden"
+                        className="w-full text-center font-mono font-bold text-sm bg-white border border-blue-300 rounded-xl py-1.5 px-2 pr-6 outline-hidden disabled:bg-slate-100 disabled:text-slate-500"
                       />
                       <Percent className="w-3.5 h-3.5 text-blue-700 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                     </div>
@@ -265,36 +347,40 @@ export default function AdminLeadershipSettingsPage() {
                 </div>
 
                 {/* Quick Presets */}
-                <div className="space-y-2 pt-2">
+                <div className={`space-y-2 pt-2 ${isLocked ? "opacity-60 pointer-events-none select-none" : ""}`}>
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                     Quick Preset Configurations:
                   </span>
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
+                      disabled={isLocked}
                       onClick={() => applyPreset(15, 5)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono text-xs font-bold transition-all cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono text-xs font-bold transition-all cursor-pointer disabled:cursor-not-allowed"
                     >
                       Default (15% / 5%)
                     </button>
                     <button
                       type="button"
+                      disabled={isLocked}
                       onClick={() => applyPreset(10, 5)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono text-xs font-bold transition-all cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono text-xs font-bold transition-all cursor-pointer disabled:cursor-not-allowed"
                     >
                       Conservative (10% / 5%)
                     </button>
                     <button
                       type="button"
+                      disabled={isLocked}
                       onClick={() => applyPreset(20, 10)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono text-xs font-bold transition-all cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono text-xs font-bold transition-all cursor-pointer disabled:cursor-not-allowed"
                     >
                       Aggressive (20% / 10%)
                     </button>
                     <button
                       type="button"
+                      disabled={isLocked}
                       onClick={() => applyPreset(0, 0)}
-                      className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-mono text-xs font-bold transition-all cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-mono text-xs font-bold transition-all cursor-pointer disabled:cursor-not-allowed"
                     >
                       Disable (0% / 0%)
                     </button>
@@ -308,13 +394,18 @@ export default function AdminLeadershipSettingsPage() {
                   </span>
                   <button
                     type="submit"
-                    disabled={saving}
-                    className="px-6 py-3 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    disabled={saving || isLocked}
+                    className="px-6 py-3 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Updating System...</span>
+                      </>
+                    ) : isLocked ? (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>Unlock to Save</span>
                       </>
                     ) : (
                       <>

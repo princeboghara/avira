@@ -139,20 +139,20 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
   };
 
   return (
-    <div className="flex flex-col h-full justify-between glass-panel select-none">
+    <div className="flex flex-col h-full justify-between bg-[#f4f7f6] border-r border-white/80 shadow-[6px_0_24px_rgba(166,180,200,0.18)] select-none">
       {/* 1. TOP LOGO & BRAND NAME */}
-      <div className="p-4 border-b border-gray-200/60 bg-gradient-to-b from-white/80 via-white/50 to-transparent flex items-center gap-3">
+      <div className="p-4 border-b border-[#e2e8f0]/60 bg-gradient-to-b from-white/90 via-[#f8faf9] to-[#f4f7f6] flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/avira-logo.png"
           alt="Avira Lifecare Global Private Limited"
-          className="h-11 w-auto object-contain shrink-0 drop-shadow-2xs"
+          className="h-11 w-auto object-contain shrink-0 drop-shadow-sm"
         />
         <div className="overflow-hidden">
           <h2 className="font-heading font-extrabold text-xs text-[#0f172a] tracking-tight leading-tight truncate">
             AVIRA LIFECARE
           </h2>
-          <span className="text-[8px] font-medium text-[#64748b] truncate block">
+          <span className="text-[8px] font-semibold text-[#64748b] tracking-wide truncate block">
             Global Pvt. Ltd.
           </span>
           <span className="text-[9px] font-mono font-bold text-[#006d36] tracking-wider uppercase block">
@@ -161,18 +161,18 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
         </div>
       </div>
 
-      {/* 2. USER MINI SUMMARY STRIP */}
+      {/* 2. USER MINI SUMMARY STRIP (NEUMORPHIC INSET) */}
       {user && (
-        <div className="px-4 py-3 neo-inset border-b border-white/60 flex items-center justify-between text-xs">
-          <div className="overflow-hidden">
+        <div className="mx-3 my-2.5 px-3.5 py-2.5 rounded-2xl neo-inset border border-white/70 flex items-center justify-between text-xs">
+          <div className="overflow-hidden pr-2">
             <span className="font-extrabold text-[#0f172a] block truncate text-xs">{user.fullName}</span>
             <span className="font-mono text-[10px] text-[#006d36] font-bold block">{user.memberId}</span>
           </div>
           <span
-            className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase shadow-2xs ${
+            className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase shadow-xs shrink-0 ${
               isUserActive
-                ? "bg-emerald-500/15 text-[#006d36] border border-emerald-500/30"
-                : "bg-rose-500/15 text-rose-700 border border-rose-500/30"
+                ? "bg-[#006d36] text-white"
+                : "bg-rose-100 text-rose-700 border border-rose-200"
             }`}
           >
             {isUserActive ? "Active" : "Red"}
@@ -181,7 +181,7 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
       )}
 
       {/* 3. SCROLLABLE MENU LIST */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 custom-scrollbar">
         {navItems.map((item) => {
           if (item.type === "link") {
             const isLinkActive = pathname === item.href;
@@ -192,13 +192,13 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
                 key={item.category}
                 href={item.href}
                 onClick={onNavigate}
-                className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+                className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 ${
                   isLinkActive
-                    ? "neo-btn-primary font-black"
-                    : "text-[#0f172a] hover:text-[#006d36] hover:bg-white/60"
+                    ? "neo-btn-primary font-black shadow-[4px_4px_12px_rgba(0,109,54,0.3),-2px_-2px_8px_#ffffff]"
+                    : "text-[#1e293b] hover:text-[#006d36] bg-[#f4f7f6] hover:shadow-[3px_3px_8px_rgba(166,180,200,0.3),-3px_-3px_8px_#ffffff] border border-transparent hover:border-white/60"
                 }`}
               >
-                <ItemIcon className="w-4 h-4 text-[#006d36] shrink-0" />
+                <ItemIcon className={`w-4 h-4 shrink-0 ${isLinkActive ? "text-white" : "text-[#006d36]"}`} />
                 <span className="truncate">{item.name}</span>
               </Link>
             );
@@ -213,10 +213,10 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
               <button
                 type="button"
                 onClick={() => toggleGroup(item.category)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 cursor-pointer ${
                   isCategoryActive
-                    ? "text-[#006d36] bg-emerald-500/10 font-black"
-                    : "text-[#0f172a] hover:bg-white/60"
+                    ? "text-[#006d36] bg-[#edf3f0] shadow-[inset_2px_2px_5px_rgba(166,180,200,0.25),inset_-2px_-2px_5px_#ffffff] border border-emerald-200/60 font-black"
+                    : "text-[#1e293b] hover:text-[#006d36] bg-[#f4f7f6] hover:shadow-[3px_3px_8px_rgba(166,180,200,0.25),-3px_-3px_8px_#ffffff] border border-transparent hover:border-white/60"
                 }`}
               >
                 <div className="flex items-center gap-2.5 truncate">
@@ -224,34 +224,36 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
                   <span className="truncate">{item.category}</span>
                 </div>
                 {isOpen ? (
-                  <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8]" />
+                  <ChevronDown className="w-3.5 h-3.5 text-[#64748b]" />
                 ) : (
                   <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />
                 )}
               </button>
 
               {isOpen && (
-                <div className="pl-5 pr-1 space-y-1 animate-fadeIn">
-                  {item.links.map((link) => {
-                    const LinkIcon = link.icon;
-                    const isActive = pathname === link.href;
+                <div className="pl-3.5 pr-1 py-1 space-y-1 animate-fadeIn">
+                  <div className="pl-2 border-l-2 border-emerald-500/30 space-y-1">
+                    {item.links.map((link) => {
+                      const LinkIcon = link.icon;
+                      const isActive = pathname === link.href;
 
-                    return (
-                      <Link
-                        key={link.name}
-                        href={link.href}
-                        onClick={onNavigate}
-                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-                          isActive
-                            ? "neo-btn-primary font-black"
-                            : "text-[#64748b] hover:text-[#0f172a] hover:bg-white/70"
-                        }`}
-                      >
-                        <LinkIcon className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">{link.name}</span>
-                      </Link>
-                    );
-                  })}
+                      return (
+                        <Link
+                          key={link.name}
+                          href={link.href}
+                          onClick={onNavigate}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${
+                            isActive
+                              ? "neo-btn-primary font-black shadow-[3px_3px_10px_rgba(0,109,54,0.28),-2px_-2px_6px_#ffffff]"
+                              : "text-[#64748b] hover:text-[#006d36] hover:bg-white/80 hover:shadow-[2px_2px_6px_rgba(166,180,200,0.2),-2px_-2px_6px_#ffffff]"
+                          }`}
+                        >
+                          <LinkIcon className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">{link.name}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -259,12 +261,12 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
         })}
       </div>
 
-      {/* 4. PINNED LOGOUT BUTTON */}
-      <div className="p-3 border-t border-gray-200/60 bg-white/40">
+      {/* 4. PINNED LOGOUT BUTTON (NEUMORPHIC) */}
+      <div className="p-3 border-t border-[#e2e8f0]/80 bg-[#f4f7f6]">
         <button
           type="button"
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 hover:bg-rose-500/20 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-[#f4f7f6] border border-rose-200/70 text-rose-700 hover:text-rose-800 shadow-[3px_3px_8px_rgba(225,29,72,0.12),-3px_-3px_8px_#ffffff] hover:shadow-[inset_2px_2px_4px_rgba(225,29,72,0.15),inset_-2px_-2px_4px_#ffffff] text-xs font-bold transition-all cursor-pointer active:scale-98"
         >
           <LogOut className="w-4 h-4" />
           <span>Logout Associate</span>

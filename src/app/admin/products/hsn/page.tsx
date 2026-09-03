@@ -19,19 +19,13 @@ interface HsnCode {
   cgst: number;
   igst: number;
   description?: string;
+  liveCount?: number;
   createdAt?: string;
 }
 
-const defaultHsnCodes: HsnCode[] = [
-  { id: "hsn-1", hsnCode: "3004", sgst: 2.5, cgst: 2.5, igst: 5.0, description: "Medicaments / Health Supplements (5% GST)" },
-  { id: "hsn-2", hsnCode: "2106", sgst: 9.0, cgst: 9.0, igst: 18.0, description: "Food Preparations / Botanical Extracts (18% GST)" },
-  { id: "hsn-3", hsnCode: "3304", sgst: 9.0, cgst: 9.0, igst: 18.0, description: "Beauty & Skin Care Preparations (18% GST)" },
-  { id: "hsn-4", hsnCode: "0902", sgst: 2.5, cgst: 2.5, igst: 5.0, description: "Herbal Infusions & Green Tea (5% GST)" },
-];
-
 export default function AdminHsnCodePage() {
-  const [hsnCodes, setHsnCodes] = useState<HsnCode[]>(defaultHsnCodes);
-  const [loading, setLoading] = useState(false);
+  const [hsnCodes, setHsnCodes] = useState<HsnCode[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -154,28 +148,28 @@ export default function AdminHsnCodePage() {
     <AdminLayout onRefresh={loadHsn} refreshing={refreshing}>
       <div className="space-y-6 animate-fadeIn">
         {/* Page Header */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="neo-card rounded-3xl p-6 sm:p-8 border border-white/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-[#006d36] font-mono text-[10px] font-black uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full neo-inset text-[#006d36] font-mono text-[10px] font-black uppercase tracking-wider border border-emerald-200/50">
                 Tax Registry
               </span>
-              <span className="text-xs text-[#5f5e5e] font-medium">
+              <span className="text-xs text-[#64748b] font-medium">
                 Product Manager • 2. HSN Code Master
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-[#1a1c1c] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0f172a] tracking-tight">
               HSN Code & GST Tax Master
             </h1>
-            <p className="text-xs text-[#5f5e5e] mt-1">
-              Manage GST tax rates (SGST, CGST, IGST) mapped to Harmonized System Nomenclature (HSN) codes.
+            <p className="text-xs text-[#64748b] mt-1 font-medium">
+              Manage GST tax rates (SGST, CGST, IGST) mapped to HSN codes and live product counts.
             </p>
           </div>
 
           <button
             type="button"
             onClick={handleOpenAddModal}
-            className="px-5 py-3 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-[#006d36]/20 cursor-pointer transition-all self-start sm:self-auto"
+            className="neo-btn-primary px-5 py-3 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-[4px_4px_12px_rgba(0,109,54,0.3),-2px_-2px_8px_#ffffff] cursor-pointer transition-all self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
             <span>Add New HSN Code</span>
@@ -211,6 +205,7 @@ export default function AdminHsnCodePage() {
                   <th className="py-3.5 px-4">CGST (%)</th>
                   <th className="py-3.5 px-4">IGST (%)</th>
                   <th className="py-3.5 px-4">Total Tax</th>
+                  <th className="py-3.5 px-4 text-center">Live Products</th>
                   <th className="py-3.5 px-4">Description</th>
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
@@ -218,14 +213,14 @@ export default function AdminHsnCodePage() {
               <tbody className="divide-y divide-[#e2e2e2]/60 font-medium">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-[#006d36]">
+                    <td colSpan={9} className="py-12 text-center text-[#006d36]">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                       <span>Loading HSN codes...</span>
                     </td>
                   </tr>
                 ) : displayedHsn.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-[#5f5e5e]">
+                    <td colSpan={9} className="py-8 text-center text-[#5f5e5e]">
                       No HSN codes found. Click &quot;Add New HSN Code&quot; to configure tax brackets.
                     </td>
                   </tr>
@@ -242,6 +237,11 @@ export default function AdminHsnCodePage() {
                       <td className="py-3.5 px-4 font-mono font-black text-[#1a1c1c]">
                         <span className="bg-emerald-50 text-[#006d36] px-2 py-0.5 rounded border border-emerald-200">
                           {Number(hsn.sgst) + Number(hsn.cgst)}%
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                          {hsn.liveCount || 0} Live
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-[#5f5e5e]">{hsn.description || "—"}</td>

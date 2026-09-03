@@ -200,6 +200,11 @@ export default function MemberCartPage() {
     return acc + tax;
   }, 0);
 
+  // Fallback to highest product shipping charge if API is pending or zero
+  const effectiveShipping = shippingCharge > 0 
+    ? shippingCharge 
+    : Math.max(0, ...cart.map((it) => Number((it.product as any)?.shippingCharge) || 0));
+
   const handleProceedToCheckout = () => {
     if (cart.length === 0) {
       alert("Your cart is empty. Please add items to proceed.");
@@ -226,9 +231,9 @@ export default function MemberCartPage() {
         address: shippingAddress.trim(),
         totalMrpAmount: totalMrpAmount,
         totalDiscount: totalDiscount,
-        totalAmount: totalPayableAmount + shippingCharge,
+        totalAmount: totalPayableAmount + effectiveShipping,
         totalPv: totalPv,
-        shippingCharge: shippingCharge,
+        shippingCharge: effectiveShipping,
         taxAmount: Math.round(totalGstEstimated),
         billedBy: user?.memberId || "",
         billedByName: user?.fullName || "",
@@ -444,7 +449,7 @@ export default function MemberCartPage() {
                   <div className="flex items-center justify-between text-[#5f5e5e]">
                     <span>Shipping Charges:</span>
                     <span className="font-mono font-bold text-[#006d36]">
-                      {shippingCharge > 0 ? `₹${shippingCharge}` : "₹0 (Free Delivery)"}
+                      {effectiveShipping > 0 ? `₹${effectiveShipping}` : "₹0 (Free Delivery)"}
                     </span>
                   </div>
 
@@ -457,7 +462,7 @@ export default function MemberCartPage() {
                   {/* 6. Final Payable Amount */}
                   <div className="flex items-center justify-between text-sm font-black text-[#1a1c1c] pt-2 border-t border-gray-200">
                     <span>Final Payable Amount:</span>
-                    <span className="font-mono text-base text-[#006d36]">₹{(totalPayableAmount + shippingCharge).toLocaleString("en-IN")}</span>
+                    <span className="font-mono text-base text-[#006d36]">₹{(totalPayableAmount + effectiveShipping).toLocaleString("en-IN")}</span>
                   </div>
                 </div>
 

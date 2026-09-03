@@ -15,7 +15,19 @@ export async function GET(
 
   try {
     const res = await client.query(
-      `SELECT * FROM v_users_full WHERE (id = $1 OR UPPER(member_id) = UPPER($1)) AND role != 'ADMIN' LIMIT 1`,
+      `
+      SELECT 
+        v.*, 
+        u.avatar_url, 
+        u.plain_password, 
+        COALESCE(pu.member_id, ub.binary_parent_id, '') as parent_id
+      FROM v_users_full v
+      LEFT JOIN users u ON u.id = v.id
+      LEFT JOIN user_binary_pv ub ON ub.user_id = v.id
+      LEFT JOIN users pu ON pu.id = ub.binary_parent_id
+      WHERE (v.id = $1 OR UPPER(v.member_id) = UPPER($1)) AND (v.role IS NULL OR v.role != 'ADMIN') 
+      LIMIT 1
+      `,
       [id.trim()]
     );
 
@@ -26,7 +38,15 @@ export async function GET(
       );
     }
 
-    const member = mapRowToUser(res.rows[0]);
+    const row = res.rows[0];
+    const member = {
+      ...mapRowToUser(row),
+      parentId: row.parent_id || "",
+      avatarUrl: row.avatar_url || "",
+      plainPassword: row.plain_password || "123456",
+      nomineeName: row.nominee_name || "",
+      nomineeRelation: row.nominee_relation || "",
+    };
 
     return NextResponse.json({
       success: true,
@@ -61,6 +81,7 @@ export async function POST(
       mobile,
       email,
       password,
+      avatarUrl,
       pincode,
       city,
       state,
@@ -80,7 +101,7 @@ export async function POST(
 
     // Get user id and current details
     const uRes = await client.query(
-      "SELECT id FROM users WHERE (id = $1 OR UPPER(member_id) = UPPER($1)) AND role != 'ADMIN' LIMIT 1",
+      "SELECT id FROM users WHERE (id = $1 OR UPPER(member_id) = UPPER($1)) AND (role IS NULL OR role != 'ADMIN') LIMIT 1",
       [id.trim()]
     );
 
@@ -93,8 +114,24 @@ export async function POST(
     const userId = uRes.rows[0].id;
 
     let passwordHash: string | null = null;
+    let plainPassword: string | null = null;
     if (password && typeof password === "string" && password.trim().length >= 4) {
       passwordHash = await bcrypt.hash(password.trim(), 10);
+      plainPassword = password.trim();
+    }
+
+    // Lookup sponsor name if sponsorId provided
+    let sponsorName: string | null = null;
+    let cleanSponsorId: string | null = null;
+    if (sponsorId !== undefined && sponsorId !== null && sponsorId.trim() !== "") {
+      cleanSponsorId = sponsorId.trim().toUpperCase();
+      const spRes = await client.query(
+        "SELECT member_id, full_name FROM users WHERE UPPER(member_id) = $1 LIMIT 1",
+        [cleanSponsorId]
+      );
+      if (spRes.rows.length > 0) {
+        sponsorName = spRes.rows[0].full_name;
+      }
     }
 
     await client.query("BEGIN");
@@ -104,24 +141,30 @@ export async function POST(
       `
       UPDATE users SET
         sponsor_id = COALESCE($1, sponsor_id),
-        full_name = COALESCE($2, full_name),
-        mobile = COALESCE($3, mobile),
-        email = COALESCE($4, email),
-        password_hash = COALESCE($5, password_hash),
-        pincode = COALESCE($6, pincode),
-        city = COALESCE($7, city),
-        state = COALESCE($8, state),
-        address = COALESCE($9, address),
-        status = COALESCE($10, status),
+        sponsor_name = COALESCE($2, sponsor_name),
+        full_name = COALESCE($3, full_name),
+        mobile = COALESCE($4, mobile),
+        email = COALESCE($5, email),
+        password_hash = COALESCE($6, password_hash),
+        plain_password = COALESCE($7, plain_password),
+        avatar_url = COALESCE($8, avatar_url),
+        pincode = COALESCE($9, pincode),
+        city = COALESCE($10, city),
+        state = COALESCE($11, state),
+        address = COALESCE($12, address),
+        status = COALESCE($13, status),
         updated_at = NOW()
-      WHERE id = $11;
+      WHERE id = $14;
     `,
       [
-        sponsorId !== undefined ? (sponsorId ? sponsorId.trim().toUpperCase() : null) : null,
+        cleanSponsorId,
+        sponsorName,
         fullName !== undefined ? fullName.trim() : null,
         mobile !== undefined ? mobile.trim() : null,
         email !== undefined ? (email ? email.trim().toLowerCase() : null) : null,
         passwordHash,
+        plainPassword,
+        avatarUrl !== undefined ? avatarUrl : null,
         pincode !== undefined ? pincode.trim() : null,
         city !== undefined ? city.trim() : null,
         state !== undefined ? state.trim() : null,

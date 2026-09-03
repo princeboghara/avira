@@ -1,22 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET /api/settings/shipping - Read current shipping charge
 export async function GET() {
   try {
     const client = await pool.connect();
     try {
+      const shipRes = await client.query(
+        "SELECT default_shipping_charge FROM shipping_settings ORDER BY id ASC LIMIT 1"
+      );
+      if (shipRes.rows.length > 0 && shipRes.rows[0].default_shipping_charge !== null) {
+        const charge = Number(shipRes.rows[0].default_shipping_charge) || 0;
+        return NextResponse.json(
+          { success: true, shippingCharge: charge },
+          { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" } }
+        );
+      }
       const res = await client.query(
         "SELECT value FROM system_settings WHERE key = 'shipping_charge' LIMIT 1"
       );
       const charge = res.rows.length > 0 ? Number(res.rows[0].value) || 0 : 0;
-      return NextResponse.json({ success: true, shippingCharge: charge });
+      return NextResponse.json(
+        { success: true, shippingCharge: charge },
+        { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" } }
+      );
     } finally {
       client.release();
     }
   } catch (err: any) {
     console.error("Error fetching shipping charge:", err);
-    return NextResponse.json({ success: true, shippingCharge: 0 });
+    return NextResponse.json(
+      { success: true, shippingCharge: 0 },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" } }
+    );
   }
 }
 

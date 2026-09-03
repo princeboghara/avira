@@ -275,6 +275,7 @@ export default function AdminApproveOrdersPage() {
                   <th className="py-3.5 px-4">NAME</th>
                   <th className="py-3.5 px-4">AMOUNT (₹)</th>
                   <th className="py-3.5 px-4">PV</th>
+                  <th className="py-3.5 px-4">PAYMENT METHOD</th>
                   <th className="py-3.5 px-4">PAYMENT SLIP</th>
                   <th className="py-3.5 px-4">TRANSACTION ID</th>
                   <th className="py-3.5 px-4 text-right">Actions</th>
@@ -283,14 +284,14 @@ export default function AdminApproveOrdersPage() {
               <tbody className="divide-y divide-[#e2e2e2]/60 font-medium">
                 {loading ? (
                   <tr>
-                    <td colSpan={10} className="py-12 text-center text-[#006d36]">
+                    <td colSpan={11} className="py-12 text-center text-[#006d36]">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                       <span>Loading orders...</span>
                     </td>
                   </tr>
                 ) : displayedOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="py-10 text-center text-[#5f5e5e]">
+                    <td colSpan={11} className="py-10 text-center text-[#5f5e5e]">
                       {statusFilter === "PENDING"
                         ? "No pending orders waiting for approval. All caught up!"
                         : "No rejected orders found."}
@@ -307,6 +308,11 @@ export default function AdminApproveOrdersPage() {
                           minute: "2-digit",
                         })
                       : "Recent";
+
+                    const isRazorpay =
+                      ord.transactionId?.startsWith("pay_") ||
+                      ord.transactionId?.toLowerCase().includes("rzp") ||
+                      ord.transactionId?.toLowerCase().includes("razorpay");
 
                     return (
                       <tr key={ord.id} className="hover:bg-emerald-50/30 transition-colors">
@@ -355,6 +361,23 @@ export default function AdminApproveOrdersPage() {
                         {/* 7. PV */}
                         <td className="py-3.5 px-4 font-mono font-black text-[#006d36] whitespace-nowrap">
                           {ord.pv} PV
+                        </td>
+
+                        {/* PAYMENT METHOD */}
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          {isRazorpay ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                              Razorpay Online
+                            </span>
+                          ) : ord.paymentSlip ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-[#006d36] border border-emerald-200">
+                              Bank Slip / QR
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                              Fund Wallet
+                            </span>
+                          )}
                         </td>
 
                         {/* 8. PAYMENT SLIP (Clickable Modal Preview) */}

@@ -10,13 +10,30 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const memberId = searchParams.get("memberId")?.trim().toUpperCase();
-
-  if (!memberId) {
-    return NextResponse.json({ success: false, message: "Member ID is required" }, { status: 400 });
-  }
-
   const client = await pool.connect();
+
   try {
+    if (!memberId || searchParams.get("history") === "true") {
+      const histRes = await client.query(
+        `SELECT id, type, member_id, full_name, pv, mode, note, created_at
+         FROM pv_transfer_history
+         WHERE type = 'SELF_PV'
+         ORDER BY created_at DESC LIMIT 50`
+      );
+      return NextResponse.json({
+        success: true,
+        history: histRes.rows.map((r) => ({
+          id: r.id,
+          memberId: r.member_id,
+          fullName: r.full_name,
+          pv: parseFloat(r.pv),
+          mode: r.mode,
+          note: r.note,
+          createdAt: r.created_at,
+        })),
+      });
+    }
+
     const res = await client.query(
       `SELECT id, member_id, full_name, mobile, status, personal_pv, daily_capping, wallet_balance, created_at
        FROM v_users_full 
@@ -95,7 +112,7 @@ export async function POST(req: NextRequest) {
     const user = userRes.rows[0];
 
     // Credit PV directly through binary engine
-    const modeLabel = shouldPropagate ? "with Binary Upline Propagation" : "Member Account Only (No Upline Flow)";
+    const modeLabel = shouldPropagate ? "Full Tree" : "Member Only";
     const packageName = note || `Admin Self PV Transfer: +${pv} PV (${modeLabel})`;
     const result = await creditPurchasePV(
       user.id,
@@ -106,6 +123,13 @@ export async function POST(req: NextRequest) {
       [{ name: `Self PV Transfer (+${pv} PV)`, quantity: 1, mrp: 0, price: 0, discountPrice: 0, pv, subtotalMrp: 0, subtotalPv: pv }],
       false,
       shouldPropagate
+    );
+
+    // Save into history
+    await client.query(
+      `INSERT INTO pv_transfer_history (type, member_id, full_name, pv, mode, note)
+       VALUES ('SELF_PV', $1, $2, $3, $4, $5)`,
+      [memberIdClean, user.full_name, pv, shouldPropagate ? "FULL_TREE" : "MEMBER_ONLY", note || ""]
     );
 
     return NextResponse.json({

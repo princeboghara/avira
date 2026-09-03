@@ -9,13 +9,31 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const memberId = searchParams.get("memberId")?.trim().toUpperCase();
-
-  if (!memberId) {
-    return NextResponse.json({ success: false, message: "Member ID is required" }, { status: 400 });
-  }
-
   const client = await pool.connect();
+
   try {
+    if (!memberId || searchParams.get("history") === "true") {
+      const histRes = await client.query(
+        `SELECT id, type, member_id, full_name, pv, leg, mode, note, created_at
+         FROM pv_transfer_history
+         WHERE type = 'POWER_PV'
+         ORDER BY created_at DESC LIMIT 50`
+      );
+      return NextResponse.json({
+        success: true,
+        history: histRes.rows.map((r) => ({
+          id: r.id,
+          memberId: r.member_id,
+          fullName: r.full_name,
+          pv: parseFloat(r.pv),
+          leg: r.leg,
+          mode: r.mode,
+          note: r.note,
+          createdAt: r.created_at,
+        })),
+      });
+    }
+
     const res = await client.query(
       `SELECT id, member_id, full_name, mobile, status, personal_pv, left_pv, right_pv, carry_left_pv, carry_right_pv
        FROM v_users_full 
@@ -158,6 +176,13 @@ export async function POST(req: NextRequest) {
         parentId = parent.binary_parent_id;
       }
     }
+
+    // Save into history
+    await client.query(
+      `INSERT INTO pv_transfer_history (type, member_id, full_name, pv, leg, mode, note)
+       VALUES ('POWER_PV', $1, $2, $3, $4, $5, $6)`,
+      [memberIdClean, user.full_name, pv, targetLeg, shouldPropagate ? "FULL_TREE" : "MEMBER_ONLY", note || ""]
+    );
 
     await client.query("COMMIT");
 

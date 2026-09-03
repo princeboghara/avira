@@ -58,6 +58,7 @@ export default function AdminKycMasterPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [processingKey, setProcessingKey] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Active Review Modal for single member
   const [reviewMember, setReviewMember] = useState<KycSubmission | null>(null);
@@ -117,6 +118,13 @@ export default function AdminKycMasterPage() {
 
       const data = await res.json();
       if (data.success) {
+        const label = section === "aadhaar" ? "Aadhaar Card" : section === "pan" ? "PAN Card" : section === "bank" ? "Bank Proof" : "KYC Submission";
+        setActionNotice({
+          type: status === "VERIFIED" ? "success" : "error",
+          text: status === "VERIFIED" ? `✓ ${label} marked as VERIFIED!` : `✕ ${label} marked as REJECTED!`,
+        });
+        setTimeout(() => setActionNotice(null), 4000);
+
         // Refresh local lists
         await loadKyc();
         if (reviewMember && reviewMember.memberId === memberId) {
@@ -169,18 +177,24 @@ export default function AdminKycMasterPage() {
       align: "center",
       cell: (row) => {
         const s = row.aadhaarStatus || "PENDING";
+        const hasDoc = !!row.aadhaarFrontUrl;
         return (
-          <span
-            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-              s === "VERIFIED"
-                ? "bg-emerald-100 text-[#006d36]"
-                : s === "REJECTED"
-                ? "bg-red-100 text-red-700"
-                : "bg-amber-100 text-amber-800"
-            }`}
-          >
-            {s}
-          </span>
+          <div className="flex flex-col items-center gap-0.5">
+            <span
+              className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                s === "VERIFIED"
+                  ? "bg-emerald-100 text-[#006d36]"
+                  : s === "REJECTED"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-amber-100 text-amber-800"
+              }`}
+            >
+              {s}
+            </span>
+            <span className="text-[10px] text-gray-500 font-medium">
+              {hasDoc ? "✓ Proof Attached" : "No File"}
+            </span>
+          </div>
         );
       },
     },
@@ -191,18 +205,24 @@ export default function AdminKycMasterPage() {
       align: "center",
       cell: (row) => {
         const s = row.panStatus || "PENDING";
+        const hasDoc = !!row.panCardUrl;
         return (
-          <span
-            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-              s === "VERIFIED"
-                ? "bg-emerald-100 text-[#006d36]"
-                : s === "REJECTED"
-                ? "bg-red-100 text-red-700"
-                : "bg-amber-100 text-amber-800"
-            }`}
-          >
-            {s}
-          </span>
+          <div className="flex flex-col items-center gap-0.5">
+            <span
+              className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                s === "VERIFIED"
+                  ? "bg-emerald-100 text-[#006d36]"
+                  : s === "REJECTED"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-amber-100 text-amber-800"
+              }`}
+            >
+              {s}
+            </span>
+            <span className="text-[10px] text-gray-500 font-medium">
+              {hasDoc ? "✓ Proof Attached" : "No File"}
+            </span>
+          </div>
         );
       },
     },
@@ -213,18 +233,24 @@ export default function AdminKycMasterPage() {
       align: "center",
       cell: (row) => {
         const s = row.bankStatus || "PENDING";
+        const hasDoc = !!row.bankProofUrl;
         return (
-          <span
-            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-              s === "VERIFIED"
-                ? "bg-emerald-100 text-[#006d36]"
-                : s === "REJECTED"
-                ? "bg-red-100 text-red-700"
-                : "bg-amber-100 text-amber-800"
-            }`}
-          >
-            {s}
-          </span>
+          <div className="flex flex-col items-center gap-0.5">
+            <span
+              className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                s === "VERIFIED"
+                  ? "bg-emerald-100 text-[#006d36]"
+                  : s === "REJECTED"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-amber-100 text-amber-800"
+              }`}
+            >
+              {s}
+            </span>
+            <span className="text-[10px] text-gray-500 font-medium">
+              {hasDoc ? "✓ Proof Attached" : "No File"}
+            </span>
+          </div>
         );
       },
     },
@@ -269,19 +295,19 @@ export default function AdminKycMasterPage() {
 
   return (
     <AdminLayout onRefresh={loadKyc} refreshing={refreshing}>
-      <div className="space-y-8 max-w-7xl mx-auto pb-12">
-        {/* Header */}
-        <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#006d36] via-[#005a2c] to-[#4f378a] text-white shadow-xl shadow-[#006d36]/15 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="space-y-6 max-w-7xl mx-auto pb-12">
+        {/* Neumorphic Header Card */}
+        <div className="neo-card rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-white/80">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-emerald-200 text-xs font-bold font-mono">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full neo-inset text-[#006d36] text-xs font-bold font-mono border border-emerald-200/50">
               <FileCheck className="w-4 h-4" />
               <span>Identity Verification & Compliance</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0f172a] tracking-tight">
               KYC Master Verification
             </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl">
-              Inspect government identity credentials (Aadhaar, PAN, Bank Passbook) and verify or reject submissions with granular feedback.
+            <p className="text-xs sm:text-sm text-[#64748b] max-w-xl font-medium">
+              Inspect government identity credentials (Aadhaar, PAN, Bank Passbook) and individually accept or reject each document with instant audit feedback.
             </p>
           </div>
         </div>
@@ -337,6 +363,23 @@ export default function AdminKycMasterPage() {
                   <span className="hidden sm:inline">Close</span>
                 </button>
               </div>
+
+              {actionNotice && (
+                <div
+                  className={`mx-4 sm:mx-6 mt-4 p-3 rounded-2xl flex items-center gap-2 text-xs font-bold shadow-xs animate-fadeIn ${
+                    actionNotice.type === "success"
+                      ? "bg-emerald-50 text-[#006d36] border border-emerald-300"
+                      : "bg-red-50 text-red-700 border border-red-300"
+                  }`}
+                >
+                  {actionNotice.type === "success" ? (
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-[#006d36]" />
+                  ) : (
+                    <XCircle className="w-4 h-4 shrink-0 text-red-600" />
+                  )}
+                  <span>{actionNotice.text}</span>
+                </div>
+              )}
 
               {/* Scrollable Modal Content */}
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar">
@@ -429,23 +472,61 @@ export default function AdminKycMasterPage() {
                   </div>
 
                   {/* Section Actions */}
-                  <div className="flex gap-2 pt-2 border-t border-gray-200">
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateStatus(reviewMember.memberId, "aadhaar", "VERIFIED")}
-                      className="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Verify</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRejectDialog({ section: "aadhaar", sectionName: "Aadhaar Card" })}
-                      className="flex-1 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                      <span>Reject</span>
-                    </button>
+                  <div className="pt-2 border-t border-gray-200">
+                    {reviewMember.aadhaarStatus === "VERIFIED" ? (
+                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-100/90 text-[#006d36] border border-emerald-300 shadow-2xs">
+                        <div className="flex items-center gap-1.5 font-black text-xs">
+                          <CheckCircle2 className="w-4 h-4 text-[#006d36]" />
+                          <span>✓ Verified Sign</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setRejectDialog({ section: "aadhaar", sectionName: "Aadhaar Card" })}
+                          className="text-[10px] font-bold text-red-600 hover:text-red-700 underline cursor-pointer"
+                        >
+                          Change to Reject
+                        </button>
+                      </div>
+                    ) : reviewMember.aadhaarStatus === "REJECTED" ? (
+                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-red-100/90 text-red-700 border border-red-300 shadow-2xs">
+                        <div className="flex items-center gap-1.5 font-black text-xs">
+                          <XCircle className="w-4 h-4 text-red-600" />
+                          <span>✕ Rejected Sign</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateStatus(reviewMember.memberId, "aadhaar", "VERIFIED")}
+                          className="text-[10px] font-bold text-emerald-700 hover:text-emerald-800 underline cursor-pointer"
+                        >
+                          Change to Verify
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          disabled={!!processingKey}
+                          onClick={() => handleUpdateStatus(reviewMember.memberId, "aadhaar", "VERIFIED")}
+                          className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer disabled:opacity-60 shadow-xs active:scale-95 transition-all"
+                        >
+                          {processingKey === `${reviewMember.memberId}_aadhaar_VERIFIED` ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Check className="w-3.5 h-3.5" />
+                          )}
+                          <span>Verify</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!!processingKey}
+                          onClick={() => setRejectDialog({ section: "aadhaar", sectionName: "Aadhaar Card" })}
+                          className="flex-1 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer disabled:opacity-60 transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>Reject</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -508,23 +589,61 @@ export default function AdminKycMasterPage() {
                   </div>
 
                   {/* Section Actions */}
-                  <div className="flex gap-2 pt-2 border-t border-gray-200">
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateStatus(reviewMember.memberId, "pan", "VERIFIED")}
-                      className="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Verify</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRejectDialog({ section: "pan", sectionName: "PAN Card" })}
-                      className="flex-1 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                      <span>Reject</span>
-                    </button>
+                  <div className="pt-2 border-t border-gray-200">
+                    {reviewMember.panStatus === "VERIFIED" ? (
+                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-100/90 text-[#006d36] border border-emerald-300 shadow-2xs">
+                        <div className="flex items-center gap-1.5 font-black text-xs">
+                          <CheckCircle2 className="w-4 h-4 text-[#006d36]" />
+                          <span>✓ Verified Sign</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setRejectDialog({ section: "pan", sectionName: "PAN Card" })}
+                          className="text-[10px] font-bold text-red-600 hover:text-red-700 underline cursor-pointer"
+                        >
+                          Change to Reject
+                        </button>
+                      </div>
+                    ) : reviewMember.panStatus === "REJECTED" ? (
+                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-red-100/90 text-red-700 border border-red-300 shadow-2xs">
+                        <div className="flex items-center gap-1.5 font-black text-xs">
+                          <XCircle className="w-4 h-4 text-red-600" />
+                          <span>✕ Rejected Sign</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateStatus(reviewMember.memberId, "pan", "VERIFIED")}
+                          className="text-[10px] font-bold text-emerald-700 hover:text-emerald-800 underline cursor-pointer"
+                        >
+                          Change to Verify
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          disabled={!!processingKey}
+                          onClick={() => handleUpdateStatus(reviewMember.memberId, "pan", "VERIFIED")}
+                          className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer disabled:opacity-60 shadow-xs active:scale-95 transition-all"
+                        >
+                          {processingKey === `${reviewMember.memberId}_pan_VERIFIED` ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Check className="w-3.5 h-3.5" />
+                          )}
+                          <span>Verify</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!!processingKey}
+                          onClick={() => setRejectDialog({ section: "pan", sectionName: "PAN Card" })}
+                          className="flex-1 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer disabled:opacity-60 transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>Reject</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -595,23 +714,61 @@ export default function AdminKycMasterPage() {
                   </div>
 
                   {/* Section Actions */}
-                  <div className="flex gap-2 pt-2 border-t border-gray-200">
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateStatus(reviewMember.memberId, "bank", "VERIFIED")}
-                      className="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Verify</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRejectDialog({ section: "bank", sectionName: "Bank Account" })}
-                      className="flex-1 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                      <span>Reject</span>
-                    </button>
+                  <div className="pt-2 border-t border-gray-200">
+                    {reviewMember.bankStatus === "VERIFIED" ? (
+                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-100/90 text-[#006d36] border border-emerald-300 shadow-2xs">
+                        <div className="flex items-center gap-1.5 font-black text-xs">
+                          <CheckCircle2 className="w-4 h-4 text-[#006d36]" />
+                          <span>✓ Verified Sign</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setRejectDialog({ section: "bank", sectionName: "Bank Account" })}
+                          className="text-[10px] font-bold text-red-600 hover:text-red-700 underline cursor-pointer"
+                        >
+                          Change to Reject
+                        </button>
+                      </div>
+                    ) : reviewMember.bankStatus === "REJECTED" ? (
+                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-red-100/90 text-red-700 border border-red-300 shadow-2xs">
+                        <div className="flex items-center gap-1.5 font-black text-xs">
+                          <XCircle className="w-4 h-4 text-red-600" />
+                          <span>✕ Rejected Sign</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateStatus(reviewMember.memberId, "bank", "VERIFIED")}
+                          className="text-[10px] font-bold text-emerald-700 hover:text-emerald-800 underline cursor-pointer"
+                        >
+                          Change to Verify
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          disabled={!!processingKey}
+                          onClick={() => handleUpdateStatus(reviewMember.memberId, "bank", "VERIFIED")}
+                          className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer disabled:opacity-60 shadow-xs active:scale-95 transition-all"
+                        >
+                          {processingKey === `${reviewMember.memberId}_bank_VERIFIED` ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Check className="w-3.5 h-3.5" />
+                          )}
+                          <span>Verify</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!!processingKey}
+                          onClick={() => setRejectDialog({ section: "bank", sectionName: "Bank Account" })}
+                          className="flex-1 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer disabled:opacity-60 transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>Reject</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -621,24 +778,16 @@ export default function AdminKycMasterPage() {
               {/* OVERALL ACTIONS STICKY FOOTER */}
               <div className="p-4 sm:px-6 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
                 <span className="text-xs text-[#5f5e5e]">
-                  Updating all sections will automatically set overall KYC to <strong>VERIFIED</strong>.
+                  Please review each document individually using the <strong>Verify</strong> or <strong>Reject</strong> buttons above.
                 </span>
 
                 <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
                   <button
                     type="button"
                     onClick={() => setReviewMember(null)}
-                    className="px-4 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-200 text-gray-700 font-bold text-xs cursor-pointer transition-colors active:scale-95"
+                    className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs cursor-pointer transition-colors active:scale-95 shadow-sm"
                   >
-                    Close Window
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleUpdateStatus(reviewMember.memberId, "overall", "VERIFIED")}
-                    className="px-5 py-2.5 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs active:scale-95 transition-all"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Approve & Verify All Documents</span>
+                    Done Reviewing (Close)
                   </button>
                 </div>
               </div>

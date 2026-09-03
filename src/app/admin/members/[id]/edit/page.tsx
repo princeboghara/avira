@@ -18,6 +18,11 @@ import {
   AlertCircle,
   CheckCircle2,
   AlertTriangle,
+  Eye,
+  EyeOff,
+  Camera,
+  Upload,
+  Users,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 
@@ -35,6 +40,8 @@ export default function EditMemberDetailPage({ params }: EditMemberPageProps) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [uploadingPfp, setUploadingPfp] = useState(false);
 
   // Pincode auto-lookup loading state
   const [pincodeLoading, setPincodeLoading] = useState(false);
@@ -43,6 +50,8 @@ export default function EditMemberDetailPage({ params }: EditMemberPageProps) {
   const [form, setForm] = useState({
     memberId: "",
     sponsorId: "",
+    parentId: "",
+    avatarUrl: "",
     fullName: "",
     mobile: "",
     email: "",
@@ -76,10 +85,12 @@ export default function EditMemberDetailPage({ params }: EditMemberPageProps) {
           setForm({
             memberId: found.memberId || "",
             sponsorId: found.sponsorId || "",
+            parentId: found.parentId || "",
+            avatarUrl: found.avatarUrl || "",
             fullName: found.fullName || "",
             mobile: found.mobile || "",
             email: found.email || "",
-            password: "",
+            password: found.plainPassword || "123456",
             pincode: found.pincode || "",
             city: found.city || "",
             state: found.state || "",
@@ -109,6 +120,40 @@ export default function EditMemberDetailPage({ params }: EditMemberPageProps) {
 
     loadMember();
   }, [targetId]);
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5MB");
+      return;
+    }
+
+    setUploadingPfp(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result as string;
+      setForm((prev) => ({ ...prev, avatarUrl: base64 }));
+
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ file: base64, folder: "profiles" }),
+        });
+        const data = await res.json();
+        if (data.success && data.url) {
+          setForm((prev) => ({ ...prev, avatarUrl: data.url }));
+        }
+      } catch (err) {
+        console.error("Upload avatar error:", err);
+      } finally {
+        setUploadingPfp(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Handle Pincode Auto Lookup
   const handlePincodeChange = async (pin: string) => {
@@ -227,8 +272,42 @@ export default function EditMemberDetailPage({ params }: EditMemberPageProps) {
           <div className="p-6 sm:p-8 rounded-3xl bg-white border border-gray-100 shadow-sm space-y-6">
             <h2 className="text-base font-bold text-[#1a1c1c] flex items-center gap-2 pb-3 border-b border-gray-100">
               <UserIcon className="w-4 h-4 text-[#006d36]" />
-              <span>1. Account Identity & Direct Referral Sponsor</span>
+              <span>1. Account Identity, Profile Photo & Placement</span>
             </h2>
+
+            {/* Profile Picture (PFP) Upload */}
+            <div className="flex items-center gap-5 p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+              <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-white border-2 border-emerald-300 shadow-sm flex items-center justify-center shrink-0">
+                {form.avatarUrl ? (
+                  <img
+                    src={form.avatarUrl}
+                    alt="Profile Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <UserIcon className="w-10 h-10 text-[#006d36]/40" />
+                )}
+                {uploadingPfp && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1">
+                <span className="block text-xs font-bold text-[#1a1c1c]">Profile Photo (PFP)</span>
+                <p className="text-[11px] text-[#5f5e5e]">Upload or update associate avatar picture.</p>
+                <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-emerald-200 text-[#006d36] font-bold text-xs hover:bg-emerald-50 cursor-pointer shadow-xs transition-all mt-1">
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>{form.avatarUrl ? "Change Photo" : "Upload Photo"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
@@ -253,6 +332,19 @@ export default function EditMemberDetailPage({ params }: EditMemberPageProps) {
                   value={form.sponsorId}
                   onChange={(e) => setForm({ ...form, sponsorId: e.target.value.toUpperCase() })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 font-mono font-bold text-xs text-[#1a1c1c] uppercase outline-hidden focus:border-[#006d36] focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#1a1c1c] mb-1.5">
+                  Binary Parent ID (View Only):
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  disabled
+                  value={form.parentId || "ROOT"}
+                  className="w-full bg-gray-100 border border-gray-200 rounded-xl py-2.5 px-3 font-mono font-bold text-xs text-gray-600 cursor-not-allowed"
                 />
               </div>
 
@@ -311,20 +403,28 @@ export default function EditMemberDetailPage({ params }: EditMemberPageProps) {
               </div>
             </div>
 
-            {/* Reset Password */}
+            {/* View / Change Password */}
             <div className="pt-2">
               <label className="block text-xs font-bold text-[#1a1c1c] mb-1.5">
-                Reset Member Password (Leave blank to keep existing password):
+                Member Password (View / Edit):
               </label>
               <div className="relative max-w-sm">
                 <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
-                  type="password"
-                  placeholder="Enter new password..."
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password..."
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 pl-9 pr-3 text-xs text-[#1a1c1c] outline-hidden focus:border-[#006d36] focus:bg-white"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 pl-9 pr-10 text-xs font-mono font-bold text-[#1a1c1c] outline-hidden focus:border-[#006d36] focus:bg-white"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 cursor-pointer"
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
           </div>
@@ -496,6 +596,42 @@ export default function EditMemberDetailPage({ params }: EditMemberPageProps) {
                   value={form.upiId}
                   onChange={(e) => setForm({ ...form, upiId: e.target.value })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 text-xs text-[#1a1c1c] outline-hidden focus:border-[#006d36] focus:bg-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 4: NOMINEE DETAILS */}
+          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-gray-100 shadow-sm space-y-6">
+            <h2 className="text-base font-bold text-[#1a1c1c] flex items-center gap-2 pb-3 border-b border-gray-100">
+              <Users className="w-4 h-4 text-[#006d36]" />
+              <span>4. Nominee Details</span>
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-[#1a1c1c] mb-1.5">
+                  Nominee Full Legal Name:
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Smt. Asha Sharma"
+                  value={form.nomineeName}
+                  onChange={(e) => setForm({ ...form, nomineeName: e.target.value })}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 text-xs font-bold text-[#1a1c1c] outline-hidden focus:border-[#006d36] focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#1a1c1c] mb-1.5">
+                  Nominee Relationship:
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Spouse / Mother / Son / Daughter"
+                  value={form.nomineeRelation}
+                  onChange={(e) => setForm({ ...form, nomineeRelation: e.target.value })}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 text-xs font-bold text-[#1a1c1c] outline-hidden focus:border-[#006d36] focus:bg-white"
                 />
               </div>
             </div>

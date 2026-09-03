@@ -109,14 +109,51 @@ export default function AdminItemManagerPage() {
     }
   };
 
+  interface ProductItem {
+    id: string;
+    category: string;
+    name: string;
+    hsnCode?: string;
+    hsnGst?: number;
+    stock: number;
+    pv: number;
+    amount: number;
+    discountPrice: number;
+    imageUrl?: string;
+    netQuantity?: string;
+    inStock?: boolean;
+    createdAt?: string;
+  }
+
   const columns: Column<ProductItem>[] = [
     {
-      header: "Product / Formulation",
+      header: "Sr No",
+      accessorKey: "id",
+      sortable: false,
+      align: "center",
+      cell: (_row, index) => (
+        <span className="font-mono text-xs font-bold text-slate-500">
+          {index ?? 1}
+        </span>
+      ),
+    },
+    {
+      header: "Category",
+      accessorKey: "category",
+      sortable: true,
+      cell: (row) => (
+        <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-50 text-[#006d36] border border-emerald-200">
+          {row.category || "General"}
+        </span>
+      ),
+    },
+    {
+      header: "Product Name",
       accessorKey: "name",
       sortable: true,
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <div className="w-12 h-14 rounded-xl bg-gray-50/80 border border-gray-200/60 flex items-center justify-center overflow-hidden shrink-0 p-1">
+          <div className="w-12 h-12 rounded-xl bg-white neo-inset border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 p-1">
             {row.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={row.imageUrl} alt={row.name} className="w-full h-full object-contain" />
@@ -125,61 +162,74 @@ export default function AdminItemManagerPage() {
             )}
           </div>
           <div>
-            <div className="font-bold text-[#1a1c1c] text-xs">{row.name}</div>
-            <div className="text-[10px] text-[#5f5e5e] font-mono">
-              HSN: {row.hsnCode || "3004"} • {row.category}
+            <div className="font-bold text-[#0f172a] text-xs leading-snug">{row.name}</div>
+            <div className="text-[10px] text-[#64748b] font-mono">
+              {row.netQuantity || "1 Unit"}
             </div>
           </div>
         </div>
       ),
     },
     {
-      header: "Price (MRP)",
+      header: "Price",
       accessorKey: "amount",
       sortable: true,
       align: "right",
       cell: (row) => (
-        <span className="font-mono font-bold text-xs text-[#1a1c1c]">
-          ₹{row.amount.toLocaleString("en-IN")}
-        </span>
+        <div className="text-right">
+          <div className="font-mono font-black text-xs text-[#006d36]">
+            ₹{(row.discountPrice && row.discountPrice < row.amount ? row.discountPrice : row.amount).toLocaleString("en-IN")}
+          </div>
+          {row.discountPrice && row.discountPrice < row.amount && (
+            <div className="font-mono text-[10px] text-slate-400 line-through">
+              MRP: ₹{row.amount.toLocaleString("en-IN")}
+            </div>
+          )}
+        </div>
       ),
     },
     {
-      header: "Associate Price",
-      accessorKey: "discountPrice",
-      sortable: true,
-      align: "right",
-      cell: (row) => (
-        <span className="font-mono font-black text-xs text-[#006d36]">
-          ₹{row.discountPrice.toLocaleString("en-IN")}
-        </span>
-      ),
-    },
-    {
-      header: "Point Volume",
+      header: "PV",
       accessorKey: "pv",
       sortable: true,
       align: "center",
       cell: (row) => (
-        <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
+        <span className="font-mono font-bold text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200">
           {row.pv} PV
         </span>
       ),
     },
     {
-      header: "Stock",
-      accessorKey: "stock",
+      header: "HSN & GST",
+      accessorKey: "hsnCode",
+      sortable: true,
+      cell: (row) => (
+        <div className="font-mono text-xs">
+          <span className="font-bold text-[#0f172a] block">HSN: {row.hsnCode || "3004"}</span>
+          <span className="text-[10px] text-[#64748b]">GST: {row.hsnGst || 5}%</span>
+        </div>
+      ),
+    },
+    {
+      header: "Current Status",
+      accessorKey: "inStock",
       sortable: true,
       align: "center",
-      cell: (row) => (
-        <span
-          className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md ${
-            row.stock > 10 ? "bg-gray-100 text-[#1a1c1c]" : "bg-red-100 text-red-700"
-          }`}
-        >
-          {row.stock} units
-        </span>
-      ),
+      cell: (row) => {
+        const isLive = row.inStock !== false;
+        return (
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase ${
+              isLive
+                ? "bg-emerald-100 text-[#006d36] border border-emerald-300"
+                : "bg-slate-200 text-slate-700 border border-slate-300"
+            }`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${isLive ? "bg-[#006d36] animate-pulse" : "bg-slate-500"}`} />
+            <span>{isLive ? "Live" : "Retired Product"}</span>
+          </span>
+        );
+      },
     },
     {
       header: "Actions",
@@ -189,7 +239,7 @@ export default function AdminItemManagerPage() {
         <div className="flex items-center justify-end gap-1.5">
           <Link
             href={`/admin/products/${row.id}`}
-            className="p-1.5 rounded-lg border border-gray-200 text-[#006d36] hover:bg-emerald-50 cursor-pointer"
+            className="p-2 rounded-xl bg-white border border-slate-200 text-[#006d36] hover:bg-emerald-50 shadow-xs cursor-pointer transition-all"
             title="Edit Product"
           >
             <Edit2 className="w-3.5 h-3.5" />
@@ -197,7 +247,7 @@ export default function AdminItemManagerPage() {
           <button
             type="button"
             onClick={() => handleDeleteItem(row)}
-            className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 cursor-pointer"
+            className="p-2 rounded-xl bg-white border border-red-200 text-red-600 hover:bg-red-50 shadow-xs cursor-pointer transition-all"
             title="Delete Product"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -209,25 +259,25 @@ export default function AdminItemManagerPage() {
 
   return (
     <AdminLayout onRefresh={loadItems} refreshing={refreshing}>
-      <div className="space-y-8 max-w-7xl mx-auto pb-12">
-        {/* Header */}
-        <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#006d36] via-[#005a2c] to-[#4f378a] text-white shadow-xl shadow-[#006d36]/15 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="space-y-6 max-w-7xl mx-auto pb-12">
+        {/* Neumorphic Top Card */}
+        <div className="neo-card rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-white/80">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-emerald-200 text-xs font-bold font-mono">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full neo-inset text-[#006d36] text-xs font-bold font-mono border border-emerald-200/50">
               <Package className="w-4 h-4" />
               <span>Catalog & Botanical Inventory</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0f172a] tracking-tight">
               Product Master Manager
             </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl">
-              Configure botanical formulas, MRP, associate discounted prices, PV points allocation, and HSN GST rates.
+            <p className="text-xs sm:text-sm text-[#64748b] max-w-xl font-medium">
+              Configure botanical formulas, MRP, associate discounted prices, PV points allocation, HSN GST rates, and live/retired store visibility.
             </p>
           </div>
 
           <Link
             href="/admin/products/new"
-            className="px-5 py-3 rounded-2xl bg-white text-[#006d36] font-bold text-xs shadow-md hover:bg-emerald-50 active:scale-95 transition-all flex items-center gap-2"
+            className="neo-btn-primary px-5 py-3 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-[4px_4px_14px_rgba(0,109,54,0.3),-2px_-2px_8px_#ffffff] cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add New Product</span>
@@ -266,6 +316,7 @@ export default function AdminItemManagerPage() {
             searchPlaceholder="Search products by Name, Category, HSN Code..."
             searchableKeys={["name", "category", "hsnCode"]}
             initialPageSize={10}
+            showIndex={false}
             onBulkDelete={handleBulkDelete}
             title="Products Master Catalog"
             emptyMessage="No products found in this category."

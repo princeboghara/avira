@@ -81,6 +81,7 @@ export default function AdminSidebar({
         { name: "Product Master", href: "/admin/products", icon: Package },
         { name: "Categories Master", href: "/admin/products/categories", icon: Layers },
         { name: "HSN & GST Setup", href: "/admin/products/hsn", icon: Percent },
+        { name: "Shipping Charge Master", href: "/admin/shipping", icon: Truck },
       ],
     },
     {
@@ -111,7 +112,6 @@ export default function AdminSidebar({
       icon: Wallet,
       links: [
         { name: "Fund Deposit Requests", href: "/admin/funds", icon: CheckCircle },
-        { name: "Withdraw Master", href: "/admin/withdraw", icon: Wallet },
       ],
     },
     {
@@ -137,7 +137,6 @@ export default function AdminSidebar({
       icon: Award,
       links: [
         { name: "Leadership Bonus Setup", href: "/admin/settings/leadership", icon: Award },
-        { name: "Binary Cutoff Engine", href: "/admin/binary", icon: TrendingUp },
       ],
     },
   ];
@@ -159,21 +158,23 @@ export default function AdminSidebar({
     setOpenCategories((prev) => ({ ...prev, [cat]: !prev[cat] }));
   };
 
+  const isWithdrawActive = pathname.startsWith("/admin/withdraw");
+
   return (
-    <div className="flex flex-col h-full justify-between glass-panel select-none">
+    <div className="flex flex-col h-full justify-between bg-[#f4f7f6] border-r border-white/80 shadow-[6px_0_24px_rgba(166,180,200,0.18)] select-none">
       {/* 1. TOP LOGO & BRAND */}
-      <div className="p-4 border-b border-gray-200/60 bg-gradient-to-b from-white/80 via-white/50 to-transparent flex items-center gap-3">
+      <div className="p-4 border-b border-[#e2e8f0]/60 bg-gradient-to-b from-white/90 via-[#f8faf9] to-[#f4f7f6] flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/avira-logo.png"
           alt="Avira Lifecare Global Private Limited"
-          className="h-11 w-auto object-contain shrink-0 drop-shadow-2xs"
+          className="h-11 w-auto object-contain shrink-0 drop-shadow-sm"
         />
         <div className="overflow-hidden">
           <h2 className="font-heading font-extrabold text-xs text-[#0f172a] tracking-tight leading-tight truncate">
             AVIRA LIFECARE
           </h2>
-          <span className="text-[8px] font-medium text-[#64748b] truncate block">
+          <span className="text-[8px] font-semibold text-[#64748b] tracking-wide truncate block">
             Global Pvt. Ltd.
           </span>
           <span className="text-[9px] font-mono font-bold text-[#006d36] tracking-wider uppercase block">
@@ -183,22 +184,22 @@ export default function AdminSidebar({
       </div>
 
       {/* 2. NAVIGATION LIST */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 custom-scrollbar">
         {/* 1. DASHBOARD */}
         <Link
           href="/admin/dashboard"
           onClick={onNavigate}
-          className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 ${
             pathname === "/admin/dashboard"
-              ? "neo-btn-primary font-black"
-              : "text-[#64748b] hover:text-[#0f172a] hover:bg-white/60"
+              ? "neo-btn-primary font-black shadow-[4px_4px_12px_rgba(0,109,54,0.3),-2px_-2px_8px_#ffffff]"
+              : "text-[#1e293b] hover:text-[#006d36] bg-[#f4f7f6] hover:shadow-[3px_3px_8px_rgba(166,180,200,0.3),-3px_-3px_8px_#ffffff] border border-transparent hover:border-white/60"
           }`}
         >
           <LayoutDashboard className="w-4 h-4 shrink-0" />
           <span>1. Dashboard</span>
         </Link>
 
-        {/* 2 to 8 GROUPS */}
+        {/* 2 to 8 ACCORDION GROUPS */}
         {adminNavGroups.map((group) => {
           const isOpen = Boolean(openCategories[group.category]);
           const isCategoryActive = group.links.some((l) => l.href.split("?")[0] === pathname);
@@ -209,10 +210,10 @@ export default function AdminSidebar({
               <button
                 type="button"
                 onClick={() => toggleCategory(group.category)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 cursor-pointer ${
                   isCategoryActive
-                    ? "text-[#006d36] bg-emerald-500/10 font-black"
-                    : "text-[#0f172a] hover:bg-white/60"
+                    ? "text-[#006d36] bg-[#edf3f0] shadow-[inset_2px_2px_5px_rgba(166,180,200,0.25),inset_-2px_-2px_5px_#ffffff] border border-emerald-200/60 font-black"
+                    : "text-[#1e293b] hover:text-[#006d36] bg-[#f4f7f6] hover:shadow-[3px_3px_8px_rgba(166,180,200,0.25),-3px_-3px_8px_#ffffff] border border-transparent hover:border-white/60"
                 }`}
               >
                 <div className="flex items-center gap-2.5 truncate">
@@ -231,7 +232,7 @@ export default function AdminSidebar({
                     </span>
                   )}
                   {isOpen ? (
-                    <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8]" />
+                    <ChevronDown className="w-3.5 h-3.5 text-[#64748b]" />
                   ) : (
                     <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />
                   )}
@@ -239,53 +240,69 @@ export default function AdminSidebar({
               </button>
 
               {isOpen && (
-                <div className="pl-5 pr-1 space-y-1 animate-fadeIn">
-                  {group.links.map((link) => {
-                    const LinkIcon = link.icon;
-                    const isActive = pathname === link.href.split("?")[0];
+                <div className="pl-3.5 pr-1 py-1 space-y-1 animate-fadeIn">
+                  <div className="pl-2 border-l-2 border-emerald-500/30 space-y-1">
+                    {group.links.map((link) => {
+                      const LinkIcon = link.icon;
+                      const isActive = pathname === link.href.split("?")[0];
 
-                    return (
-                      <Link
-                        key={link.name}
-                        href={link.href}
-                        onClick={onNavigate}
-                        className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-                          isActive
-                            ? "neo-btn-primary font-black"
-                            : "text-[#64748b] hover:text-[#0f172a] hover:bg-white/70"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <LinkIcon className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">{link.name}</span>
-                        </div>
-                        {link.badge !== undefined && link.badge !== null && link.badge > 0 && (
-                          <span
-                            className={`px-1.5 py-0.5 rounded-full text-[9px] font-mono font-bold ${
-                              isActive
-                                ? "bg-white text-[#006d36]"
-                                : link.badgeColor || "bg-amber-500/15 text-amber-900"
-                            }`}
-                          >
-                            {link.badge}
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  })}
+                      return (
+                        <Link
+                          key={link.name}
+                          href={link.href}
+                          onClick={onNavigate}
+                          className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${
+                            isActive
+                              ? "neo-btn-primary font-black shadow-[3px_3px_10px_rgba(0,109,54,0.28),-2px_-2px_6px_#ffffff]"
+                              : "text-[#64748b] hover:text-[#006d36] hover:bg-white/80 hover:shadow-[2px_2px_6px_rgba(166,180,200,0.2),-2px_-2px_6px_#ffffff]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <LinkIcon className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">{link.name}</span>
+                          </div>
+                          {link.badge !== undefined && link.badge !== null && link.badge > 0 && (
+                            <span
+                              className={`px-1.5 py-0.5 rounded-full text-[9px] font-mono font-bold ${
+                                isActive
+                                  ? "bg-white text-[#006d36]"
+                                  : link.badgeColor || "bg-amber-500/15 text-amber-900"
+                              }`}
+                            >
+                              {link.badge}
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
           );
         })}
+
+        {/* 9. WITHDRAW MASTER (DIRECT MAIN LINK) */}
+        <Link
+          href="/admin/withdraw"
+          onClick={onNavigate}
+          className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 ${
+            isWithdrawActive
+              ? "neo-btn-primary font-black shadow-[4px_4px_12px_rgba(0,109,54,0.3),-2px_-2px_8px_#ffffff]"
+              : "text-[#1e293b] hover:text-[#006d36] bg-[#f4f7f6] hover:shadow-[3px_3px_8px_rgba(166,180,200,0.3),-3px_-3px_8px_#ffffff] border border-transparent hover:border-white/60"
+          }`}
+        >
+          <Wallet className="w-4 h-4 shrink-0 text-[#006d36]" />
+          <span>9. Withdraw Master</span>
+        </Link>
       </div>
 
       {/* 3. PINNED LOGOUT BUTTON */}
-      <div className="p-3 border-t border-gray-200/60 bg-white/40">
+      <div className="p-3 border-t border-[#e2e8f0]/80 bg-[#f4f7f6]">
         <button
           type="button"
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 hover:bg-rose-500/20 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-[#f4f7f6] border border-rose-200/70 text-rose-700 hover:text-rose-800 shadow-[3px_3px_8px_rgba(225,29,72,0.12),-3px_-3px_8px_#ffffff] hover:shadow-[inset_2px_2px_4px_rgba(225,29,72,0.15),inset_-2px_-2px_4px_#ffffff] text-xs font-bold transition-all cursor-pointer active:scale-98"
         >
           <LogOut className="w-4 h-4" />
           <span>Logout Admin</span>

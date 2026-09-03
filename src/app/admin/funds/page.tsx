@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   User,
   Phone,
+  CreditCard,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 
@@ -353,6 +354,7 @@ export default function AdminFundsPage() {
                     <th className="py-3 px-4">Date & ID</th>
                     <th className="py-3 px-4">Associate Details</th>
                     <th className="py-3 px-4">Deposit Amount</th>
+                    <th className="py-3 px-4">Payment Method</th>
                     <th className="py-3 px-4">Transaction UTR</th>
                     <th className="py-3 px-4">Payment Slip</th>
                     <th className="py-3 px-4">Status</th>
@@ -401,6 +403,26 @@ export default function AdminFundsPage() {
                         <span className="text-sm font-black font-mono text-[#006d36] block">
                           ₹{r.amount.toLocaleString("en-IN")}
                         </span>
+                      </td>
+
+                      {/* Payment Method Badge */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        {r.transactionId?.startsWith("pay_") || r.id?.includes("rzp") ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200">
+                            <CreditCard className="w-3 h-3" />
+                            <span>Razorpay Online</span>
+                          </span>
+                        ) : r.slipUrl ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-[#006d36] border border-emerald-200">
+                            <FileText className="w-3 h-3" />
+                            <span>Bank Transfer Slip</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200">
+                            <Wallet className="w-3 h-3" />
+                            <span>Manual / UTR</span>
+                          </span>
+                        )}
                       </td>
 
                       {/* Transaction UTR */}

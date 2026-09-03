@@ -10,15 +10,18 @@ export async function GET(req: NextRequest) {
   try {
     const res = await client.query(`
       SELECT 
-        id, 
-        hsn_code, 
-        sgst, 
-        cgst, 
-        igst, 
-        description, 
-        created_at
-      FROM hsn_codes
-      ORDER BY hsn_code ASC;
+        h.id, 
+        h.hsn_code, 
+        h.sgst, 
+        h.cgst, 
+        h.igst, 
+        h.description, 
+        h.created_at,
+        COUNT(p.id) as live_count
+      FROM hsn_codes h
+      LEFT JOIN products p ON p.hsn_code = h.hsn_code AND (p.in_stock IS NOT FALSE)
+      GROUP BY h.id, h.hsn_code, h.sgst, h.cgst, h.igst, h.description, h.created_at
+      ORDER BY h.hsn_code ASC;
     `);
 
     const hsnCodes = res.rows.map((r) => ({
@@ -28,6 +31,7 @@ export async function GET(req: NextRequest) {
       cgst: parseFloat(r.cgst || "0"),
       igst: parseFloat(r.igst || "0"),
       description: r.description || "",
+      liveCount: parseInt(r.live_count || "0", 10),
       createdAt: r.created_at ? new Date(r.created_at).toISOString() : new Date().toISOString(),
     }));
 

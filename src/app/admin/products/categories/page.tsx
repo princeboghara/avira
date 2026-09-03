@@ -16,18 +16,13 @@ interface Category {
   id: string;
   name: string;
   description?: string;
+  itemCount?: number;
   createdAt?: string;
 }
 
-const defaultCategories: Category[] = [
-  { id: "cat-1", name: "Health Care", description: "Ayurvedic & Nutritional Supplements" },
-  { id: "cat-2", name: "Personal Care", description: "Skin, Hair & Oral Hygiene" },
-  { id: "cat-3", name: "Immunity", description: "Energy Boosters & Immunity Drops" },
-];
-
 export default function AdminCategoryMasterPage() {
-  const [categories, setCategories] = useState<Category[]>(defaultCategories);
-  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -129,28 +124,28 @@ export default function AdminCategoryMasterPage() {
     <AdminLayout onRefresh={loadCategories} refreshing={refreshing}>
       <div className="space-y-6 animate-fadeIn">
         {/* Page Header */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="neo-card rounded-3xl p-6 sm:p-8 border border-white/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-[#006d36] font-mono text-[10px] font-black uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full neo-inset text-[#006d36] font-mono text-[10px] font-black uppercase tracking-wider border border-emerald-200/50">
                 Product Taxonomy
               </span>
-              <span className="text-xs text-[#5f5e5e] font-medium">
+              <span className="text-xs text-[#64748b] font-medium">
                 Product Manager • 1. Category Master
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-[#1a1c1c] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0f172a] tracking-tight">
               Product Categories Master
             </h1>
-            <p className="text-xs text-[#5f5e5e] mt-1">
-              Manage product classification tags and department groups.
+            <p className="text-xs text-[#64748b] mt-1 font-medium">
+              Manage all botanical classification tags, department groups, and active product counts.
             </p>
           </div>
 
           <button
             type="button"
             onClick={handleOpenAddModal}
-            className="px-5 py-3 rounded-2xl bg-[#006d36] hover:bg-[#005025] text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-[#006d36]/20 cursor-pointer transition-all self-start sm:self-auto"
+            className="neo-btn-primary px-5 py-3 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-[4px_4px_12px_rgba(0,109,54,0.3),-2px_-2px_8px_#ffffff] cursor-pointer transition-all self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
             <span>Add New Category</span>
@@ -183,20 +178,21 @@ export default function AdminCategoryMasterPage() {
                   <th className="py-3.5 px-4">Sr No</th>
                   <th className="py-3.5 px-4">Category Name</th>
                   <th className="py-3.5 px-4">Description</th>
+                  <th className="py-3.5 px-4 text-center">Product Count</th>
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#e2e2e2]/60 font-medium">
                 {loading ? (
                   <tr>
-                    <td colSpan={4} className="py-12 text-center text-[#006d36]">
+                    <td colSpan={5} className="py-12 text-center text-[#006d36]">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                       <span>Loading categories...</span>
                     </td>
                   </tr>
                 ) : displayedCategories.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-[#5f5e5e]">
+                    <td colSpan={5} className="py-8 text-center text-[#5f5e5e]">
                       No categories found. Click &quot;Add New Category&quot; to create one.
                     </td>
                   </tr>
@@ -210,6 +206,11 @@ export default function AdminCategoryMasterPage() {
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-[#5f5e5e]">{cat.description || "—"}</td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-[#006d36] border border-emerald-200">
+                          {cat.itemCount || 0} Products
+                        </span>
+                      </td>
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
                           <button

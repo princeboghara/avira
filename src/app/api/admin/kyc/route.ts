@@ -21,10 +21,13 @@ export async function GET(req: NextRequest) {
         k.kyc_submitted_at, k.kyc_verified_at, k.kyc_rejection_reason
       FROM users u
       LEFT JOIN user_kyc k ON u.id = k.user_id
-      WHERE u.role != 'ADMIN' AND (
+      WHERE (u.role IS NULL OR u.role != 'ADMIN') AND (
         (k.kyc_status IS NOT NULL AND k.kyc_status != 'NOT_SUBMITTED')
+        OR (k.aadhaar_front_url IS NOT NULL AND k.aadhaar_front_url != '')
         OR (k.aadhaar_number IS NOT NULL AND k.aadhaar_number != '')
+        OR (k.pan_card_url IS NOT NULL AND k.pan_card_url != '')
         OR (k.pan_number IS NOT NULL AND k.pan_number != '')
+        OR (k.bank_proof_url IS NOT NULL AND k.bank_proof_url != '')
         OR (k.bank_account_number IS NOT NULL AND k.bank_account_number != '')
       )
     `;

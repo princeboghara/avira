@@ -14,38 +14,41 @@ export async function GET(req: NextRequest) {
 
     let query = `
       SELECT 
-        id, member_id, full_name, mobile, email, sponsor_id, sponsor_name,
-        pincode, city, state, address, gst_number, role, status, wallet_balance, total_earnings,
-        personal_pv, left_pv, right_pv, carry_left_pv, carry_right_pv, joined_date,
-        pan_number, aadhaar_name, aadhaar_number, bank_name, bank_account_number, ifsc_code, upi_id,
-        nominee_name, nominee_relation, kyc_document_url, kyc_status, kyc_submitted_at, kyc_verified_at,
-        created_at
-      FROM v_users_full
+        v.id, v.member_id, v.full_name, v.mobile, v.email, v.sponsor_id, v.sponsor_name,
+        v.pincode, v.city, v.state, v.address, v.gst_number, v.role, v.status, v.wallet_balance, v.total_earnings,
+        v.personal_pv, v.left_pv, v.right_pv, v.carry_left_pv, v.carry_right_pv, v.joined_date,
+        v.pan_number, v.aadhaar_name, v.aadhaar_number, v.bank_name, v.bank_account_number, v.ifsc_code, v.upi_id,
+        v.nominee_name, v.nominee_relation, v.kyc_document_url, v.kyc_status, v.kyc_submitted_at, v.kyc_verified_at,
+        v.created_at,
+        COALESCE(pu.member_id, ub.binary_parent_id, '') as parent_id
+      FROM v_users_full v
+      LEFT JOIN user_binary_pv ub ON ub.user_id = v.id
+      LEFT JOIN users pu ON pu.id = ub.binary_parent_id
     `;
 
     const params: any[] = [];
     if (search.trim()) {
       query += `
-        WHERE (role IS NULL OR role != 'ADMIN')
+        WHERE (v.role IS NULL OR v.role != 'ADMIN')
           AND (
-            member_id ILIKE $1 
-            OR full_name ILIKE $1 
-            OR mobile ILIKE $1 
-            OR city ILIKE $1 
-            OR sponsor_id ILIKE $1
+            v.member_id ILIKE $1 
+            OR v.full_name ILIKE $1 
+            OR v.mobile ILIKE $1 
+            OR v.city ILIKE $1 
+            OR v.sponsor_id ILIKE $1
           )
       `;
       params.push(`%${search.trim()}%`);
     } else {
-      query += ` WHERE (role IS NULL OR role != 'ADMIN') `;
+      query += ` WHERE (v.role IS NULL OR v.role != 'ADMIN') `;
     }
 
     const limitParam = searchParams.get("limit");
     if (limitParam && !isNaN(Number(limitParam))) {
       params.push(Number(limitParam));
-      query += ` ORDER BY created_at DESC LIMIT $${params.length};`;
+      query += ` ORDER BY v.created_at DESC LIMIT $${params.length};`;
     } else {
-      query += ` ORDER BY created_at DESC;`;
+      query += ` ORDER BY v.created_at DESC;`;
     }
 
     const res = await client.query(query, params);
@@ -58,6 +61,7 @@ export async function GET(req: NextRequest) {
       email: row.email || "",
       sponsorId: row.sponsor_id,
       sponsorName: row.sponsor_name,
+      parentId: row.parent_id || "",
       pincode: row.pincode,
       city: row.city,
       state: row.state,

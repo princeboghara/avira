@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Zap,
   Search,
@@ -30,6 +30,16 @@ interface MemberLookupData {
   joinedDate: string;
 }
 
+interface PvHistoryItem {
+  id: number;
+  memberId: string;
+  fullName: string;
+  pv: number;
+  mode: string;
+  note: string;
+  createdAt: string;
+}
+
 export default function SelfPvManagerPage() {
   const [memberIdInput, setMemberIdInput] = useState("");
   const [searching, setSearching] = useState(false);
@@ -41,6 +51,29 @@ export default function SelfPvManagerPage() {
   const [propagateUpline, setPropagateUpline] = useState<boolean>(false);
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // History State
+  const [history, setHistory] = useState<PvHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  const loadHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const res = await fetch("/api/admin/pv/self?history=true");
+      const data = await res.json();
+      if (data.success && data.history) {
+        setHistory(data.history);
+      }
+    } catch (err) {
+      console.error("Load PV history error:", err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,24 +152,22 @@ export default function SelfPvManagerPage() {
   };
 
   return (
-    <AdminLayout>
-      <div className="space-y-8 max-w-5xl mx-auto pb-12 font-[Arial,sans-serif]">
-        {/* Header */}
-        <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#006d36] to-[#50c878] text-white shadow-xl shadow-[#006d36]/15">
-          <div className="flex items-center gap-2.5 mb-2">
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
-              <Zap className="w-4.5 h-4.5 text-white" />
+    <AdminLayout onRefresh={loadHistory} refreshing={loadingHistory}>
+      <div className="space-y-6 max-w-5xl mx-auto pb-12 font-[Arial,sans-serif]">
+        {/* Neumorphic Header Card */}
+        <div className="neo-card rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-white/80">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full neo-inset text-[#006d36] text-xs font-bold font-mono border border-emerald-200/50">
+              <Zap className="w-4 h-4" />
+              <span>Self PV Manager Engine</span>
             </div>
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-100">
-              PV Manager Engine
-            </span>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0f172a] tracking-tight">
+              Self PV Credit & Activation Manager
+            </h1>
+            <p className="text-xs sm:text-sm text-[#64748b] max-w-xl font-medium">
+              Search any associate by ID, view current Personal Volume & Rank, and credit Self PV directly to their personal account with optional full tree upline flow.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-            Self PV Credit & Activation Manager
-          </h1>
-          <p className="text-xs sm:text-sm text-emerald-100 mt-1 max-w-2xl">
-            Search any associate by ID, view their current Personal Volume & Rank, and credit Self PV directly to their personal account with optional Upline tree propagation.
-          </p>
         </div>
 
         {/* Step 1: Lookup Member Form */}
@@ -221,7 +252,7 @@ export default function SelfPvManagerPage() {
               {/* 2-Option Distribution Mode Selector */}
               <div className="space-y-2">
                 <label className="block text-xs font-black text-slate-900 uppercase tracking-wider">
-                  PV Distribution Mode / અપલાઇન કેલ્ક્યુલેશન ઓપ્શન:
+                  PV Distribution Mode:
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   {/* Option 1: Member Only */}
@@ -242,15 +273,15 @@ export default function SelfPvManagerPage() {
                     </div>
                     <div>
                       <span className="font-bold text-xs text-slate-900 block flex items-center gap-1.5">
-                        <span>1. માત્ર આ મેમ્બરમાં જ જમા થાય (Member Only)</span>
+                        <span>Member Only</span>
                       </span>
                       <span className="text-[11px] text-slate-600 block mt-0.5 leading-snug">
-                        ખાસ આ ID નું Personal PV અને Capping વધશે. <strong>અપલાઇનમાં કોઈપણ PV કે મેચિંગ કેલ્ક્યુલેશન જશે નહીં.</strong>
+                        Credits Personal PV directly to this associate only. No upline matching points generated.
                       </span>
                     </div>
                   </div>
 
-                  {/* Option 2: With Upline Propagation */}
+                  {/* Option 2: Full Tree */}
                   <div
                     onClick={() => setPropagateUpline(true)}
                     className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 ${
@@ -268,10 +299,10 @@ export default function SelfPvManagerPage() {
                     </div>
                     <div>
                       <span className="font-bold text-xs text-slate-900 block flex items-center gap-1.5">
-                        <span>2. અપલાઇન સાથે (Full Tree Propagation)</span>
+                        <span>Full Tree</span>
                       </span>
                       <span className="text-[11px] text-slate-600 block mt-0.5 leading-snug">
-                        મેમ્બરનું Personal PV પણ વધશે + <strong>તમામ ઉપરના Upline લીડર્સના Binary લેગમાં પણ PV કાઉન્ટ થઈને 1:1 મેચિંગ થશે.</strong>
+                        Credits Personal PV and propagates matching volume to all binary upline placement parents.
                       </span>
                     </div>
                   </div>
@@ -325,6 +356,89 @@ export default function SelfPvManagerPage() {
             </form>
           </div>
         )}
+
+        {/* Transfer History Table */}
+        <div className="rounded-3xl p-6 sm:p-8 bg-white border border-gray-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-[#1a1c1c] flex items-center gap-2">
+              <Layers className="w-4 h-4 text-[#006d36]" />
+              <span>Self PV Transfer History</span>
+            </h2>
+            <span className="text-xs text-gray-500 font-mono">
+              Total Transfers: <strong>{history.length}</strong>
+            </span>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-gray-200">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 uppercase font-bold text-[10px]">
+                <tr>
+                  <th className="py-3 px-4">Date & Time</th>
+                  <th className="py-3 px-4">Member ID</th>
+                  <th className="py-3 px-4">Associate Name</th>
+                  <th className="py-3 px-4 text-center">PV Credited</th>
+                  <th className="py-3 px-4 text-center">Distribution Mode</th>
+                  <th className="py-3 px-4">Note / Reason</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 font-medium text-[#1a1c1c]">
+                {loadingHistory ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-[#006d36]">
+                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-1" />
+                      <span>Loading transfer history...</span>
+                    </td>
+                  </tr>
+                ) : history.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-gray-400">
+                      No Self PV transfers recorded yet.
+                    </td>
+                  </tr>
+                ) : (
+                  history.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-4 font-mono text-[11px] text-gray-500 whitespace-nowrap">
+                        {new Date(item.createdAt).toLocaleString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </td>
+                      <td className="py-3 px-4 font-mono font-bold text-[#006d36]">
+                        {item.memberId}
+                      </td>
+                      <td className="py-3 px-4 font-bold text-[#1a1c1c]">
+                        {item.fullName}
+                      </td>
+                      <td className="py-3 px-4 text-center whitespace-nowrap">
+                        <span className="font-mono font-black text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#006d36] border border-emerald-200">
+                          +{item.pv} PV
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center whitespace-nowrap">
+                        <span
+                          className={`font-bold text-[10px] px-2.5 py-0.5 rounded-full ${
+                            item.mode === "FULL_TREE"
+                              ? "bg-purple-50 text-purple-700 border border-purple-200"
+                              : "bg-blue-50 text-blue-700 border border-blue-200"
+                          }`}
+                        >
+                          {item.mode === "FULL_TREE" ? "Full Tree" : "Member Only"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-gray-500 text-xs">
+                        {item.note || "—"}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </AdminLayout>
   );

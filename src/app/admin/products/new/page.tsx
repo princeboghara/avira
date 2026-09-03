@@ -33,8 +33,10 @@ function AddProductForm() {
   const [stock, setStock] = useState<number>(100);
   const [pv, setPv] = useState<number>(12);
   const [amount, setAmount] = useState<number>(1200);
-  const [discountPrice, setDiscountPrice] = useState<number>(1000);
+  const [discountPrice, setDiscountPrice] = useState<number | "">("");
+  const [inStock, setInStock] = useState<boolean>(true);
   const [imageUrl, setImageUrl] = useState("");
+  const [showSavedToast, setShowSavedToast] = useState(false);
 
   // HSN Search inside dropdown
   const [hsnSearch, setHsnSearch] = useState("");
@@ -79,7 +81,8 @@ function AddProductForm() {
               setStock(found.stock || 100);
               setPv(found.pv || 0);
               setAmount(found.amount || found.mrp || 0);
-              setDiscountPrice(found.discountPrice || found.amount || 0);
+              setDiscountPrice(found.discountPrice && found.discountPrice < (found.amount || found.mrp) ? found.discountPrice : "");
+              setInStock(found.inStock !== false);
               setImageUrl(found.imageUrl || "");
             }
           }
@@ -142,6 +145,7 @@ function AddProductForm() {
 
     setSubmitting(true);
     try {
+      const finalDiscount = typeof discountPrice === "number" && discountPrice > 0 ? discountPrice : amount;
       const res = await fetch("/api/admin/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -154,16 +158,20 @@ function AddProductForm() {
           hsnGst,
           stock: Number(stock),
           pv: Number(pv),
+          mrp: Number(amount),
           amount: Number(amount),
-          discountPrice: Number(discountPrice),
+          discountPrice: Number(finalDiscount),
+          inStock,
           imageUrl,
         }),
       });
 
       const data = await res.json();
       if (data.success) {
-        alert(editId ? "Product updated successfully!" : "New product created successfully!");
-        router.push("/admin/products");
+        setShowSavedToast(true);
+        setTimeout(() => {
+          router.push("/admin/products");
+        }, 1500);
       } else {
         alert(data.message || "Failed to save product");
       }
@@ -399,17 +407,51 @@ function AddProductForm() {
             </div>
             <div>
               <label className="block font-bold text-[#1a1c1c] uppercase tracking-wider mb-1.5">
-                Discount Price (₹) *
+                Discount Price (₹) <span className="text-gray-400 font-normal lowercase">(optional)</span>
               </label>
               <input
                 type="number"
-                min="1"
+                min="0"
+                step="any"
+                placeholder="Leave blank for no discount"
                 value={discountPrice}
-                onChange={(e) => setDiscountPrice(Number(e.target.value))}
-                required
+                onChange={(e) => setDiscountPrice(e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
                 className="w-full bg-[#f9f9f9] border border-[#e2e2e2] rounded-xl p-3 font-mono font-black text-xs text-[#006d36] outline-none focus:border-[#006d36]"
               />
+              <span className="text-[10px] text-gray-500 block mt-1 leading-tight">If entered, product sells at this price. If empty, regular MRP applies.</span>
             </div>
+          </div>
+
+          {/* Row 5: Live vs Retired Selector */}
+          <div className="p-4 rounded-2xl bg-[#f9f9f9] border border-[#e2e2e2] space-y-2">
+            <label className="block font-bold text-[#1a1c1c] uppercase tracking-wider text-xs">
+              Product Status (Store Visibility)
+            </label>
+            <div className="grid grid-cols-2 gap-3 max-w-sm">
+              <button
+                type="button"
+                onClick={() => setInStock(true)}
+                className={`py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  inStock ? "bg-[#006d36] text-white shadow-xs" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-300" />
+                <span>Live</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setInStock(false)}
+                className={`py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  !inStock ? "bg-slate-800 text-white shadow-xs" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-rose-400" />
+                <span>Retired</span>
+              </button>
+            </div>
+            <span className="text-[10px] text-gray-500 block leading-tight">
+              {inStock ? "✓ Live: Product shows on Member Shopping Store." : "✕ Retired: Product hidden from Member Store."}
+            </span>
           </div>
 
           {/* Submit Actions */}
@@ -429,6 +471,19 @@ function AddProductForm() {
             </button>
           </div>
         </form>
+
+        {/* ON-SCREEN "DATA SAVED" SIGN/NOTIFICATION */}
+        {showSavedToast && (
+          <div className="fixed top-12 left-1/2 -translate-x-1/2 z-50 animate-bounce shadow-2xl">
+            <div className="px-6 py-3.5 rounded-2xl bg-[#006d36] text-white flex items-center gap-3 border border-emerald-400">
+              <CheckCircle2 className="w-6 h-6 text-emerald-200" />
+              <div>
+                <h4 className="text-sm font-black tracking-wide uppercase">Data Saved</h4>
+                <p className="text-[11px] text-emerald-100 font-medium">Product changes updated in system catalog.</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

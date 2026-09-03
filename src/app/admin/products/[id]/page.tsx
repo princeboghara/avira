@@ -40,13 +40,14 @@ export default function EditProductPage() {
   const [hsnCode, setHsnCode] = useState("30049011");
   const [hsnGst, setHsnGst] = useState(5.0);
   const [mrp, setMrp] = useState<number>(0);
-  const [dp, setDp] = useState<number>(0);
+  const [discountPrice, setDiscountPrice] = useState<number | "">("");
   const [pv, setPv] = useState<number>(0);
   const [stock, setStock] = useState<number>(500);
   const [inStock, setInStock] = useState(true);
   const [imageUrl, setImageUrl] = useState("");
   const [description, setDescription] = useState("");
   const [tag, setTag] = useState("Popular");
+  const [showSavedToast, setShowSavedToast] = useState(false);
 
   useEffect(() => {
     async function loadProductData() {
@@ -77,16 +78,14 @@ export default function EditProductPage() {
             setNetQuantity(p.netQuantity || "1 Unit");
             setHsnCode(p.hsnCode || "30049011");
             setHsnGst(p.hsnGst || 5.0);
-            setMrp(Number(p.mrp || 0));
-            setDp(Number(p.dp || p.discountPrice || p.mrp || 0));
-            setPv(Number(p.pv || 0));
-            setStock(Number(p.stock !== undefined ? p.stock : 500));
+            setMrp(p.mrp || 0);
+            setDiscountPrice(p.discountPrice && p.discountPrice < p.mrp ? p.discountPrice : "");
+            setPv(p.pv || 0);
+            setStock(p.stock !== undefined ? p.stock : 500);
             setInStock(p.inStock !== false);
             setImageUrl(p.imageUrl || "");
             setDescription(p.description || "");
-            setTag(p.tag || (p.pv >= 100 ? "Bestseller" : "Popular"));
-          } else {
-            console.error("Product fetch issue:", prodData.message);
+            setTag(p.tag || "Popular");
           }
         }
       } catch (err) {
@@ -97,35 +96,20 @@ export default function EditProductPage() {
     }
 
     loadProductData();
-  }, [productId, router]);
+  }, [productId]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image size should be less than 5MB.");
+      alert("File size exceeds 5MB limit.");
       return;
     }
 
     const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64Data = reader.result as string;
-      setImageUrl(base64Data);
-
-      try {
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ file: base64Data, folder: "products" }),
-        });
-        const data = await res.json();
-        if (data.success && data.url) {
-          setImageUrl(data.url);
-        }
-      } catch (err) {
-        console.error("Cloudinary upload failed:", err);
-      }
+    reader.onload = () => {
+      setImageUrl(reader.result as string);
     };
     reader.readAsDataURL(file);
   };
@@ -140,16 +124,11 @@ export default function EditProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!name.trim()) {
-      alert("Please enter product name");
-      return;
-    }
-
     setSaving(true);
     setSavedSuccess(false);
 
     try {
+      const finalDiscount = typeof discountPrice === "number" && discountPrice > 0 ? discountPrice : mrp;
       const res = await fetch(`/api/admin/products/${productId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -159,8 +138,8 @@ export default function EditProductPage() {
           hsnCode,
           netQuantity,
           mrp,
-          dp,
-          discountPrice: dp,
+          dp: finalDiscount,
+          discountPrice: finalDiscount,
           pv,
           stock,
           inStock,
@@ -172,8 +151,8 @@ export default function EditProductPage() {
 
       const data = await res.json();
       if (data.success) {
-        setSavedSuccess(true);
-        setTimeout(() => setSavedSuccess(false), 3000);
+        setShowSavedToast(true);
+        setTimeout(() => setShowSavedToast(false), 3500);
       } else {
         alert(data.message || "Failed to update product");
       }
@@ -268,8 +247,10 @@ export default function EditProductPage() {
 
           <div className="flex items-center gap-3">
             <span className="text-right">
-              <span className="text-[10px] text-emerald-300 block uppercase font-bold">DP Price</span>
-              <span className="text-2xl font-black font-mono">₹{dp.toLocaleString("en-IN")}</span>
+              <span className="text-[10px] text-emerald-300 block uppercase font-bold">Price</span>
+              <span className="text-2xl font-black font-mono">
+                ₹{(typeof discountPrice === "number" && discountPrice > 0 ? discountPrice : mrp).toLocaleString("en-IN")}
+              </span>
             </span>
           </div>
         </div>
@@ -379,18 +360,19 @@ export default function EditProductPage() {
                     />
                   </div>
 
-                  {/* DP / Associate Price */}
+                  {/* Discount Price */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-700">DP / Selling Price (₹) *</label>
+                    <label className="text-xs font-bold text-gray-700">Discount Price (₹) <span className="text-gray-400 font-normal">(Optional)</span></label>
                     <input
                       type="number"
-                      required
                       min="0"
                       step="any"
-                      value={dp}
-                      onChange={(e) => setDp(parseFloat(e.target.value) || 0)}
+                      placeholder="Leave blank for no discount"
+                      value={discountPrice}
+                      onChange={(e) => setDiscountPrice(e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-mono font-bold text-[#006d36] focus:outline-hidden focus:ring-2 focus:ring-[#006d36]/20 focus:border-[#006d36]"
                     />
+                    <span className="text-[10px] text-gray-500 block leading-tight">If entered, product sells at this price. If empty, regular MRP applies.</span>
                   </div>
 
                   {/* PV Points */}
@@ -408,17 +390,21 @@ export default function EditProductPage() {
                   </div>
                 </div>
 
-                {/* HSN & GST */}
+                {/* HSN & GST Dropdown */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-700">HSN Code</label>
-                    <input
-                      type="text"
+                    <label className="text-xs font-bold text-gray-700">HSN Code (Select Dropdown) *</label>
+                    <select
                       value={hsnCode}
                       onChange={(e) => handleHsnSelect(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-mono font-bold focus:outline-hidden focus:ring-2 focus:ring-[#006d36]/20 focus:border-[#006d36]"
-                      placeholder="e.g. 30049011, 21069099"
-                    />
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-mono font-bold focus:outline-hidden focus:ring-2 focus:ring-[#006d36]/20 focus:border-[#006d36] bg-white cursor-pointer"
+                    >
+                      {hsnCodes.map((h) => (
+                        <option key={h.id} value={h.hsnCode}>
+                          HSN: {h.hsnCode} — {Number(h.sgst) + Number(h.cgst)}% GST ({h.description || "General"})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="space-y-1.5">
@@ -474,7 +460,7 @@ export default function EditProductPage() {
               <div className="bg-white rounded-3xl p-6 border border-gray-200/80 shadow-2xs space-y-4">
                 <h3 className="text-sm font-black text-gray-900 flex items-center gap-2">
                   <Layers className="w-4 h-4 text-[#006d36]" />
-                  <span>Inventory & Marketing Tag</span>
+                  <span>Inventory & Store Status</span>
                 </h3>
 
                 <div className="space-y-1.5">
@@ -502,14 +488,34 @@ export default function EditProductPage() {
                   </select>
                 </div>
 
-                <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                  <span className="text-xs font-bold text-gray-700">In Stock Available</span>
-                  <input
-                    type="checkbox"
-                    checked={inStock}
-                    onChange={(e) => setInStock(e.target.checked)}
-                    className="w-4 h-4 accent-[#006d36] rounded cursor-pointer"
-                  />
+                {/* Live vs Retired Selector */}
+                <div className="pt-3 border-t border-gray-100 space-y-2">
+                  <label className="text-xs font-bold text-gray-700 block">Product Status (Store Visibility)</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setInStock(true)}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        inStock ? "bg-[#006d36] text-white shadow-xs" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      <span className="w-2 h-2 rounded-full bg-emerald-300" />
+                      <span>Live</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInStock(false)}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        !inStock ? "bg-slate-800 text-white shadow-xs" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      <span className="w-2 h-2 rounded-full bg-rose-400" />
+                      <span>Retired</span>
+                    </button>
+                  </div>
+                  <span className="text-[10px] text-gray-500 block leading-tight">
+                    {inStock ? "✓ Live: Product shows on Member Shopping Store." : "✕ Retired: Product hidden from Member Store."}
+                  </span>
                 </div>
               </div>
             </div>
@@ -534,6 +540,19 @@ export default function EditProductPage() {
             </button>
           </div>
         </form>
+
+        {/* ON-SCREEN "DATA SAVED" SIGN/NOTIFICATION */}
+        {showSavedToast && (
+          <div className="fixed top-12 left-1/2 -translate-x-1/2 z-50 animate-bounce shadow-2xl">
+            <div className="px-6 py-3.5 rounded-2xl bg-[#006d36] text-white flex items-center gap-3 border border-emerald-400">
+              <CheckCircle2 className="w-6 h-6 text-emerald-200" />
+              <div>
+                <h4 className="text-sm font-black tracking-wide uppercase">Data Saved</h4>
+                <p className="text-[11px] text-emerald-100 font-medium">Product changes updated in system catalog.</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

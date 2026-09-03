@@ -53,6 +53,8 @@ export async function GET(
       isActive: Boolean(r.is_active !== false),
       tag: r.tag || `${r.pv} PV`,
       imageIcon: r.image_icon || "spa",
+      shippingCharge: parseFloat(r.shipping_charge || "0"),
+      isFreeShipping: Boolean(r.is_free_shipping),
       createdAt: r.created_at ? new Date(r.created_at).toISOString() : new Date().toISOString(),
     };
 
@@ -106,8 +108,8 @@ export async function PUT(
     const active = isActive !== undefined ? Boolean(isActive) : true;
     const finalTag = tag || (parsedPv >= 100 ? "Bestseller" : "Popular");
 
-    const finalImageUrl = imageUrl && imageUrl.startsWith("data:") 
-      ? await uploadToCloudinary(imageUrl, "products") 
+    const finalImageUrl = imageUrl && imageUrl.startsWith("data:")
+      ? await uploadToCloudinary(imageUrl, "products")
       : (imageUrl || "");
 
     await client.query(
