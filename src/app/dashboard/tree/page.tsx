@@ -97,7 +97,6 @@ export default function TreeViewPage() {
             breadcrumbs={breadcrumbs}
             parentMemberId={parentMemberId}
             viewerMemberId={myMemberId || tree.memberId}
-            onSearch={(id) => loadTree(id)}
             onResetRoot={handleResetToSelf}
             isCustomRoot={currentRootId !== myMemberId}
             totalNetworkMembers={totalNetworkMembers}

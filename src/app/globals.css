@@ -904,40 +904,40 @@ html.dark .neo-disc-base:hover {
   box-shadow: 12px 12px 30px rgba(0, 0, 0, 0.75), -8px -8px 22px rgba(255, 255, 255, 0.04);
 }
 
-/* Level 0: You / Root (Blue) */
+/* Main ID: Root (Blue) */
 .neo-disc-blue {
   background: radial-gradient(circle at 35% 30%, #ffffff 0%, #eff6ff 55%, #dbeafe 100%);
-  border-color: #ffffff;
-  box-shadow: 8px 8px 22px rgba(59, 130, 246, 0.22), 6px 6px 18px rgba(150, 169, 194, 0.45), -8px -8px 20px #ffffff;
+  border-color: #93c5fd;
+  box-shadow: 8px 8px 22px rgba(59, 130, 246, 0.28), 6px 6px 18px rgba(150, 169, 194, 0.45), -8px -8px 20px #ffffff;
 }
 html.dark .neo-disc-blue {
   background: radial-gradient(circle at 35% 35%, #1e293b 0%, #0f172a 70%, #081020 100%);
-  border-color: rgba(59, 130, 246, 0.5);
-  box-shadow: 10px 10px 24px rgba(0, 0, 0, 0.75), 0 0 22px rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.6);
+  box-shadow: 10px 10px 24px rgba(0, 0, 0, 0.75), 0 0 22px rgba(59, 130, 246, 0.35);
 }
 
-/* Level 1: Directs (Purple / Violet) */
+/* Right Side: (Purple) */
 .neo-disc-purple {
-  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f5f3ff 55%, #ede9fe 100%);
-  border-color: #ffffff;
-  box-shadow: 8px 8px 22px rgba(139, 92, 246, 0.22), 6px 6px 18px rgba(150, 169, 194, 0.45), -8px -8px 20px #ffffff;
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #faf5ff 55%, #f3e8ff 100%);
+  border-color: #d8b4fe;
+  box-shadow: 8px 8px 22px rgba(168, 85, 247, 0.28), 6px 6px 18px rgba(150, 169, 194, 0.45), -8px -8px 20px #ffffff;
 }
 html.dark .neo-disc-purple {
   background: radial-gradient(circle at 35% 35%, #24143d 0%, #150a26 70%, #0c0517 100%);
-  border-color: rgba(168, 85, 247, 0.5);
-  box-shadow: 10px 10px 24px rgba(0, 0, 0, 0.75), 0 0 22px rgba(168, 85, 247, 0.25);
+  border-color: rgba(168, 85, 247, 0.6);
+  box-shadow: 10px 10px 24px rgba(0, 0, 0, 0.75), 0 0 22px rgba(168, 85, 247, 0.35);
 }
 
-/* Level 2: Grandchildren (Mint / Emerald) */
+/* Left Side: (Green) */
 .neo-disc-mint {
   background: radial-gradient(circle at 35% 30%, #ffffff 0%, #ecfdf5 55%, #d1fae5 100%);
-  border-color: #ffffff;
-  box-shadow: 8px 8px 22px rgba(16, 185, 129, 0.22), 6px 6px 18px rgba(150, 169, 194, 0.45), -8px -8px 20px #ffffff;
+  border-color: #6ee7b7;
+  box-shadow: 8px 8px 22px rgba(16, 185, 129, 0.28), 6px 6px 18px rgba(150, 169, 194, 0.45), -8px -8px 20px #ffffff;
 }
 html.dark .neo-disc-mint {
   background: radial-gradient(circle at 35% 35%, #062b1e 0%, #041a12 70%, #02100b 100%);
-  border-color: rgba(16, 185, 129, 0.5);
-  box-shadow: 10px 10px 24px rgba(0, 0, 0, 0.75), 0 0 22px rgba(16, 185, 129, 0.25);
+  border-color: rgba(16, 185, 129, 0.6);
+  box-shadow: 10px 10px 24px rgba(0, 0, 0, 0.75), 0 0 22px rgba(16, 185, 129, 0.35);
 }
 
 /* Level 3: Level 3 (Coral / Rose / Pink) */

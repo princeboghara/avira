@@ -7,29 +7,60 @@ const pool = new Pool({
 });
 
 async function run() {
+  const searchId = 'AV62928';
+  const rootId = 'AV0001';
+
   const res = await pool.query(`
-    WITH RECURSIVE tree_nodes AS (
-      SELECT 
-        u.id, u.member_id, u.full_name, b.left_child_id, b.right_child_id, 1 AS depth
+    WITH RECURSIVE ancestors AS (
+      SELECT u.id, u.member_id, b.binary_parent_id, 1 as depth
       FROM users u
       JOIN user_binary_pv b ON u.id = b.user_id
-      WHERE u.member_id = 'AV0001'
+      WHERE (UPPER(u.member_id) = UPPER($1) OR u.id = $1)
 
       UNION ALL
 
-      SELECT 
-        u.id, u.member_id, u.full_name, b.left_child_id, b.right_child_id, tn.depth + 1
+      SELECT u.id, u.member_id, b.binary_parent_id, a.depth + 1
       FROM users u
       JOIN user_binary_pv b ON u.id = b.user_id
-      INNER JOIN tree_nodes tn ON (u.id = tn.left_child_id OR u.id = tn.right_child_id)
-      WHERE tn.depth < 3
-    )
-    SELECT * FROM tree_nodes;
-  `);
+      INNER JOIN ancestors a ON u.id = a.binary_parent_id
+      WHERE u.role != 'ADMIN'
+    ),
+    root_seed AS (
+      SELECT u.id, u.member_id, b.left_child_id, b.right_child_id, 1 as depth
+      FROM users u
+      JOIN user_binary_pv b ON u.id = b.user_id
+      WHERE (UPPER(u.member_id) = UPPER($2) OR u.id = $2)
 
-  console.log('Total returned rows:', res.rows.length);
+      UNION ALL
+
+      SELECT u.id, u.member_id, b.left_child_id, b.right_child_id, rs.depth + 1
+      FROM users u
+      JOIN user_binary_pv b ON u.id = b.user_id
+      INNER JOIN root_seed rs ON (u.id = rs.left_child_id OR u.id = rs.right_child_id)
+      WHERE rs.depth < 3
+    ),
+    ancestor_children AS (
+      SELECT b.left_child_id as child_id FROM ancestors a JOIN user_binary_pv b ON a.id = b.user_id WHERE b.left_child_id IS NOT NULL
+      UNION
+      SELECT b.right_child_id as child_id FROM ancestors a JOIN user_binary_pv b ON a.id = b.user_id WHERE b.right_child_id IS NOT NULL
+    ),
+    all_needed_ids AS (
+      SELECT id FROM ancestors
+      UNION
+      SELECT child_id AS id FROM ancestor_children
+      UNION
+      SELECT id FROM root_seed
+    )
+    SELECT u.id, u.member_id, u.full_name, b.binary_position, b.left_child_id, b.right_child_id
+    FROM all_needed_ids ani
+    JOIN users u ON ani.id = u.id
+    JOIN user_binary_pv b ON u.id = b.user_id
+    WHERE u.role != 'ADMIN';
+  `, [searchId, rootId]);
+
+  console.log('Total nodes returned:', res.rows.length);
   for (const r of res.rows) {
-    console.log(`Depth ${r.depth}: ${r.member_id} (${r.full_name}) -> Left: ${r.left_child_id}, Right: ${r.right_child_id}`);
+    console.log(`${r.member_id} (${r.full_name}) -> Left: ${r.left_child_id}, Right: ${r.right_child_id}`);
   }
   await pool.end();
 }

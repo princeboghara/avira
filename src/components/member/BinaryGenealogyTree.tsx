@@ -75,6 +75,9 @@ export default function BinaryGenealogyTree({
   const [loadingNodes, setLoadingNodes] = useState<Record<string, boolean>>({});
   const [zoomScale, setZoomScale] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [targetMemberId, setTargetMemberId] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const treeContentRef = useRef<HTMLDivElement>(null);
@@ -273,10 +276,42 @@ export default function BinaryGenealogyTree({
     }
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim() && onSearch) {
-      onSearch(searchQuery.trim().toUpperCase());
+    const query = searchQuery.trim().toUpperCase();
+    if (!query) return;
+
+    setIsSearching(true);
+    setSearchError("");
+
+    try {
+      const rootId = viewerMemberId || treeData.memberId || "AV0001";
+      const res = await fetch(
+        `/api/member/tree?root=${encodeURIComponent(rootId)}&search=${encodeURIComponent(query)}`,
+        { cache: "no-store" }
+      );
+      const data = await res.json();
+      if (data.success && data.tree) {
+        setTreeData(data.tree);
+        setTargetMemberId(data.targetMemberId || query);
+        // Expand all ancestor nodes down to the searched target
+        if (Array.isArray(data.expandedNodeIds)) {
+          const nextExpanded: Record<string, boolean> = { [data.tree.id]: true };
+          data.expandedNodeIds.forEach((id: string) => {
+            nextExpanded[id] = true;
+          });
+          setExpandedNodes((prev) => ({ ...prev, ...nextExpanded }));
+        }
+        if (onSearch) {
+          onSearch(query);
+        }
+      } else {
+        setSearchError(data.message || `Member ID "${query}" not found in tree.`);
+      }
+    } catch {
+      setSearchError("Failed to search member tree.");
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -318,7 +353,7 @@ export default function BinaryGenealogyTree({
 
         {/* Right: Search Bar + Total Members + Parent Button + Zoom Controls */}
         <div className="flex items-center gap-2.5 flex-wrap self-start lg:self-auto">
-          {/* SEARCH BAR (Positioned right beside zoom controls as requested) */}
+          {/* SEARCH BAR */}
           <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5">
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] pointer-events-none" />
@@ -326,21 +361,27 @@ export default function BinaryGenealogyTree({
                 type="text"
                 placeholder="Search ID..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value.toUpperCase())}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value.toUpperCase());
+                  if (searchError) setSearchError("");
+                }}
                 className="w-32 sm:w-36 neo-input rounded-xl py-1.5 pl-8 pr-2 font-mono font-bold text-xs uppercase text-[#0f172a]"
               />
             </div>
             <button
               type="submit"
-              className="neo-btn-primary px-3 py-1.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs active:scale-95"
+              disabled={isSearching}
+              className="neo-btn-primary px-3 py-1.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
             >
-              Search
+              {isSearching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Search"}
             </button>
-            {isCustomRoot && (
+            {(isCustomRoot || targetMemberId) && (
               <button
                 type="button"
                 onClick={() => {
                   setSearchQuery("");
+                  setTargetMemberId(null);
+                  setSearchError("");
                   onResetRoot && onResetRoot();
                 }}
                 className="neo-btn-icon p-1.5 rounded-xl cursor-pointer"
@@ -416,6 +457,20 @@ export default function BinaryGenealogyTree({
         </div>
       </div>
 
+      {/* Search Error Alert */}
+      {searchError && (
+        <div className="px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center justify-between shadow-xs">
+          <span>⚠️ {searchError}</span>
+          <button
+            type="button"
+            onClick={() => setSearchError("")}
+            className="text-rose-500 hover:text-rose-800 font-black px-2 cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* 2. Main Interactive Free-Panning Tree Canvas Tray (360° Free Drag & Scroll in all directions) */}
       <div
         ref={canvasRef}
@@ -448,7 +503,7 @@ export default function BinaryGenealogyTree({
             expandedNodes={expandedNodes}
             loadingNodes={loadingNodes}
             onToggleExpand={handleToggleExpand}
-            onSelectRootId={onSelectRootId}
+            targetMemberId={targetMemberId}
             isExtremeLeft={true}
             isExtremeRight={true}
             viewerMemberId={effectiveViewerId}
@@ -469,7 +524,7 @@ function RecursiveTreeNode({
   expandedNodes,
   loadingNodes,
   onToggleExpand,
-  onSelectRootId,
+  targetMemberId,
   isExtremeLeft = false,
   isExtremeRight = false,
   viewerMemberId,
@@ -480,7 +535,7 @@ function RecursiveTreeNode({
   expandedNodes: Record<string, boolean>;
   loadingNodes: Record<string, boolean>;
   onToggleExpand: (node: TreeNode) => void;
-  onSelectRootId?: (id: string) => void;
+  targetMemberId?: string | null;
   isExtremeLeft?: boolean;
   isExtremeRight?: boolean;
   viewerMemberId: string;
@@ -515,7 +570,7 @@ function RecursiveTreeNode({
         isExpanded={isExpanded}
         isLoading={isLoading}
         onToggleExpand={() => onToggleExpand(node)}
-        onRootClick={() => onSelectRootId && onSelectRootId(node.memberId)}
+        isSearchedTarget={Boolean(targetMemberId && targetMemberId.toUpperCase() === node.memberId.toUpperCase())}
       />
 
       {/* Expanded Children Branch */}
@@ -546,7 +601,7 @@ function RecursiveTreeNode({
                   expandedNodes={expandedNodes}
                   loadingNodes={loadingNodes}
                   onToggleExpand={onToggleExpand}
-                  onSelectRootId={onSelectRootId}
+                  targetMemberId={targetMemberId}
                   isExtremeLeft={isExtremeLeft}
                   isExtremeRight={false}
                   viewerMemberId={viewerMemberId}
@@ -572,7 +627,7 @@ function RecursiveTreeNode({
                   expandedNodes={expandedNodes}
                   loadingNodes={loadingNodes}
                   onToggleExpand={onToggleExpand}
-                  onSelectRootId={onSelectRootId}
+                  targetMemberId={targetMemberId}
                   isExtremeLeft={false}
                   isExtremeRight={isExtremeRight}
                   viewerMemberId={viewerMemberId}
@@ -595,12 +650,11 @@ function RecursiveTreeNode({
 
 /**
  * Pixel-Perfect Circular Neumorphic Node Disc with Interactive "+" Button
- * - Left leg: Orange ID & accents
- * - Right leg: Purple ID & accents
- * - Root: Emerald / Green
- * - No info button or popup
- * - No PV displayed
- * - No red for inactive IDs
+ * - Main ID: BLUE
+ * - Left side: GREEN
+ * - Right side: PURPLE
+ * - Clicking member disc DOES NOT open/change the root tree
+ * - "+" button expands downline branch in-place
  */
 function NeumorphicNodeDisc({
   node,
@@ -609,7 +663,7 @@ function NeumorphicNodeDisc({
   isExpanded,
   isLoading,
   onToggleExpand,
-  onRootClick,
+  isSearchedTarget = false,
 }: {
   node: TreeNode;
   level: number;
@@ -617,55 +671,56 @@ function NeumorphicNodeDisc({
   isExpanded: boolean;
   isLoading: boolean;
   onToggleExpand: () => void;
-  onRootClick: () => void;
+  isSearchedTarget?: boolean;
 }) {
   const isLeft = leg === "LEFT";
   const isRight = leg === "RIGHT";
   const isRoot = leg === "ROOT";
 
-  // Left ID is Orange, Right ID is Purple, Root is Emerald Green
-  const idColor = isLeft
-    ? "text-orange-600"
-    : isRight
-    ? "text-purple-600"
-    : "text-[#006d36]";
+  // MAIN ID BLUE, LEFT SIDE GREEN, RIGHT SIDE PURPLE
+  const idColor = isRoot
+    ? "text-blue-600 dark:text-blue-400"
+    : isLeft
+    ? "text-[#006d36] dark:text-emerald-400"
+    : "text-purple-600 dark:text-purple-400";
 
-  const labelColor = isLeft
-    ? "text-orange-600"
-    : isRight
-    ? "text-purple-600"
-    : "text-[#006d36]";
+  const labelColor = isRoot
+    ? "text-blue-800 dark:text-blue-300"
+    : isLeft
+    ? "text-emerald-800 dark:text-emerald-300"
+    : "text-purple-800 dark:text-purple-300";
 
-  const discClass = isLeft
-    ? "neo-disc-amber"
-    : isRight
-    ? "neo-disc-purple"
-    : "neo-disc-blue";
+  const discClass = isRoot
+    ? "neo-disc-blue border-blue-200 dark:border-blue-800"
+    : isLeft
+    ? "neo-disc-mint border-emerald-200 dark:border-emerald-800"
+    : "neo-disc-purple border-purple-200 dark:border-purple-800";
 
-  const avatarBg = isLeft
-    ? "bg-orange-100 text-orange-600 border-orange-200"
-    : isRight
-    ? "bg-purple-100 text-purple-600 border-purple-200"
-    : "bg-emerald-100 text-[#006d36] border-emerald-200";
+  const avatarBg = isRoot
+    ? "bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-800"
+    : isLeft
+    ? "bg-emerald-100 text-[#006d36] border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800"
+    : "bg-purple-100 text-purple-600 border-purple-200 dark:bg-purple-950/60 dark:text-purple-400 dark:border-purple-800";
 
-  const iconColor = isLeft
-    ? "text-orange-600"
-    : isRight
-    ? "text-purple-600"
-    : "text-[#006d36]";
+  const iconColor = isRoot
+    ? "text-blue-600 dark:text-blue-400"
+    : isLeft
+    ? "text-[#006d36] dark:text-emerald-400"
+    : "text-purple-600 dark:text-purple-400";
 
-  // User requirement:
-  // "binary tree ma you lakkhyu teni jagya ae te id nu namew ane sponcer lakhyu tya id number"
   const label = node.fullName;
   const sublabel = node.memberId;
 
   return (
     <div className="relative group/node flex flex-col items-center">
-      {/* Outer Raised Neumorphic Disc */}
+      {/* Outer Raised Neumorphic Disc - NOT clickable to navigate away */}
       <div
-        className={`relative w-28 h-28 sm:w-32 sm:h-32 rounded-full flex flex-col items-center justify-center p-2 neo-disc-base ${discClass} cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95`}
-        onClick={onRootClick}
-        title={`Click to focus on ${node.fullName} (${node.memberId})`}
+        className={`relative w-28 h-28 sm:w-32 sm:h-32 rounded-full flex flex-col items-center justify-center p-2 neo-disc-base ${discClass} transition-all duration-300 select-none ${
+          isSearchedTarget
+            ? "ring-4 ring-amber-400 ring-offset-4 ring-offset-slate-100 shadow-[0_0_30px_rgba(251,191,36,0.8)] scale-105"
+            : ""
+        }`}
+        title={`${node.fullName} (${node.memberId})`}
       >
         {/* Circular Avatar / Icon */}
         <div
@@ -683,12 +738,12 @@ function NeumorphicNodeDisc({
           )}
         </div>
 
-        {/* Member Name (Replacing "You") */}
+        {/* Member Name */}
         <span className={`font-extrabold text-[11px] sm:text-[12px] ${labelColor} leading-tight block truncate max-w-[90px] sm:max-w-[100px] text-center px-1`}>
           {label}
         </span>
-        {/* Member ID Number (Replacing "Sponsor") */}
-        <span className="text-[9.5px] sm:text-[10px] font-mono font-bold text-[#475569] block truncate max-w-[90px] sm:max-w-[100px] text-center mt-0.5">
+        {/* Member ID Number */}
+        <span className={`text-[9.5px] sm:text-[10px] font-mono font-bold ${idColor} block truncate max-w-[90px] sm:max-w-[100px] text-center mt-0.5`}>
           {sublabel}
         </span>
 
@@ -703,7 +758,11 @@ function NeumorphicNodeDisc({
           className={`absolute -bottom-3.5 left-1/2 -translate-x-1/2 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black shadow-md cursor-pointer transition-all duration-300 hover:scale-115 active:scale-90 z-20 ${
             isExpanded
               ? "bg-[#0f172a] text-white border-2 border-white shadow-slate-900/30"
-              : "bg-white text-[#006d36] border-2 border-emerald-400 shadow-[2px_3px_8px_rgba(16,185,129,0.35)]"
+              : isRoot
+              ? "bg-white text-blue-600 border-2 border-blue-400 shadow-[2px_3px_8px_rgba(59,130,246,0.35)]"
+              : isLeft
+              ? "bg-white text-[#006d36] border-2 border-emerald-400 shadow-[2px_3px_8px_rgba(16,185,129,0.35)]"
+              : "bg-white text-purple-600 border-2 border-purple-400 shadow-[2px_3px_8px_rgba(168,85,247,0.35)]"
           }`}
           title={isExpanded ? "Collapse Branch (-)" : "Open Downline Tree (+)"}
           aria-label="Expand or collapse tree branch"
@@ -735,20 +794,25 @@ function VacantNeumorphicSlot({
   position: "LEFT" | "RIGHT";
   level: number;
 }) {
+  const isLeft = position === "LEFT";
+  const legColor = isLeft ? "text-[#006d36]" : "text-purple-600";
+  const hoverText = isLeft ? "group-hover:text-[#006d36]" : "group-hover:text-purple-600";
+  const borderHover = isLeft ? "hover:border-emerald-300" : "hover:border-purple-300";
+
   return (
     <div className="flex flex-col items-center">
       <Link
         href={`/register?sponsor=${encodeURIComponent(sponsorId)}&ref=${encodeURIComponent(sponsorId)}&parent=${encodeURIComponent(parentId)}&pos=${position}`}
-        className="w-24 h-24 sm:w-28 sm:h-28 rounded-full neo-disc-vacant flex flex-col items-center justify-center p-2 cursor-pointer group transition-all duration-200 hover:scale-105 active:scale-95 shadow-xs hover:shadow-md"
+        className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full neo-disc-vacant flex flex-col items-center justify-center p-2 cursor-pointer group transition-all duration-200 hover:scale-105 active:scale-95 shadow-xs hover:shadow-md ${borderHover}`}
         title={`Register new member on ${position} leg\nSponsor: ${sponsorId}\nParent: ${parentId}`}
       >
-        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full neo-inset flex items-center justify-center text-[#006d36] mb-1 group-hover:scale-110 transition-transform">
+        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full neo-inset flex items-center justify-center ${legColor} mb-1 group-hover:scale-110 transition-transform`}>
           <Plus className="w-4 h-4 stroke-[3]" />
         </div>
-        <span className="font-extrabold text-[11px] text-[#334155] dark:text-slate-200 group-hover:text-[#006d36] transition-colors leading-tight">
+        <span className={`font-extrabold text-[11px] text-[#334155] dark:text-slate-200 ${hoverText} transition-colors leading-tight`}>
           + Add
         </span>
-        <span className="text-[9px] font-mono font-black text-[#006d36] uppercase tracking-wider">
+        <span className={`text-[9px] font-mono font-black ${legColor} uppercase tracking-wider`}>
           {position} Leg
         </span>
         <span className="text-[8px] font-mono font-bold text-[#64748b] dark:text-slate-400 truncate max-w-[85px] mt-0.5" title={`Sponsor ID: ${sponsorId}`}>

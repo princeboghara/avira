@@ -49,86 +49,200 @@ export async function GET(req: NextRequest) {
       targetRoot = "AV0001";
     }
 
+    const searchTarget = searchParams.get("search")?.trim().toUpperCase() || null;
     const requestedDepth = Math.min(Math.max(Number(searchParams.get("depth") || 3), 1), 5);
 
     const client = await pool.connect();
     try {
-      // 0. Enforce Downline Access Control: Non-admin members can only search/view members in their own downline
-      if (session.role !== "ADMIN" && targetRoot !== session.memberId) {
-        const downlineCheck = await client.query(
+      let treeRes: any;
+      let expandedNodeIds: string[] = [];
+      let foundSearchTarget: string | null = null;
+
+      if (searchTarget) {
+        // --- SEARCH MODE: Expand entire tree from targetRoot down to searched member ---
+        const userExists = await client.query(
+          "SELECT id, member_id, full_name FROM users WHERE (UPPER(member_id) = UPPER($1) OR id = $1) AND role != 'ADMIN' LIMIT 1",
+          [searchTarget]
+        );
+        if (userExists.rows.length === 0) {
+          return NextResponse.json(
+            { success: false, message: `Member ID "${searchTarget}" not found.` },
+            { status: 404 }
+          );
+        }
+
+        const ancestorsRes = await client.query(
           `
-          WITH RECURSIVE my_downline AS (
-            SELECT u.id, u.member_id, b.left_child_id, b.right_child_id
+          WITH RECURSIVE ancestors AS (
+            SELECT u.id, u.member_id, u.full_name, b.binary_parent_id, 1 as depth
             FROM users u
             JOIN user_binary_pv b ON u.id = b.user_id
-            WHERE UPPER(u.member_id) = UPPER($1)
+            WHERE (UPPER(u.member_id) = UPPER($1) OR u.id = $1)
 
             UNION ALL
 
-            SELECT u.id, u.member_id, b.left_child_id, b.right_child_id
+            SELECT u.id, u.member_id, u.full_name, b.binary_parent_id, a.depth + 1
             FROM users u
             JOIN user_binary_pv b ON u.id = b.user_id
-            INNER JOIN my_downline md ON (u.id = md.left_child_id OR u.id = md.right_child_id)
+            INNER JOIN ancestors a ON u.id = a.binary_parent_id
+            WHERE u.role != 'ADMIN'
           )
-          SELECT 1 FROM my_downline WHERE UPPER(member_id) = UPPER($2) LIMIT 1;
-        `,
-          [session.memberId, targetRoot]
+          SELECT id, member_id, full_name, binary_parent_id, depth FROM ancestors ORDER BY depth DESC;
+          `,
+          [searchTarget]
         );
 
-        if (downlineCheck.rows.length === 0) {
+        const ancestorMemberIds = ancestorsRes.rows.map((r) => r.member_id);
+        const ancestorUserIds = ancestorsRes.rows.map((r) => r.id);
+
+        if (session.role !== "ADMIN" && !ancestorMemberIds.includes(session.memberId)) {
           return NextResponse.json(
             {
               success: false,
-              message: `Member ID "${targetRoot}" is not in your downline network. You can only search members within your team.`,
+              message: `Member ID "${searchTarget}" is not in your downline network.`,
             },
             { status: 403 }
           );
         }
-      }
 
-      // 1. Single high-performance recursive query to fetch entire tree up to requestedDepth
-      const treeRes = await client.query(
-        `
-        WITH RECURSIVE tree_nodes AS (
+        expandedNodeIds = [...ancestorUserIds, ...ancestorMemberIds];
+        foundSearchTarget = userExists.rows[0].member_id;
+
+        treeRes = await client.query(
+          `
+          WITH RECURSIVE ancestors AS (
+            SELECT u.id, u.member_id, b.binary_parent_id, 1 as depth
+            FROM users u
+            JOIN user_binary_pv b ON u.id = b.user_id
+            WHERE (UPPER(u.member_id) = UPPER($1) OR u.id = $1)
+
+            UNION ALL
+
+            SELECT u.id, u.member_id, b.binary_parent_id, a.depth + 1
+            FROM users u
+            JOIN user_binary_pv b ON u.id = b.user_id
+            INNER JOIN ancestors a ON u.id = a.binary_parent_id
+            WHERE u.role != 'ADMIN'
+          ),
+          root_seed AS (
+            SELECT u.id, u.member_id, b.left_child_id, b.right_child_id, 1 as depth
+            FROM users u
+            JOIN user_binary_pv b ON u.id = b.user_id
+            WHERE (UPPER(u.member_id) = UPPER($2) OR u.id = $2)
+
+            UNION ALL
+
+            SELECT u.id, u.member_id, b.left_child_id, b.right_child_id, rs.depth + 1
+            FROM users u
+            JOIN user_binary_pv b ON u.id = b.user_id
+            INNER JOIN root_seed rs ON (u.id = rs.left_child_id OR u.id = rs.right_child_id)
+            WHERE rs.depth < 3
+          ),
+          ancestor_children AS (
+            SELECT b.left_child_id as child_id FROM ancestors a JOIN user_binary_pv b ON a.id = b.user_id WHERE b.left_child_id IS NOT NULL
+            UNION
+            SELECT b.right_child_id as child_id FROM ancestors a JOIN user_binary_pv b ON a.id = b.user_id WHERE b.right_child_id IS NOT NULL
+          ),
+          all_needed_ids AS (
+            SELECT id FROM ancestors
+            UNION
+            SELECT child_id AS id FROM ancestor_children
+            UNION
+            SELECT id FROM root_seed
+          )
           SELECT 
             u.id, u.member_id, u.full_name, u.avatar_url, u.status, u.sponsor_id, u.sponsor_name, u.joined_date, u.created_at,
             b.personal_pv, b.left_pv, b.right_pv, b.carry_left_pv, b.carry_right_pv, b.binary_position, b.binary_parent_id, b.left_child_id, b.right_child_id,
             p.member_id as parent_member_id,
             COALESCE(w.total_team_count, 0) AS total_team_count,
             1 AS depth
-          FROM users u
+          FROM all_needed_ids ani
+          JOIN users u ON ani.id = u.id
           JOIN user_binary_pv b ON u.id = b.user_id
           LEFT JOIN users p ON b.binary_parent_id = p.id
           LEFT JOIN user_wallets w ON u.id = w.user_id
-          WHERE (UPPER(u.member_id) = UPPER($1) OR u.id = $1) AND u.role != 'ADMIN'
+          WHERE u.role != 'ADMIN';
+          `,
+          [searchTarget, targetRoot]
+        );
+      } else {
+        // --- NORMAL MODE: Enforce Downline Access Control ---
+        if (session.role !== "ADMIN" && targetRoot !== session.memberId) {
+          const downlineCheck = await client.query(
+            `
+            WITH RECURSIVE my_downline AS (
+              SELECT u.id, u.member_id, b.left_child_id, b.right_child_id
+              FROM users u
+              JOIN user_binary_pv b ON u.id = b.user_id
+              WHERE UPPER(u.member_id) = UPPER($1)
 
-          UNION ALL
+              UNION ALL
 
-          SELECT 
-            u.id, u.member_id, u.full_name, u.avatar_url, u.status, u.sponsor_id, u.sponsor_name, u.joined_date, u.created_at,
-            b.personal_pv, b.left_pv, b.right_pv, b.carry_left_pv, b.carry_right_pv, b.binary_position, b.binary_parent_id, b.left_child_id, b.right_child_id,
-            tn.member_id as parent_member_id,
-            COALESCE(w.total_team_count, 0) AS total_team_count,
-            tn.depth + 1
-          FROM users u
-          JOIN user_binary_pv b ON u.id = b.user_id
-          LEFT JOIN user_wallets w ON u.id = w.user_id
-          INNER JOIN tree_nodes tn ON (u.id = tn.left_child_id OR u.id = tn.right_child_id)
-          WHERE tn.depth < $2 AND u.role != 'ADMIN'
-        )
-        SELECT * FROM tree_nodes;
-      `,
-        [targetRoot, requestedDepth]
-      );
+              SELECT u.id, u.member_id, b.left_child_id, b.right_child_id
+              FROM users u
+              JOIN user_binary_pv b ON u.id = b.user_id
+              INNER JOIN my_downline md ON (u.id = md.left_child_id OR u.id = md.right_child_id)
+            )
+            SELECT 1 FROM my_downline WHERE UPPER(member_id) = UPPER($2) LIMIT 1;
+          `,
+            [session.memberId, targetRoot]
+          );
 
-      if (treeRes.rows.length === 0) {
+          if (downlineCheck.rows.length === 0) {
+            return NextResponse.json(
+              {
+                success: false,
+                message: `Member ID "${targetRoot}" is not in your downline network. You can only view members within your team.`,
+              },
+              { status: 403 }
+            );
+          }
+        }
+
+        // Fetch tree up to requestedDepth
+        treeRes = await client.query(
+          `
+          WITH RECURSIVE tree_nodes AS (
+            SELECT 
+              u.id, u.member_id, u.full_name, u.avatar_url, u.status, u.sponsor_id, u.sponsor_name, u.joined_date, u.created_at,
+              b.personal_pv, b.left_pv, b.right_pv, b.carry_left_pv, b.carry_right_pv, b.binary_position, b.binary_parent_id, b.left_child_id, b.right_child_id,
+              p.member_id as parent_member_id,
+              COALESCE(w.total_team_count, 0) AS total_team_count,
+              1 AS depth
+            FROM users u
+            JOIN user_binary_pv b ON u.id = b.user_id
+            LEFT JOIN users p ON b.binary_parent_id = p.id
+            LEFT JOIN user_wallets w ON u.id = w.user_id
+            WHERE (UPPER(u.member_id) = UPPER($1) OR u.id = $1) AND u.role != 'ADMIN'
+
+            UNION ALL
+
+            SELECT 
+              u.id, u.member_id, u.full_name, u.avatar_url, u.status, u.sponsor_id, u.sponsor_name, u.joined_date, u.created_at,
+              b.personal_pv, b.left_pv, b.right_pv, b.carry_left_pv, b.carry_right_pv, b.binary_position, b.binary_parent_id, b.left_child_id, b.right_child_id,
+              tn.member_id as parent_member_id,
+              COALESCE(w.total_team_count, 0) AS total_team_count,
+              tn.depth + 1
+            FROM users u
+            JOIN user_binary_pv b ON u.id = b.user_id
+            LEFT JOIN user_wallets w ON u.id = w.user_id
+            INNER JOIN tree_nodes tn ON (u.id = tn.left_child_id OR u.id = tn.right_child_id)
+            WHERE tn.depth < $2 AND u.role != 'ADMIN'
+          )
+          SELECT * FROM tree_nodes;
+        `,
+          [targetRoot, requestedDepth]
+        );
+      }
+
+      if (!treeRes || treeRes.rows.length === 0) {
         return NextResponse.json(
           { success: false, message: `Member node "${targetRoot}" was not found.` },
           { status: 404 }
         );
       }
 
-      // 2. Build tree hierarchy in-memory from the single result set
+      // 2. Build tree hierarchy in-memory from the result set
       const nodeMap = new Map<string, any>();
       for (const row of treeRes.rows) {
         const pPv = parseFloat(row.personal_pv || "0");
@@ -170,7 +284,9 @@ export async function GET(req: NextRequest) {
         let leftChild: TreeNodeData | null = null;
         let rightChild: TreeNodeData | null = null;
 
-        if (currentDepth < requestedDepth) {
+        const shouldTraverse = searchTarget ? true : currentDepth < requestedDepth;
+
+        if (shouldTraverse) {
           if (item.leftChildId && nodeMap.has(item.leftChildId)) {
             leftChild = constructNode(item.leftChildId, currentDepth + 1);
           }
@@ -206,7 +322,11 @@ export async function GET(req: NextRequest) {
         };
       }
 
-      const rootRow = treeRes.rows[0];
+      const rootRow =
+        nodeMap.get(targetRoot) ||
+        Array.from(nodeMap.values()).find((n: any) => n.memberId.toUpperCase() === targetRoot.toUpperCase()) ||
+        treeRes.rows[0];
+
       const tree = constructNode(rootRow.id, 1);
 
       // 3. Fetch ancestor breadcrumb path from Root down to targetRoot
@@ -230,7 +350,7 @@ export async function GET(req: NextRequest) {
         FROM ancestors 
         ORDER BY depth DESC;
       `,
-        [targetRoot]
+        [rootRow.member_id]
       );
 
       const breadcrumbs = breadcrumbsRes.rows.map((r) => ({
@@ -249,6 +369,8 @@ export async function GET(req: NextRequest) {
         breadcrumbs,
         parentMemberId: tree.parentMemberId || null,
         totalTeamCount: Number(rootRow.total_team_count || 0),
+        expandedNodeIds,
+        targetMemberId: foundSearchTarget,
       });
     } finally {
       client.release();
