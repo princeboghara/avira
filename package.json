@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "next dev",
     "build": "next build --webpack",
     "start": "node server.js",
     "start:next": "next start",
@@ -22,7 +22,6 @@
     "lucide-react": "^1.34.0",
     "next": "16.3.3",
     "pg": "^8.23.0",
-    "puppeteer": "^25.9.0",
     "razorpay": "^2.9.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
