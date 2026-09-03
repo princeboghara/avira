@@ -83,14 +83,16 @@ export async function GET(req: NextRequest) {
     let targetMemberId: string | null = null;
 
     if (isAdmin) {
-      // 1. ADMIN SCOPE: All users across India
+      // 1. ADMIN SCOPE: All users across India with real states
       const stateQuery = await client.query(`
         SELECT 
-          COALESCE(NULLIF(TRIM(state), ''), 'Gujarat') as raw_state,
+          TRIM(u.state) as raw_state,
           COUNT(*) as total_count,
-          COUNT(CASE WHEN status = 'ACTIVE' OR personal_pv >= 100 THEN 1 END) as active_count,
-          COALESCE(SUM(personal_pv), 0) as total_pv
-        FROM v_users_full
+          COUNT(CASE WHEN u.status = 'ACTIVE' OR b.personal_pv >= 100 THEN 1 END) as active_count,
+          COALESCE(SUM(b.personal_pv), 0) as total_pv
+        FROM users u
+        LEFT JOIN user_binary_pv b ON u.id = b.user_id
+        WHERE u.state IS NOT NULL AND TRIM(u.state) != ''
         GROUP BY raw_state
         ORDER BY total_count DESC;
       `);
@@ -98,10 +100,11 @@ export async function GET(req: NextRequest) {
 
       const cityQuery = await client.query(`
         SELECT 
-          COALESCE(NULLIF(TRIM(state), ''), 'Gujarat') as raw_state,
-          COALESCE(NULLIF(TRIM(city), ''), 'Main District') as raw_city,
+          TRIM(u.state) as raw_state,
+          TRIM(u.city) as raw_city,
           COUNT(*) as city_count
-        FROM v_users_full
+        FROM users u
+        WHERE u.state IS NOT NULL AND TRIM(u.state) != '' AND u.city IS NOT NULL AND TRIM(u.city) != ''
         GROUP BY raw_state, raw_city
         ORDER BY raw_state, city_count DESC;
       `);
@@ -155,24 +158,25 @@ export async function GET(req: NextRequest) {
       const stateQuery = await client.query(
         `
         WITH RECURSIVE downline AS (
-          -- Immediate children of root (Level 1)
-          SELECT id, state, city, personal_pv, status, 1 AS level
-          FROM v_users_full
+          SELECT user_id
+          FROM user_binary_pv
           WHERE binary_parent_id = $1
 
           UNION ALL
 
-          -- Recursive downlines
-          SELECT u.id, u.state, u.city, u.personal_pv, u.status, d.level + 1
-          FROM v_users_full u
-          INNER JOIN downline d ON u.binary_parent_id = d.id
+          SELECT b.user_id
+          FROM user_binary_pv b
+          INNER JOIN downline d ON b.binary_parent_id = d.user_id
         )
         SELECT 
-          COALESCE(NULLIF(TRIM(state), ''), 'Gujarat') as raw_state,
+          TRIM(u.state) as raw_state,
           COUNT(*) as total_count,
-          COUNT(CASE WHEN status = 'ACTIVE' OR personal_pv >= 100 THEN 1 END) as active_count,
-          COALESCE(SUM(personal_pv), 0) as total_pv
-        FROM downline
+          COUNT(CASE WHEN u.status = 'ACTIVE' OR b.personal_pv >= 100 THEN 1 END) as active_count,
+          COALESCE(SUM(b.personal_pv), 0) as total_pv
+        FROM downline d
+        JOIN users u ON d.user_id = u.id
+        LEFT JOIN user_binary_pv b ON d.user_id = b.user_id
+        WHERE u.state IS NOT NULL AND TRIM(u.state) != ''
         GROUP BY raw_state
         ORDER BY total_count DESC;
       `,
@@ -183,21 +187,23 @@ export async function GET(req: NextRequest) {
       const cityQuery = await client.query(
         `
         WITH RECURSIVE downline AS (
-          SELECT id, state, city, 1 AS level
-          FROM v_users_full
+          SELECT user_id
+          FROM user_binary_pv
           WHERE binary_parent_id = $1
 
           UNION ALL
 
-          SELECT u.id, u.state, u.city, d.level + 1
-          FROM v_users_full u
-          INNER JOIN downline d ON u.binary_parent_id = d.id
+          SELECT b.user_id
+          FROM user_binary_pv b
+          INNER JOIN downline d ON b.binary_parent_id = d.user_id
         )
         SELECT 
-          COALESCE(NULLIF(TRIM(state), ''), 'Gujarat') as raw_state,
-          COALESCE(NULLIF(TRIM(city), ''), 'Main District') as raw_city,
+          TRIM(u.state) as raw_state,
+          TRIM(u.city) as raw_city,
           COUNT(*) as city_count
-        FROM downline
+        FROM downline d
+        JOIN users u ON d.user_id = u.id
+        WHERE u.state IS NOT NULL AND TRIM(u.state) != '' AND u.city IS NOT NULL AND TRIM(u.city) != ''
         GROUP BY raw_state, raw_city
         ORDER BY raw_state, city_count DESC;
       `,
@@ -209,7 +215,8 @@ export async function GET(req: NextRequest) {
     // Process cities by state
     const citiesByState: Record<string, Array<{ city: string; count: number }>> = {};
     for (const crow of cityRows) {
-      const stateName = (crow.raw_state || "Gujarat").trim().toLowerCase();
+      const stateName = (crow.raw_state || "").trim().toLowerCase();
+      if (!stateName) continue;
       if (!citiesByState[stateName]) {
         citiesByState[stateName] = [];
       }
@@ -238,7 +245,8 @@ export async function GET(req: NextRequest) {
     let grandPv = 0;
 
     for (const row of stateRows) {
-      const raw = (row.raw_state || "Gujarat").trim();
+      const raw = (row.raw_state || "").trim();
+      if (!raw) continue;
       const lower = raw.toLowerCase();
       const count = parseInt(row.total_count, 10) || 0;
       const active = parseInt(row.active_count, 10) || 0;

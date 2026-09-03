@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, ShieldCheck, AlertCircle, Lock, KeyRound, User, Eye, EyeOff } from "lucide-react";
+import { Loader2, ShieldCheck, AlertCircle, Lock, User, Eye, EyeOff } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -49,7 +49,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9f9f9] text-[#1a1c1c] flex flex-col justify-between p-4 sm:p-6 selection:bg-[#50c878] selection:text-[#005025]">
+    <div className="min-h-screen bio-canvas-bg text-[#0f172a] flex flex-col justify-between p-4 sm:p-6 selection:bg-[#006d36] selection:text-white">
       {/* Top Header Navigation */}
       <header className="max-w-6xl mx-auto w-full flex items-center justify-between py-2">
         <div className="flex items-center gap-3">
@@ -60,10 +60,10 @@ export default function AdminLoginPage() {
             className="h-10 sm:h-12 w-auto object-contain"
           />
           <div>
-            <span className="font-black text-sm tracking-tight text-[#006d36] block">
+            <span className="font-heading font-extrabold text-sm tracking-tight text-[#006d36] block">
               AVIRA LIFECARE
             </span>
-            <span className="text-[9px] font-mono tracking-widest text-[#5f5e5e] uppercase font-bold">
+            <span className="text-[9px] font-mono tracking-widest text-[#64748b] uppercase font-bold">
               Master Admin Console
             </span>
           </div>
@@ -71,7 +71,7 @@ export default function AdminLoginPage() {
 
         <Link
           href="/login"
-          className="text-xs font-bold text-[#5f5e5e] hover:text-[#006d36] transition-colors flex items-center gap-1.5 bg-white px-3.5 py-2 rounded-xl border border-[#e2e2e2] shadow-xs"
+          className="neo-btn-secondary text-xs font-bold text-[#64748b] hover:text-[#006d36] flex items-center gap-1.5 px-4 py-2 rounded-2xl"
         >
           <User className="w-4 h-4" />
           <span>Switch to Member Portal</span>
@@ -80,7 +80,8 @@ export default function AdminLoginPage() {
 
       {/* Center Console Card */}
       <main className="flex-1 flex items-center justify-center py-8">
-        <div className="w-full max-w-md bg-white rounded-3xl p-8 sm:p-10 border border-[#e2e2e2] shadow-xl relative overflow-hidden">
+        <div className="w-full max-w-md glass-card rounded-[38px] sm:rounded-[42px] p-8 sm:p-10 shadow-[0_20px_50px_rgba(15,23,42,0.06)] relative overflow-hidden text-center">
+          
           {/* Top highlight bar */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#006d36] via-[#50c878] to-[#006d36]" />
 
@@ -89,33 +90,33 @@ export default function AdminLoginPage() {
             <img
               src="/images/avira-logo.png"
               alt="Avira Lifecare Global Private Limited"
-              className="h-16 w-auto object-contain mb-3"
+              className="h-16 w-auto object-contain mb-3 drop-shadow-sm transition-transform hover:scale-105 duration-300"
             />
-            <h1 className="text-xl sm:text-2xl font-black text-[#1a1c1c] tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-heading font-extrabold text-[#0f172a] tracking-tight">
               Admin Password Login
             </h1>
-            <p className="text-xs text-[#5f5e5e] mt-1">
+            <p className="text-xs text-[#64748b] mt-1 font-medium">
               Avira Lifecare Global Private Limited
             </p>
           </div>
 
           {errorMessage && (
-            <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2.5">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-500" />
+            <div className="mb-5 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 text-xs flex items-center gap-2.5 text-left font-semibold animate-fadeIn">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-500" />
               <span>{errorMessage}</span>
             </div>
           )}
 
-          <form onSubmit={handleAdminLogin} className="space-y-4">
+          <form onSubmit={handleAdminLogin} className="space-y-4 text-left">
             <div>
               <label
                 htmlFor="adminPassword"
-                className="block text-xs font-bold text-[#1a1c1c] mb-1.5 uppercase tracking-wider"
+                className="block text-[11px] font-bold text-[#475569] mb-1.5 uppercase tracking-wider pl-1"
               >
                 Master Administrator Password *
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-[#94a3b8]">
                   <Lock className="w-4 h-4" />
                 </span>
                 <input
@@ -125,12 +126,12 @@ export default function AdminLoginPage() {
                   placeholder="Enter master password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-[#f9f9f9] border border-[#e2e2e2] rounded-xl py-3 pl-11 pr-11 text-[#1a1c1c] text-sm focus:border-[#006d36] focus:ring-1 focus:ring-[#006d36] outline-none transition-all placeholder-gray-400 font-medium tracking-wide"
+                  className="neo-input w-full rounded-2xl py-3 pl-11 pr-11 text-[#0f172a] text-sm font-medium tracking-wide"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-[#1a1c1c] transition-colors cursor-pointer"
+                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-[#94a3b8] hover:text-[#0f172a] transition-colors cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -140,7 +141,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 py-3.5 px-4 bg-[#006d36] hover:bg-[#005025] text-white rounded-xl font-bold text-sm shadow-md shadow-[#006d36]/20 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
+              className="neo-btn-primary w-full mt-2 py-3.5 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
             >
               {isLoading ? (
                 <>
@@ -156,8 +157,8 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-[#e2e2e2] text-center">
-            <p className="text-[11px] text-[#5f5e5e]">
+          <div className="mt-6 pt-4 border-t border-gray-200/60 text-center">
+            <p className="text-xs text-[#64748b] font-medium">
               Are you an Associate Member?{" "}
               <Link href="/login" className="text-[#006d36] font-bold hover:underline ml-1">
                 Go to Member Login
@@ -168,7 +169,7 @@ export default function AdminLoginPage() {
       </main>
 
       {/* Footer */}
-      <footer className="max-w-6xl mx-auto w-full text-center text-[11px] text-[#5f5e5e] py-2">
+      <footer className="max-w-6xl mx-auto w-full text-center text-xs text-[#64748b] py-2">
         Avira Life Care Global • Secured Management Console • 256-Bit SSL
       </footer>
     </div>

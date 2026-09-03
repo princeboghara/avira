@@ -7,25 +7,15 @@ import {
   TrendingUp,
   Package,
   Users,
-  ShieldCheck,
-  ArrowRight,
-  Clock,
   CheckCircle2,
-  AlertCircle,
   FileCheck,
   ShoppingBag,
   RefreshCw,
   Zap,
-  Award,
-  Layers,
-  Sparkles,
   BarChart3,
   Calendar,
   Wallet,
-  Truck,
-  Boxes,
   ChevronRight,
-  DollarSign,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { User } from "@/types";
@@ -125,23 +115,23 @@ export default function AdminOverviewDashboardPage() {
     <AdminLayout user={adminUser} onRefresh={loadDashboardData} refreshing={refreshing}>
       <div className="space-y-8 max-w-7xl mx-auto pb-20 animate-fadeIn">
         {/* ========================================================
-            1. EXECUTIVE CONTROL HERO (Deep Obsidian & Emerald)
+            1. EXECUTIVE CONTROL HERO (Dark Glass Luxury Accent)
            ======================================================== */}
-        <div className="relative rounded-3xl p-7 sm:p-9 bg-gradient-to-br from-[#022814] via-[#04331b] to-[#01170b] text-white shadow-xl shadow-[#022814]/15 border border-emerald-900/30 overflow-hidden">
-          {/* Ambient Glows */}
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-[#50c878]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative rounded-[32px] sm:rounded-[36px] p-7 sm:p-9 glass-dark shadow-2xl border border-emerald-500/25 overflow-hidden">
+          {/* Ambient Lighting Orbs */}
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-[#50c878]/15 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-black/40 border border-white/15 text-emerald-300 text-xs font-bold font-mono backdrop-blur-md">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-white/20 text-emerald-300 text-xs font-bold font-mono backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-[#50c878] animate-pulse" />
                 <span>Enterprise Central Operations Hub</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              <h1 className="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight text-white">
                 Avira Executive Command Center
               </h1>
-              <p className="text-xs sm:text-sm text-emerald-200/80 font-medium max-w-xl">
+              <p className="text-xs sm:text-sm text-emerald-100/80 font-medium max-w-xl">
                 Real-time oversight for order fulfillment, KYC approvals, 1:1 binary matching volume, and weekly payout settlements.
               </p>
             </div>
@@ -152,7 +142,7 @@ export default function AdminOverviewDashboardPage() {
                 type="button"
                 onClick={loadDashboardData}
                 disabled={refreshing}
-                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-xs hover:bg-white/20 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="flex-1 sm:flex-none px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-xs hover:bg-white/20 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
                 <span>Refresh Live</span>
@@ -160,7 +150,7 @@ export default function AdminOverviewDashboardPage() {
 
               <Link
                 href="/admin/orders/approve"
-                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white text-[#006d36] font-bold text-xs shadow-md hover:bg-emerald-50 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                className="neo-btn-primary flex-1 sm:flex-none px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Package className="w-4 h-4" />
                 <span>Approve Orders</span>
@@ -176,25 +166,25 @@ export default function AdminOverviewDashboardPage() {
           {/* Pending Orders Alert */}
           <Link
             href="/admin/orders/approve"
-            className="p-6 rounded-3xl bg-white border border-amber-200/80 shadow-2xs hover:shadow-md transition-all flex items-center justify-between group"
+            className="p-6 rounded-[32px] neo-card-amber neo-card-hover flex items-center justify-between group"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#d97706] to-[#fbbf24] text-white flex items-center justify-center font-bold shadow-md shadow-amber-600/30 group-hover:scale-105 transition-transform">
                 <Package className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#92400e] block">
                   Pending Orders
                 </span>
-                <div className="text-2xl font-black font-mono text-amber-800">
+                <div className="text-2xl font-heading font-black text-amber-800">
                   {stats.pendingOrders} Orders
                 </div>
-                <span className="text-[10px] text-amber-700 font-medium block">
+                <span className="text-[10px] text-amber-700/90 font-medium block">
                   Awaiting payment slip verification
                 </span>
               </div>
             </div>
-            <span className="text-xs font-bold text-amber-800 bg-amber-100/80 px-3 py-1.5 rounded-xl flex items-center gap-1 group-hover:bg-amber-200 transition-colors">
+            <span className="text-xs font-bold text-amber-900 bg-amber-200/80 px-3.5 py-1.5 rounded-xl flex items-center gap-1 group-hover:bg-amber-300 transition-colors shadow-xs">
               <span>Review</span>
               <ChevronRight className="w-4 h-4" />
             </span>
@@ -203,25 +193,25 @@ export default function AdminOverviewDashboardPage() {
           {/* Pending KYC Alert */}
           <Link
             href="/admin/kyc"
-            className="p-6 rounded-3xl bg-white border border-purple-200/80 shadow-2xs hover:shadow-md transition-all flex items-center justify-between group"
+            className="p-6 rounded-[32px] neo-card-violet neo-card-hover flex items-center justify-between group"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center font-bold shadow-md shadow-purple-600/30 group-hover:scale-105 transition-transform">
                 <FileCheck className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#5b21b6] block">
                   Pending KYC Submissions
                 </span>
-                <div className="text-2xl font-black font-mono text-purple-700">
+                <div className="text-2xl font-heading font-black text-[#6d28d9]">
                   {stats.pendingKyc} Requests
                 </div>
-                <span className="text-[10px] text-purple-600 font-medium block">
+                <span className="text-[10px] text-purple-700/90 font-medium block">
                   Aadhaar & Bank verification
                 </span>
               </div>
             </div>
-            <span className="text-xs font-bold text-purple-700 bg-purple-100/80 px-3 py-1.5 rounded-xl flex items-center gap-1 group-hover:bg-purple-200 transition-colors">
+            <span className="text-xs font-bold text-purple-900 bg-purple-200/80 px-3.5 py-1.5 rounded-xl flex items-center gap-1 group-hover:bg-purple-300 transition-colors shadow-xs">
               <span>Verify</span>
               <ChevronRight className="w-4 h-4" />
             </span>
@@ -230,25 +220,25 @@ export default function AdminOverviewDashboardPage() {
           {/* Weekly Payouts Withdraw Master */}
           <Link
             href="/admin/withdraw"
-            className="p-6 rounded-3xl bg-white border border-emerald-200/80 shadow-2xs hover:shadow-md transition-all flex items-center justify-between group"
+            className="p-6 rounded-[32px] neo-card-emerald neo-card-hover flex items-center justify-between group"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-[#006d36] flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#006d36] to-[#10b981] text-white flex items-center justify-center font-bold shadow-md shadow-emerald-700/30 group-hover:scale-105 transition-transform">
                 <Wallet className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#065f46] block">
                   Withdraw Master
                 </span>
-                <div className="text-2xl font-black font-mono text-[#006d36]">
+                <div className="text-2xl font-heading font-black text-[#006d36]">
                   Weekly Settlement
                 </div>
-                <span className="text-[10px] text-emerald-700 font-medium block">
+                <span className="text-[10px] text-emerald-700/90 font-medium block">
                   15% statutory deduction engine
                 </span>
               </div>
             </div>
-            <span className="text-xs font-bold text-[#006d36] bg-emerald-100/80 px-3 py-1.5 rounded-xl flex items-center gap-1 group-hover:bg-emerald-200 transition-colors">
+            <span className="text-xs font-bold text-[#006d36] bg-emerald-200/80 px-3.5 py-1.5 rounded-xl flex items-center gap-1 group-hover:bg-emerald-300 transition-colors shadow-xs">
               <span>Payouts</span>
               <ChevronRight className="w-4 h-4" />
             </span>
@@ -260,11 +250,11 @@ export default function AdminOverviewDashboardPage() {
            ======================================================== */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-heading font-black text-[#0f172a] flex items-center gap-2">
               <Zap className="w-5 h-5 text-amber-500" />
               <span>Today&apos;s Live Business Metrics</span>
             </h2>
-            <span className="text-xs font-mono font-bold text-slate-400">
+            <span className="text-xs font-mono font-bold text-[#64748b]">
               {new Date().toLocaleDateString("en-IN", {
                 weekday: "short",
                 day: "2-digit",
@@ -276,73 +266,73 @@ export default function AdminOverviewDashboardPage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Today Revenue */}
-            <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-2xs">
+            <div className="p-6 rounded-[30px] neo-card-emerald neo-card-hover">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#065f46]">
                   Today&apos;s Revenue
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#006d36] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#006d36] to-[#10b981] text-white flex items-center justify-center shadow-xs">
                   <TrendingUp className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl font-black font-mono text-slate-900">
+              <div className="text-2xl font-heading font-black text-[#006d36]">
                 ₹{stats.todayRevenue.toLocaleString("en-IN")}
               </div>
-              <span className="text-[10px] text-emerald-700 font-medium block mt-1">
+              <span className="text-[10px] text-emerald-700 font-bold block mt-1">
                 Gross received today
               </span>
             </div>
 
             {/* Today PV Generated */}
-            <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-2xs">
+            <div className="p-6 rounded-[30px] neo-card-violet neo-card-hover">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#5b21b6]">
                   Today&apos;s PV Volume
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center shadow-xs">
                   <Zap className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl font-black font-mono text-slate-900">
+              <div className="text-2xl font-heading font-black text-[#6d28d9]">
                 {stats.todayPvRevenue.toLocaleString("en-IN")} PV
               </div>
-              <span className="text-[10px] text-indigo-600 font-medium block mt-1">
-                Volume injected in binary tree
+              <span className="text-[10px] text-purple-700 font-bold block mt-1">
+                Volume injected in tree
               </span>
             </div>
 
             {/* Today New Associates */}
-            <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-2xs">
+            <div className="p-6 rounded-[30px] neo-card-rose neo-card-hover">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#9f1239]">
                   Today&apos;s New Joining
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#e11d48] to-[#f43f5e] text-white flex items-center justify-center shadow-xs">
                   <Users className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl font-black font-mono text-slate-900">
+              <div className="text-2xl font-heading font-black text-rose-700">
                 {stats.todayNewMembers} Associates
               </div>
-              <span className="text-[10px] text-purple-600 font-medium block mt-1">
+              <span className="text-[10px] text-rose-600 font-bold block mt-1">
                 New member registrations
               </span>
             </div>
 
             {/* Today Orders */}
-            <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-2xs">
+            <div className="p-6 rounded-[30px] neo-card-sapphire neo-card-hover">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#1e40af]">
                   Today&apos;s Total Orders
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center shadow-xs">
                   <ShoppingBag className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl font-black font-mono text-slate-900">
+              <div className="text-2xl font-heading font-black text-blue-700">
                 {stats.todayOrders} Orders
               </div>
-              <span className="text-[10px] text-blue-600 font-medium block mt-1">
+              <span className="text-[10px] text-blue-600 font-bold block mt-1">
                 In-store & member purchases
               </span>
             </div>
@@ -353,61 +343,61 @@ export default function AdminOverviewDashboardPage() {
             4. LIFETIME ENTERPRISE VOLUME & TOTAL STATS
            ======================================================== */}
         <div className="space-y-4">
-          <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+          <h2 className="text-base sm:text-lg font-heading font-black text-[#0f172a] flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-[#006d36]" />
             <span>Lifetime Enterprise Cumulative Totals</span>
           </h2>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Lifetime Revenue */}
-            <div className="p-6 rounded-3xl bg-gradient-to-br from-emerald-50/70 via-white to-white border border-emerald-200 shadow-2xs">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+            <div className="p-6 rounded-[30px] neo-card-emerald neo-card-hover">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#065f46] block">
                 Total Lifetime Revenue
               </span>
-              <div className="text-2xl sm:text-3xl font-black font-mono text-[#006d36] mt-1">
+              <div className="text-2xl sm:text-3xl font-heading font-black text-[#006d36] mt-1">
                 ₹{stats.totalRevenue.toLocaleString("en-IN")}
               </div>
-              <span className="text-[10px] text-emerald-700 font-medium block mt-1">
+              <span className="text-[10px] text-emerald-700 font-bold block mt-1">
                 Gross turnover generated
               </span>
             </div>
 
             {/* Total Cumulative PV */}
-            <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-2xs">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+            <div className="p-6 rounded-[30px] neo-card-sapphire neo-card-hover">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#1e40af] block">
                 Total Cumulative PV
               </span>
-              <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 mt-1">
+              <div className="text-2xl sm:text-3xl font-heading font-black text-blue-700 mt-1">
                 {stats.totalPvRevenue.toLocaleString("en-IN")} PV
               </div>
-              <span className="text-[10px] text-slate-400 font-medium block mt-1">
+              <span className="text-[10px] text-blue-600 font-bold block mt-1">
                 All historical binary points
               </span>
             </div>
 
             {/* Total Orders Processed */}
-            <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-2xs">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+            <div className="p-6 rounded-[30px] neo-card-amber neo-card-hover">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#92400e] block">
                 Total Orders Registry
               </span>
-              <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 mt-1">
+              <div className="text-2xl sm:text-3xl font-heading font-black text-amber-700 mt-1">
                 {stats.totalOrders.toLocaleString("en-IN")}
               </div>
-              <span className="text-[10px] text-slate-400 font-medium block mt-1">
-                All approved and dispatched orders
+              <span className="text-[10px] text-amber-600 font-bold block mt-1">
+                Approved & dispatched orders
               </span>
             </div>
 
             {/* Total Registered Network */}
-            <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-2xs">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+            <div className="p-6 rounded-[30px] neo-card-violet neo-card-hover">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#5b21b6] block">
                 Total Registered Network
               </span>
-              <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 mt-1">
+              <div className="text-2xl sm:text-3xl font-heading font-black text-[#6d28d9] mt-1">
                 {stats.totalMembers.toLocaleString("en-IN")}
               </div>
-              <span className="text-[10px] text-[#006d36] font-bold block mt-1">
-                {stats.activeMembers} Active Active Associates
+              <span className="text-[10px] text-purple-700 font-black block mt-1">
+                {stats.activeMembers} Active Associates
               </span>
             </div>
           </div>
@@ -416,13 +406,13 @@ export default function AdminOverviewDashboardPage() {
         {/* ========================================================
             5. RECENT LIVE ORDERS FEED
            ======================================================== */}
-        <div className="rounded-3xl p-6 sm:p-8 bg-white border border-slate-200/80 shadow-2xs">
+        <div className="rounded-[32px] p-6 sm:p-8 glass-card">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900">
+              <h2 className="text-base sm:text-lg font-heading font-extrabold text-[#0f172a]">
                 Recent Orders Stream
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#64748b]">
                 Live customer orders requiring approval, packing, and dispatch tracking
               </p>
             </div>
@@ -436,15 +426,15 @@ export default function AdminOverviewDashboardPage() {
           </div>
 
           {recentOrders.length === 0 ? (
-            <div className="py-12 text-center text-sm text-slate-400 flex flex-col items-center gap-2 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
-              <Clock className="w-8 h-8 text-slate-300" />
+            <div className="py-12 text-center text-sm text-[#64748b] flex flex-col items-center gap-2 neo-inset rounded-2xl">
+              <Package className="w-8 h-8 text-[#94a3b8]" />
               <span>No recent orders recorded yet.</span>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider font-extrabold text-[10px]">
+                  <tr className="border-b border-gray-200/70 text-[#64748b] uppercase tracking-wider font-extrabold text-[10px]">
                     <th className="py-3 px-4">Order ID</th>
                     <th className="py-3 px-4">Associate</th>
                     <th className="py-3 px-4">PV Value</th>
@@ -453,34 +443,34 @@ export default function AdminOverviewDashboardPage() {
                     <th className="py-3 px-4 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-gray-100">
                   {recentOrders.map((ord) => (
-                    <tr key={ord.id} className="hover:bg-slate-50/80 transition-colors">
+                    <tr key={ord.id} className="hover:bg-white/60 transition-colors">
                       <td className="py-3.5 px-4 font-mono font-bold text-[#006d36]">
                         {ord.id}
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="font-bold text-slate-900">{ord.fullName || "Associate"}</div>
-                        <div className="text-[10px] font-mono text-slate-400">{ord.memberId}</div>
+                        <div className="font-bold text-[#0f172a]">{ord.fullName || "Associate"}</div>
+                        <div className="text-[10px] font-mono text-[#94a3b8]">{ord.memberId}</div>
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                      <td className="py-3.5 px-4 font-mono font-bold text-[#0f172a]">
                         {ord.pv} PV
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-black text-slate-900">
+                      <td className="py-3.5 px-4 font-mono font-bold text-[#0f172a]">
                         ₹{ord.amount.toLocaleString("en-IN")}
                       </td>
                       <td className="py-3.5 px-4">
                         <span
                           className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                             ord.status === "CONFIRMED"
-                              ? "bg-emerald-100 text-[#006d36]"
+                              ? "bg-emerald-500/15 text-[#006d36] border border-emerald-500/30"
                               : ord.status === "PENDING"
-                              ? "bg-amber-100 text-amber-800"
+                              ? "bg-amber-500/15 text-amber-800 border border-amber-500/30"
                               : ord.status === "PACKED"
-                              ? "bg-indigo-100 text-indigo-700"
+                              ? "bg-indigo-500/15 text-indigo-700 border border-indigo-500/30"
                               : ord.status === "DISPATCHED"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-slate-100 text-slate-700"
+                              ? "bg-blue-500/15 text-blue-700 border border-blue-500/30"
+                              : "bg-gray-100 text-gray-700"
                           }`}
                         >
                           {ord.status}

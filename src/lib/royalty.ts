@@ -1,5 +1,4 @@
 import { PoolClient } from "pg";
-import { pool } from "@/lib/db";
 
 export interface RoyaltyQualificationResult {
   isQualified: boolean;

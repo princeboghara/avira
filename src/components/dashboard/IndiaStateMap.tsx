@@ -8,15 +8,11 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  Sparkles,
   Award,
   Layers,
   Building2,
-  Palette,
   Users,
-  Network,
   Compass,
-  CheckCircle2,
   Move,
 } from "lucide-react";
 import {
@@ -856,7 +852,7 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
 
             {/* Scrollable State List */}
             <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1">
-              {filteredStates.map((st, idx) => {
+              {filteredStates.map((st) => {
                 const isSelected = selectedState?.code === st.code;
                 const stateColor = STATE_PALETTE[st.code] || "#059669";
                 return (

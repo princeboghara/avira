@@ -70,25 +70,28 @@ const CATEGORIES = [
 
 export default function HomeCategories() {
   return (
-    <section id="categories" className="py-16 bg-[#faf9f6] border-b border-stone-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="categories" className="py-20 relative overflow-hidden">
+      {/* Soft Ambient Background Glow */}
+      <div className="absolute top-1/2 left-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#1b3b32] block mb-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#006d36] block mb-1">
               Curated Collections
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#0f172a] tracking-tight">
               Shop by Ayurvedic Category
             </h2>
           </div>
           <Link
             href="/products"
-            className="text-xs font-bold text-[#1b3b32] hover:text-[#234e40] flex items-center gap-1 uppercase tracking-wider transition-colors"
+            className="neo-btn-secondary text-xs font-bold px-4 py-2 rounded-2xl flex items-center gap-1.5 uppercase tracking-wider"
           >
-            <span>View All 40+ Products</span>
-            <ArrowRight className="w-4 h-4" />
+            <span>View All Formulations</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
@@ -98,11 +101,11 @@ export default function HomeCategories() {
             <Link
               key={cat.id}
               href={cat.link}
-              className="bg-white rounded-2xl p-5 border border-stone-200 hover:border-stone-400 hover:shadow-md transition-all duration-300 flex flex-col justify-between group"
+              className="glass-card rounded-[32px] p-5 neo-card-hover flex flex-col justify-between group"
             >
               <div>
-                {/* Photo Stage with Soft Studio Background */}
-                <div className="w-full h-48 bg-[#f7f5f0] rounded-xl mb-4 relative overflow-hidden flex items-center justify-center p-4 border border-stone-100 group-hover:bg-[#f1ede3] transition-colors">
+                {/* Photo Stage */}
+                <div className="w-full h-48 neo-inset rounded-2xl mb-4 relative overflow-hidden flex items-center justify-center p-4 group-hover:bg-white/90 transition-colors">
                   <Image
                     src={cat.imageUrl}
                     alt={cat.name}
@@ -111,25 +114,25 @@ export default function HomeCategories() {
                     loading="lazy"
                     className="max-h-full max-w-full object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300"
                   />
-                  <span className="absolute top-3 right-3 px-2.5 py-0.5 rounded-md bg-white text-stone-700 text-[10px] font-bold border border-stone-200 shadow-2xs">
+                  <span className="glass-pill absolute top-3 right-3 px-3 py-0.5 rounded-full text-[#0f172a] text-[10px] font-bold">
                     {cat.count}
                   </span>
                 </div>
 
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#8c827a] block mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#64748b] block mb-1">
                   {cat.badge}
                 </span>
 
-                <h3 className="text-lg font-bold text-stone-900 group-hover:text-[#1b3b32] transition-colors">
+                <h3 className="text-lg font-heading font-extrabold text-[#0f172a] group-hover:text-[#006d36] transition-colors">
                   {cat.name}
                 </h3>
 
-                <p className="text-xs text-stone-500 mt-1">
+                <p className="text-xs text-[#64748b] mt-1 font-medium">
                   {cat.subtitle}
                 </p>
               </div>
 
-              <div className="pt-4 mt-3 border-t border-stone-100 flex items-center justify-between text-xs font-bold text-[#1b3b32] group-hover:translate-x-1 transition-transform">
+              <div className="pt-4 mt-3 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-[#006d36] group-hover:translate-x-1 transition-transform">
                 <span>Explore Formulations</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>

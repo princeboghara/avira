@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Sparkles, FlaskConical, Award } from "lucide-react";
+import { ArrowRight, FlaskConical } from "lucide-react";
 
 interface CategoryMastery {
   id: string;

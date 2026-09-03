@@ -52,7 +52,7 @@ export default function BinaryGenealogyTree({
   parentMemberId,
   viewerMemberId,
 }: BinaryGenealogyTreeProps) {
-  // Tree state holding the full tree hierarchy (supports dynamic node additions)
+  // Tree state holding the full tree hierarchy
   const [treeData, setTreeData] = useState<TreeNode>(rootNode);
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({
     [rootNode.id]: true,
@@ -103,57 +103,60 @@ export default function BinaryGenealogyTree({
       return;
     }
 
-    // If node has children already in memory, just expand
-    if (node.leftChild || node.rightChild || (!node.hasLeftChild && !node.hasRightChild)) {
+    if (node.leftChild !== undefined && node.rightChild !== undefined) {
       setExpandedNodes((prev) => ({ ...prev, [node.id]: true }));
       return;
     }
 
-    // Otherwise, fetch on demand from API
     setLoadingNodes((prev) => ({ ...prev, [node.id]: true }));
     try {
-      const res = await fetch(`/api/member/tree?node=${encodeURIComponent(node.memberId)}&depth=2`);
+      const res = await fetch(`/api/member/tree?rootId=${node.memberId}`, { cache: "no-store" });
       const data = await res.json();
       if (data.success && data.tree) {
         updateNodeInTree(node.id, {
-          leftChild: data.tree.leftChild,
-          rightChild: data.tree.rightChild,
+          leftChild: data.tree.leftChild || null,
+          rightChild: data.tree.rightChild || null,
         });
+        setExpandedNodes((prev) => ({
+          ...prev,
+          [node.id]: true,
+          ...(data.tree.leftChild ? { [data.tree.leftChild.id]: true } : {}),
+          ...(data.tree.rightChild ? { [data.tree.rightChild.id]: true } : {}),
+        }));
+      } else {
         setExpandedNodes((prev) => ({ ...prev, [node.id]: true }));
       }
-    } catch (err) {
-      console.error("Failed to load node children:", err);
+    } catch {
+      setExpandedNodes((prev) => ({ ...prev, [node.id]: true }));
     } finally {
       setLoadingNodes((prev) => ({ ...prev, [node.id]: false }));
     }
   };
 
   return (
-    <div className="w-full space-y-4">
-      {/* Top Navigation & Toolbar: Breadcrumbs + Zoom Controls */}
-      <div className="bg-white rounded-2xl p-4 border border-emerald-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        {/* Breadcrumb Hierarchy */}
+    <div className="space-y-4 font-sans">
+      {/* Top Controls Strip: Breadcrumb Trail + Zoom Buttons */}
+      <div className="glass-panel p-4 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Breadcrumb Trail */}
         <div className="flex items-center gap-1.5 flex-wrap text-xs">
-          <span className="font-bold text-gray-400 uppercase tracking-wider text-[10px] mr-1">
-            Path:
-          </span>
+          <span className="text-[#64748b] font-bold mr-1">Hierarchy Path:</span>
           {breadcrumbs.map((b, idx) => {
             const isLast = idx === breadcrumbs.length - 1;
             return (
               <React.Fragment key={b.memberId}>
-                {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />}
+                {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />}
                 <button
                   type="button"
                   onClick={() => onSelectRootId && onSelectRootId(b.memberId)}
-                  className={`px-2.5 py-1 rounded-lg font-mono font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                  className={`px-3 py-1 rounded-xl font-mono text-xs font-bold transition-all cursor-pointer ${
                     isLast
-                      ? "bg-[#006d36] text-white shadow-xs"
-                      : "bg-emerald-50 text-[#006d36] hover:bg-emerald-100"
+                      ? "neo-btn-primary font-black"
+                      : "neo-btn-secondary"
                   }`}
                   title={`Jump to ${b.fullName} (${b.memberId})`}
                 >
                   <span>{b.memberId}</span>
-                  <span className="text-[10px] opacity-80 font-normal">({b.fullName})</span>
+                  <span className="text-[10px] opacity-80 font-normal ml-1">({b.fullName})</span>
                 </button>
               </React.Fragment>
             );
@@ -166,7 +169,7 @@ export default function BinaryGenealogyTree({
             <button
               type="button"
               onClick={() => onSelectRootId && onSelectRootId(parentMemberId)}
-              className="px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 text-[#006d36] text-xs font-bold hover:bg-emerald-100 flex items-center gap-1.5 cursor-pointer shadow-2xs transition-all"
+              className="neo-btn-secondary px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
               title="Navigate Up to Parent"
             >
               <ArrowUp className="w-3.5 h-3.5" />
@@ -174,22 +177,22 @@ export default function BinaryGenealogyTree({
             </button>
           )}
 
-          <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-1 border border-gray-200">
+          <div className="flex items-center neo-inset rounded-2xl p-1 gap-1">
             <button
               type="button"
               onClick={() => setZoomScale((z) => Math.max(0.6, z - 0.1))}
-              className="p-1.5 text-gray-600 hover:text-black rounded-lg hover:bg-white transition-colors cursor-pointer"
+              className="p-1.5 text-[#64748b] hover:text-[#0f172a] rounded-xl hover:bg-white transition-colors cursor-pointer"
               title="Zoom Out"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="text-[10px] font-mono font-bold px-1 text-gray-600 min-w-[36px] text-center">
+            <span className="text-[10px] font-mono font-bold px-1.5 text-[#0f172a] min-w-[36px] text-center">
               {Math.round(zoomScale * 100)}%
             </span>
             <button
               type="button"
               onClick={() => setZoomScale((z) => Math.min(1.4, z + 0.1))}
-              className="p-1.5 text-gray-600 hover:text-black rounded-lg hover:bg-white transition-colors cursor-pointer"
+              className="p-1.5 text-[#64748b] hover:text-[#0f172a] rounded-xl hover:bg-white transition-colors cursor-pointer"
               title="Zoom In"
             >
               <ZoomIn className="w-3.5 h-3.5" />
@@ -197,7 +200,7 @@ export default function BinaryGenealogyTree({
             <button
               type="button"
               onClick={() => setZoomScale(1)}
-              className="p-1.5 text-gray-600 hover:text-black rounded-lg hover:bg-white transition-colors cursor-pointer"
+              className="p-1.5 text-[#64748b] hover:text-[#0f172a] rounded-xl hover:bg-white transition-colors cursor-pointer"
               title="Reset Zoom"
             >
               <Maximize2 className="w-3.5 h-3.5" />
@@ -207,7 +210,7 @@ export default function BinaryGenealogyTree({
       </div>
 
       {/* Main Interactive Canvas */}
-      <div className="bg-white rounded-3xl p-6 sm:p-10 border border-emerald-200 shadow-sm overflow-x-auto min-h-[500px]">
+      <div className="glass-card rounded-[32px] p-6 sm:p-10 overflow-x-auto min-h-[500px]">
         <div
           className="flex justify-center transition-transform duration-200 origin-top min-w-max pb-12"
           style={{ transform: `scale(${zoomScale})` }}
@@ -232,7 +235,6 @@ export default function BinaryGenealogyTree({
 
 /**
  * Truly recursive binary tree node renderer
- * Dynamically expands down 1, 2, 3, 4, 5, 10, 20+ levels!
  */
 function RecursiveTreeNode({
   node,
@@ -260,7 +262,6 @@ function RecursiveTreeNode({
   const isExpanded = Boolean(expandedNodes[node.id]);
   const isLoading = Boolean(loadingNodes[node.id]);
 
-  // A node can expand if it has left/right children or hasMoreChildren flagged
   const canExpand = Boolean(
     node.leftChild ||
     node.rightChild ||
@@ -287,24 +288,23 @@ function RecursiveTreeNode({
         onRootClick={() => onSelectRootId && onSelectRootId(node.memberId)}
       />
 
-      {/* Children Sub-branch (Rendered if expanded) */}
+      {/* Children Sub-branch */}
       {isExpanded && (
         <div className="flex flex-col items-center mt-3 animate-fadeIn w-full">
           {/* Connector Line from Parent */}
-          <div className="w-0.5 h-6 bg-emerald-500 relative" />
+          <div className="w-0.5 h-6 bg-[#006d36] relative" />
 
-          {/* Horizontal Split Line between Left and Right Sub-branches */}
+          {/* Horizontal Split Line */}
           <div className="w-full flex items-center justify-center relative">
-            <div className="w-1/2 h-0.5 bg-emerald-500" />
-            <div className="w-1/2 h-0.5 bg-purple-500" />
+            <div className="w-1/2 h-0.5 bg-[#006d36]" />
+            <div className="w-1/2 h-0.5 bg-indigo-500" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#006d36] border-2 border-white shadow-xs" />
           </div>
 
-          {/* Left and Right Child Containers */}
-          <div className="grid grid-cols-2 gap-8 sm:gap-12 w-full pt-3">
+          <div className="flex items-start justify-center gap-8 sm:gap-14 pt-2">
             {/* LEFT LEG CONTAINER */}
             <div className="flex flex-col items-center">
-              <div className="w-0.5 h-3 bg-emerald-500 mb-1" />
+              <div className="w-0.5 h-3 bg-[#006d36] mb-1" />
               {node.leftChild ? (
                 <RecursiveTreeNode
                   node={node.leftChild}
@@ -329,7 +329,7 @@ function RecursiveTreeNode({
 
             {/* RIGHT LEG CONTAINER */}
             <div className="flex flex-col items-center">
-              <div className="w-0.5 h-3 bg-purple-500 mb-1" />
+              <div className="w-0.5 h-3 bg-indigo-500 mb-1" />
               {node.rightChild ? (
                 <RecursiveTreeNode
                   node={node.rightChild}
@@ -359,7 +359,7 @@ function RecursiveTreeNode({
 }
 
 /**
- * Node card with real sponsor details, live PV, and dynamic expand button
+ * Node card with live PV, tactile elevation, and dynamic expand button
  */
 function TreeNodeCard({
   node,
@@ -387,12 +387,12 @@ function TreeNodeCard({
 
   const cardBorder =
     leg === "ROOT"
-      ? "border-[#006d36] bg-emerald-50/50 shadow-md ring-2 ring-emerald-500/20"
+      ? "border-[#006d36] bg-emerald-500/10 shadow-[0_8px_20px_rgba(0,109,54,0.12)]"
       : isRed
-      ? "border-red-400 bg-red-50/40 shadow-xs"
+      ? "border-rose-400/80 bg-rose-500/10 shadow-xs"
       : leg === "LEFT"
-      ? "border-blue-400 bg-blue-50/40 shadow-xs"
-      : "border-purple-400 bg-purple-50/40 shadow-xs";
+      ? "border-emerald-400/80 bg-emerald-500/10 shadow-xs"
+      : "border-indigo-400/80 bg-indigo-500/10 shadow-xs";
 
   const formattedActivation = node.activationDate
     ? new Date(node.activationDate).toLocaleDateString("en-IN", {
@@ -405,19 +405,19 @@ function TreeNodeCard({
   return (
     <div className="relative group/node">
       <div
-        className={`rounded-2xl border p-2 sm:p-2.5 transition-all flex flex-col items-center relative ${cardBorder} ${
+        className={`glass-card rounded-2xl border p-2.5 sm:p-3 transition-all flex flex-col items-center relative ${cardBorder} ${
           isSmall ? "w-32 sm:w-36" : "w-36 sm:w-44"
         }`}
       >
         {/* Top Leg & Info Bar */}
         <div className="flex items-center justify-between w-full mb-1">
           <span
-            className={`text-[8px] font-mono font-black uppercase px-1.5 py-0.5 rounded shadow-2xs ${
+            className={`text-[8px] font-mono font-black uppercase px-2 py-0.5 rounded-md ${
               leg === "ROOT"
                 ? "bg-[#006d36] text-white"
                 : leg === "LEFT"
-                ? "bg-blue-600 text-white"
-                : "bg-purple-600 text-white"
+                ? "bg-[#006d36] text-white"
+                : "bg-indigo-600 text-white"
             }`}
           >
             {leg}
@@ -426,14 +426,14 @@ function TreeNodeCard({
           <button
             type="button"
             onClick={() => setShowTooltip((p) => !p)}
-            className="text-gray-400 hover:text-[#006d36] p-0.5 transition-colors cursor-pointer"
+            className="text-[#94a3b8] hover:text-[#006d36] p-0.5 transition-colors cursor-pointer"
             title="View PV and Sponsor Details"
           >
             <Info className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Avatar / Initials (Click to Focus Root) */}
+        {/* Avatar / Initials */}
         <button
           type="button"
           onClick={onRootClick}
@@ -445,20 +445,20 @@ function TreeNodeCard({
             <img
               src={node.avatarUrl}
               alt={node.fullName}
-              className={`rounded-full object-cover border-2 ${
-                isRed ? "border-red-400" : "border-emerald-500"
+              className={`rounded-2xl object-cover border ${
+                isRed ? "border-rose-400" : "border-emerald-500"
               } ${isSmall ? "w-8 h-8" : "w-10 h-10"}`}
             />
           ) : (
             <div
-              className={`rounded-full flex items-center justify-center font-black text-white shadow-xs ${
+              className={`rounded-2xl flex items-center justify-center font-black text-white shadow-xs ${
                 leg === "ROOT"
                   ? "bg-[#006d36]"
                   : isRed
-                  ? "bg-red-500"
+                  ? "bg-rose-500"
                   : leg === "LEFT"
-                  ? "bg-blue-600"
-                  : "bg-purple-600"
+                  ? "bg-[#006d36]"
+                  : "bg-indigo-600"
               } ${isSmall ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm"}`}
             >
               {node.fullName ? node.fullName.charAt(0).toUpperCase() : "A"}
@@ -476,37 +476,37 @@ function TreeNodeCard({
           <span className="font-mono font-black text-[11px] sm:text-xs text-[#006d36] block truncate hover:underline">
             {node.memberId}
           </span>
-          <span className="font-bold text-[10px] sm:text-[11px] text-[#1a1c1c] block truncate leading-tight mt-0.5">
+          <span className="font-bold text-[10px] sm:text-[11px] text-[#0f172a] block truncate leading-tight mt-0.5">
             {node.fullName}
           </span>
         </button>
 
-        {/* Sponsor Name Badge */}
+        {/* Sponsor Name */}
         <div className="mt-1 w-full text-center">
-          <span className="text-[8px] text-gray-500 block truncate font-medium">
-            Sp: <strong className="text-gray-700">{node.sponsorName || node.sponsorId || "Root"}</strong>
+          <span className="text-[8px] text-[#64748b] block truncate font-medium">
+            Sp: <strong className="text-[#0f172a]">{node.sponsorName || node.sponsorId || "Root"}</strong>
           </span>
         </div>
 
         {/* PV Badge */}
         <div className="mt-1 flex items-center gap-1 text-[8px] font-mono font-bold">
           <span
-            className={`px-1.5 py-0.5 rounded shadow-2xs ${
-              isRed ? "bg-red-100 text-red-700" : "bg-emerald-100 text-[#006d36]"
+            className={`px-2 py-0.5 rounded-md ${
+              isRed ? "bg-rose-500/15 text-rose-700" : "bg-emerald-500/15 text-[#006d36]"
             }`}
           >
             {node.personalPv} PV
           </span>
         </div>
 
-        {/* Expand '+' / Collapse '-' Button (Loaded dynamically down any level!) */}
+        {/* Expand / Collapse Button */}
         {canExpand && (
           <button
             type="button"
             onClick={onToggleExpand}
             disabled={isLoading}
-            className={`absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full flex items-center justify-center text-white shadow-md cursor-pointer transition-all hover:scale-110 active:scale-95 z-20 ${
-              isExpanded ? "bg-gray-700 hover:bg-gray-800" : "bg-[#006d36] hover:bg-[#005025]"
+            className={`neo-btn-icon absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full flex items-center justify-center text-[#0f172a] shadow-md cursor-pointer transition-all hover:scale-110 active:scale-95 z-20 ${
+              isExpanded ? "bg-slate-800 text-white" : "bg-white text-[#006d36]"
             }`}
             title={isExpanded ? "Collapse Children" : "Expand Children (+)"}
           >
@@ -523,55 +523,55 @@ function TreeNodeCard({
 
       {/* Floating Detailed Tooltip */}
       {showTooltip && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-3.5 bg-white rounded-2xl shadow-2xl border border-emerald-300 text-xs z-50 animate-scaleUp">
-          <div className="flex items-center justify-between pb-1.5 border-b border-gray-100 mb-2">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-4 glass-card rounded-2xl shadow-2xl border border-white text-xs z-50 animate-slideRight">
+          <div className="flex items-center justify-between pb-2 border-b border-gray-100 mb-2">
             <span className="font-black font-mono text-[#006d36] text-xs">{node.memberId}</span>
             <span
-              className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${
+              className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
                 isRed
-                  ? "bg-red-50 text-red-700 border border-red-200"
-                  : "bg-emerald-50 text-[#006d36] border border-emerald-200"
+                  ? "bg-rose-500/15 text-rose-700 border border-rose-500/30"
+                  : "bg-emerald-500/15 text-[#006d36] border border-emerald-500/30"
               }`}
             >
-              {isRed ? "INACTIVE (<100 PV)" : "ACTIVE"}
+              {isRed ? "INACTIVE" : "ACTIVE"}
             </span>
           </div>
 
-          <div className="space-y-1 font-mono text-[10px]">
+          <div className="space-y-1.5 font-mono text-[10px] text-[#0f172a]">
             <div className="flex justify-between">
-              <span className="text-gray-500">Associate Name:</span>
-              <span className="font-bold text-gray-900 truncate max-w-[120px]">{node.fullName}</span>
+              <span className="text-[#64748b]">Associate:</span>
+              <span className="font-bold truncate max-w-[120px]">{node.fullName}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Real Sponsor:</span>
+              <span className="text-[#64748b]">Sponsor:</span>
               <span className="font-bold text-[#006d36] truncate max-w-[120px]">
                 {node.sponsorName} ({node.sponsorId})
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Package Amount:</span>
-              <span className="font-bold text-gray-900">{node.personalPv} PV</span>
+              <span className="text-[#64748b]">Package:</span>
+              <span className="font-bold">{node.personalPv} PV</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Activation Date:</span>
-              <span className="font-bold text-gray-900">{formattedActivation}</span>
+              <span className="text-[#64748b]">Activation:</span>
+              <span className="font-bold">{formattedActivation}</span>
             </div>
           </div>
 
           {/* Left & Right PV Ledger */}
           <div className="pt-2 mt-2 border-t border-gray-100 grid grid-cols-2 gap-2 text-center font-mono">
-            <div className="p-2 bg-blue-50/80 rounded-xl border border-blue-200">
-              <span className="text-[9px] uppercase font-bold text-blue-700 block">Total Left PV</span>
-              <span className="font-black text-xs text-blue-800">{node.leftPv} PV</span>
-              <span className="text-[8px] text-blue-600 block mt-0.5 font-bold">
-                Carry: {node.carryLeftPv || 0} PV
+            <div className="p-2 neo-inset rounded-xl">
+              <span className="text-[9px] uppercase font-bold text-[#006d36] block">Left PV</span>
+              <span className="font-black text-xs text-[#006d36]">{node.leftPv} PV</span>
+              <span className="text-[8px] text-[#64748b] block mt-0.5">
+                Carry: {node.carryLeftPv || 0}
               </span>
             </div>
-            <div className="p-2 bg-purple-50/80 rounded-xl border border-purple-200">
-              <span className="text-[9px] uppercase font-bold text-purple-700 block">Total Right PV</span>
-              <span className="font-black text-xs text-purple-800">{node.rightPv} PV</span>
-              <span className="text-[8px] text-purple-600 block mt-0.5 font-bold">
-                Carry: {node.carryRightPv || 0} PV
+            <div className="p-2 neo-inset rounded-xl">
+              <span className="text-[9px] uppercase font-bold text-indigo-600 block">Right PV</span>
+              <span className="font-black text-xs text-indigo-700">{node.rightPv} PV</span>
+              <span className="text-[8px] text-[#64748b] block mt-0.5">
+                Carry: {node.carryRightPv || 0}
               </span>
             </div>
           </div>
@@ -579,9 +579,9 @@ function TreeNodeCard({
           <button
             type="button"
             onClick={onRootClick}
-            className="w-full mt-2 py-1.5 rounded-xl bg-[#006d36] text-white text-[10px] font-bold hover:bg-[#005025] transition-all cursor-pointer text-center block"
+            className="neo-btn-primary w-full mt-2.5 py-1.5 rounded-xl text-[10px] font-bold text-center block cursor-pointer"
           >
-            Drill Down / Center This Tree
+            Center This Tree
           </button>
         </div>
       )}
@@ -601,11 +601,11 @@ function VacantSlot({
   return (
     <Link
       href={`/register?sponsor=${sponsorId}&ref=${sponsorId}&parent=${parentId}&pos=${position}`}
-      className="border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center p-2 text-gray-500 hover:border-[#006d36] hover:text-[#006d36] hover:bg-emerald-50/50 transition-all w-28 sm:w-32 h-20 text-[9px] shadow-2xs"
+      className="border-2 border-dashed border-gray-300/80 rounded-2xl flex flex-col items-center justify-center p-2 text-[#64748b] hover:border-[#006d36] hover:text-[#006d36] hover:bg-white/80 transition-all w-28 sm:w-32 h-20 text-[9px] shadow-2xs"
     >
       <Plus className="w-4 h-4 text-[#006d36] mb-0.5" />
       <span className="font-bold text-[10px]">+ Add Member</span>
-      <span className="text-[8px] font-mono text-gray-500">{position} Leg</span>
+      <span className="text-[8px] font-mono text-[#94a3b8]">{position} Leg</span>
     </Link>
   );
 }

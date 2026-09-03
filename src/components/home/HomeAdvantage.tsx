@@ -4,9 +4,7 @@ import React from "react";
 import {
   ShieldCheck,
   CheckCircle2,
-  Award,
   Leaf,
-  FlaskConical,
   Recycle,
   Microscope,
   Building2,

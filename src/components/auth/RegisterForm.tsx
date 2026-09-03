@@ -19,6 +19,7 @@ import {
   Network,
   MapPin,
   ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function RegisterForm() {
@@ -63,7 +64,7 @@ export default function RegisterForm() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 3D Registration Success Modal State
+  // Registration Success Modal State
   const [registeredMember, setRegisteredMember] = useState<{
     memberId: string;
     fullName: string;
@@ -100,42 +101,48 @@ export default function RegisterForm() {
       } finally {
         setIsVerifyingSponsor(false);
       }
-    }, 250);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [sponsorId]);
 
-  // 2. Immediate Fast Pincode City & State on 6 digits
+  // 2. Indian Postal Pincode Auto Lookup
   useEffect(() => {
-    const cleanPincode = pincode.trim().replace(/\D/g, "");
-    if (cleanPincode.length === 6) {
+    const cleanPin = pincode.trim();
+    if (cleanPin.length !== 6) {
+      const resetPinTimer = setTimeout(() => {
+        setPincodeAutofilled(false);
+        setCity("");
+        setStateName("");
+      }, 0);
+      return () => clearTimeout(resetPinTimer);
+    }
+
+    const timer = setTimeout(async () => {
       setIsFetchingPincode(true);
-      fetch(`/api/pincode/${cleanPincode}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.city && data.state) {
-            setCity(data.city);
-            setStateName(data.state);
-            setPincodeAutofilled(true);
-          } else {
-            setCity("");
-            setStateName("");
-            setPincodeAutofilled(false);
-          }
-        })
-        .catch(() => {
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${cleanPin}`);
+        const data = await res.json();
+
+        if (Array.isArray(data) && data[0]?.Status === "Success" && data[0]?.PostOffice?.length > 0) {
+          const po = data[0].PostOffice[0];
+          setCity(po.District || po.Block || po.Name);
+          setStateName(po.State);
+          setPincodeAutofilled(true);
+          setErrorMessage("");
+        } else {
+          setPincodeAutofilled(false);
           setCity("");
           setStateName("");
-          setPincodeAutofilled(false);
-        })
-        .finally(() => {
-          setIsFetchingPincode(false);
-        });
-    } else {
-      setCity("");
-      setStateName("");
-      setPincodeAutofilled(false);
-    }
+        }
+      } catch {
+        setPincodeAutofilled(false);
+      } finally {
+        setIsFetchingPincode(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [pincode]);
 
   const triggerConfetti = () => {
@@ -144,7 +151,6 @@ export default function RegisterForm() {
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ["#1b3b32", "#059669", "#ffffff", "#34d399"],
       });
     } catch {
       // Fallback
@@ -230,52 +236,51 @@ export default function RegisterForm() {
   };
 
   return (
-    <div className="w-full flex items-center justify-center py-2 sm:py-4 font-[Arial,sans-serif]">
-      
-      {/* 3D Matte White Squircle Box with Depth Grey Border */}
-      <div className="relative w-full max-w-[94vw] sm:max-w-[500px] lg:max-w-[540px] rounded-[36px] sm:rounded-[44px] bg-[#fafafc] border-[6px] sm:border-[8px] lg:border-[10px] border-[#c8d0d9] p-7 sm:p-10 lg:p-12 flex flex-col items-center justify-center text-center shadow-[20px_32px_60px_rgba(20,30,45,0.22),-10px_-10px_28px_rgba(255,255,255,0.95),inset_0_2px_5px_rgba(255,255,255,1),inset_0_-3px_6px_rgba(0,0,0,0.07)] transition-all duration-300">
+    <div className="w-full flex items-center justify-center py-4 sm:py-8">
+      {/* Neumorphic Glass Squircle Card */}
+      <div className="relative w-full max-w-[94vw] sm:max-w-[500px] lg:max-w-[540px] rounded-[38px] sm:rounded-[44px] glass-card p-7 sm:p-10 lg:p-11 flex flex-col items-center justify-center text-center shadow-[0_20px_50px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.02)] transition-all duration-300">
         
-        {/* Inner White Bevel Rim */}
-        <div className="absolute inset-1 sm:inset-1.5 rounded-[32px] sm:rounded-[38px] border border-white pointer-events-none" />
+        {/* Ambient Inner Glow */}
+        <div className="absolute inset-0 rounded-[38px] sm:rounded-[44px] bg-gradient-to-b from-white/60 via-transparent to-emerald-500/5 pointer-events-none" />
 
         {/* Content Container */}
-        <div className="relative z-10 w-full flex flex-col items-center justify-center space-y-3.5 my-auto">
+        <div className="relative z-10 w-full flex flex-col items-center justify-center space-y-4 my-auto">
           
-          {/* Bigger Logo & Header */}
-          <div className="flex flex-col items-center -mt-1 sm:-mt-2">
+          {/* Logo & Header */}
+          <div className="flex flex-col items-center -mt-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/avira-logo.png"
               alt="Avira Life Care"
-              className="h-16 sm:h-20 lg:h-22 w-auto object-contain mb-2.5 drop-shadow-md transition-transform hover:scale-105"
+              className="h-16 sm:h-20 w-auto object-contain mb-2.5 drop-shadow-sm transition-transform hover:scale-105 duration-300"
             />
-            <h1 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight leading-tight">
+            <h1 className="text-xl sm:text-2xl font-heading font-extrabold text-[#0f172a] tracking-tight leading-tight">
               Associate Registration
             </h1>
-            <p className="text-[11px] sm:text-xs text-stone-600 font-bold mt-0.5">
+            <p className="text-[11px] sm:text-xs text-[#64748b] font-medium mt-0.5">
               Avira Life Care Global Private Limited
             </p>
           </div>
 
           {errorMessage && (
-            <div className="w-full p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2 text-left font-bold">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+            <div className="w-full p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 text-xs flex items-center gap-2.5 text-left font-semibold animate-fadeIn">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {/* Form Fields */}
-          <form onSubmit={handleSubmit} className="w-full space-y-3 pt-1">
+          <form onSubmit={handleSubmit} className="w-full space-y-3.5 pt-1 text-left">
             
-            {/* 1. Sponsor ID (Without 'AV0001' in placeholder) */}
-            <div className="p-3 sm:p-3.5 rounded-2xl bg-white border-2 border-stone-200 space-y-1 text-left shadow-xs">
+            {/* 1. Sponsor ID */}
+            <div className="glass-panel p-3.5 rounded-2xl space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-[11px] font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1">
-                  <BadgeCheck className="w-3.5 h-3.5 text-[#1b3b32]" />
+                <label className="text-[11px] font-bold text-[#475569] uppercase tracking-wider flex items-center gap-1.5">
+                  <BadgeCheck className="w-3.5 h-3.5 text-[#006d36]" />
                   <span>Sponsor ID *</span>
                 </label>
                 {isSponsorLocked && (
-                  <span className="text-[9.5px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
                     <Lock className="w-3 h-3" />
                     <span>Locked</span>
                   </span>
@@ -287,17 +292,15 @@ export default function RegisterForm() {
                   type="text"
                   required
                   readOnly={isSponsorLocked}
-                  placeholder="Enter Sponsor ID"
+                  placeholder="Enter Sponsor ID (e.g. AV00001)"
                   value={sponsorId}
                   onChange={(e) => !isSponsorLocked && setSponsorId(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
-                  className={`w-full rounded-xl py-2.5 px-3.5 outline-none text-xs sm:text-sm font-bold tracking-wider border ${
-                    isSponsorLocked
-                      ? "bg-[#eef2ee] text-[#1b3b32] border-emerald-200 cursor-not-allowed select-none"
-                      : "bg-[#f7f5f0] text-stone-900 border-stone-200 focus:bg-white focus:border-[#1b3b32]"
+                  className={`neo-input w-full rounded-xl py-2.5 px-3.5 text-xs sm:text-sm font-bold tracking-wider ${
+                    isSponsorLocked ? "cursor-not-allowed select-none opacity-80" : ""
                   }`}
                 />
                 <div className="absolute right-3.5 top-2.5">
-                  {isVerifyingSponsor && <Loader2 className="w-4 h-4 text-[#1b3b32] animate-spin" />}
+                  {isVerifyingSponsor && <Loader2 className="w-4 h-4 text-[#006d36] animate-spin" />}
                   {!isVerifyingSponsor && sponsorVerified && (
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                   )}
@@ -305,70 +308,85 @@ export default function RegisterForm() {
               </div>
 
               {sponsorVerified && sponsorName && (
-                <div className="text-[11px] text-[#1b3b32] font-bold flex items-center gap-1 pt-0.5">
-                  <UserIcon className="w-3 h-3 text-[#1b3b32]" />
+                <div className="text-[11px] text-[#006d36] font-bold flex items-center gap-1.5 pt-0.5">
+                  <UserIcon className="w-3.5 h-3.5 text-[#006d36]" />
                   <span className="truncate">{sponsorName}</span>
                 </div>
               )}
             </div>
 
             {/* 2. Associate First & Last Name */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <input
-                type="text"
-                required
-                placeholder="First Name *"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full bg-white border-2 border-stone-200 focus:border-[#1b3b32] rounded-full py-2.5 px-4 text-stone-900 focus:ring-4 focus:ring-[#1b3b32]/10 outline-none text-xs sm:text-sm font-bold shadow-xs text-left"
-              />
-              <input
-                type="text"
-                required
-                placeholder="Last Name *"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full bg-white border-2 border-stone-200 focus:border-[#1b3b32] rounded-full py-2.5 px-4 text-stone-900 focus:ring-4 focus:ring-[#1b3b32]/10 outline-none text-xs sm:text-sm font-bold shadow-xs text-left"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1 pl-1">
+                  First Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="First Name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="neo-input w-full rounded-2xl py-2.5 px-4 text-xs sm:text-sm font-bold"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1 pl-1">
+                  Last Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Last Name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="neo-input w-full rounded-2xl py-2.5 px-4 text-xs sm:text-sm font-bold"
+                />
+              </div>
             </div>
 
             {/* 3. Mobile Number */}
-            <div className="relative w-full">
-              <Phone className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
-              <input
-                type="tel"
-                required
-                maxLength={10}
-                placeholder="Mobile Number (10 Digits) *"
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
-                className="w-full pl-11 pr-4 py-2.5 sm:py-3 bg-white border-2 border-stone-200 focus:border-[#1b3b32] rounded-full text-stone-900 focus:ring-4 focus:ring-[#1b3b32]/10 text-xs sm:text-sm font-bold tracking-wider placeholder-stone-400 outline-none shadow-xs text-left transition-all"
-              />
+            <div>
+              <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1 pl-1">
+                Mobile Number *
+              </label>
+              <div className="relative w-full">
+                <Phone className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#94a3b8] pointer-events-none" />
+                <input
+                  type="tel"
+                  required
+                  maxLength={10}
+                  placeholder="10-Digit Mobile Number"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
+                  className="neo-input w-full pl-11 pr-4 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-bold tracking-wider"
+                />
+              </div>
             </div>
 
             {/* 4. Placement Leg */}
-            <div className="p-3 rounded-2xl bg-white border-2 border-stone-200 space-y-1.5 text-left shadow-xs">
+            <div className="glass-panel p-3.5 rounded-2xl space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-[11px] font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1">
-                  <Network className="w-3.5 h-3.5 text-[#1b3b32]" />
+                <label className="text-[11px] font-bold text-[#475569] uppercase tracking-wider flex items-center gap-1.5">
+                  <Network className="w-3.5 h-3.5 text-[#006d36]" />
                   <span>Placement Leg *</span>
                 </label>
                 {isPositionLocked && (
-                  <span className="text-[9.5px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
                     <Lock className="w-3 h-3" />
                     <span>Locked</span>
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
                   disabled={isPositionLocked && binaryPosition !== "LEFT"}
                   onClick={() => !isPositionLocked && setBinaryPosition("LEFT")}
-                  className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     binaryPosition === "LEFT"
-                      ? "bg-[#1b3b32] border-[#1b3b32] text-white shadow-xs"
-                      : "bg-[#f7f5f0] border-stone-200 text-stone-700 hover:bg-stone-100"
+                      ? "neo-btn-primary"
+                      : "neo-btn-secondary"
                   }`}
                 >
                   <span>Left Leg</span>
@@ -377,10 +395,10 @@ export default function RegisterForm() {
                   type="button"
                   disabled={isPositionLocked && binaryPosition !== "RIGHT"}
                   onClick={() => !isPositionLocked && setBinaryPosition("RIGHT")}
-                  className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     binaryPosition === "RIGHT"
-                      ? "bg-[#1b3b32] border-[#1b3b32] text-white shadow-xs"
-                      : "bg-[#f7f5f0] border-stone-200 text-stone-700 hover:bg-stone-100"
+                      ? "neo-btn-primary"
+                      : "neo-btn-secondary"
                   }`}
                 >
                   <span>Right Leg</span>
@@ -388,20 +406,20 @@ export default function RegisterForm() {
               </div>
             </div>
 
-            {/* 5. Pincode (Without '395006' in placeholder) */}
-            <div className="p-3 rounded-2xl bg-white border-2 border-stone-200 space-y-1.5 text-left shadow-xs">
+            {/* 5. Pincode */}
+            <div className="glass-panel p-3.5 rounded-2xl space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-[11px] font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-[#1b3b32]" />
+                <label className="text-[11px] font-bold text-[#475569] uppercase tracking-wider flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-[#006d36]" />
                   <span>Pincode *</span>
                 </label>
                 {pincodeAutofilled && city && stateName ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1b3b32] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 animate-in fade-in">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#006d36] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 animate-fadeIn">
                     <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                     <span>{city}, {stateName}</span>
                   </span>
                 ) : (
-                  <span className="text-[10px] text-stone-500 font-bold">6 Digits</span>
+                  <span className="text-[10px] text-[#94a3b8] font-bold">6 Digits</span>
                 )}
               </div>
               <div className="relative">
@@ -409,61 +427,66 @@ export default function RegisterForm() {
                   type="text"
                   maxLength={6}
                   required
-                  placeholder="Enter 6-Digit Pincode"
+                  placeholder="Enter 6-Digit Area Pincode"
                   value={pincode}
                   onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))}
-                  className="w-full bg-[#f7f5f0] border border-stone-200 focus:bg-white focus:border-[#1b3b32] rounded-xl py-2 px-3 text-stone-900 outline-none text-xs sm:text-sm font-bold tracking-wide"
+                  className="neo-input w-full rounded-xl py-2 px-3 text-xs sm:text-sm font-bold tracking-wide"
                 />
                 <div className="absolute right-3 top-2">
-                  {isFetchingPincode && <Loader2 className="w-4 h-4 text-[#1b3b32] animate-spin" />}
+                  {isFetchingPincode && <Loader2 className="w-4 h-4 text-[#006d36] animate-spin" />}
                 </div>
               </div>
             </div>
 
-            {/* 6. Password Input with Eye Toggle */}
-            <div className="relative w-full">
-              <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none z-10" />
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create Password *"
-                required
-                className="w-full pl-11 pr-12 py-2.5 sm:py-3 bg-white border-2 border-stone-200 focus:border-[#1b3b32] rounded-full text-stone-900 focus:ring-4 focus:ring-[#1b3b32]/10 text-xs sm:text-sm font-bold placeholder-stone-400 outline-none shadow-xs text-left transition-all relative z-0"
-              />
-              <button
-                type="button"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition-colors focus:outline-none cursor-pointer z-20 p-1"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+            {/* 6. Password Input */}
+            <div>
+              <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1 pl-1">
+                Password *
+              </label>
+              <div className="relative w-full">
+                <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#94a3b8] pointer-events-none z-10" />
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create strong password"
+                  required
+                  className="neo-input w-full pl-11 pr-12 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-bold placeholder-[#94a3b8] relative z-0"
+                />
+                <button
+                  type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#0f172a] transition-colors focus:outline-none cursor-pointer z-20 p-1"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
-            {/* Terms */}
-            <div className="flex items-center gap-2 pt-0.5 px-2 text-left">
+            {/* Terms Checkbox */}
+            <div className="flex items-center gap-2.5 pt-1 px-1">
               <input
                 id="terms"
                 type="checkbox"
                 checked={termsAgreed}
                 onChange={(e) => setTermsAgreed(e.target.checked)}
-                className="w-4 h-4 text-[#1b3b32] rounded border-stone-300 focus:ring-[#1b3b32]"
+                className="w-4 h-4 text-[#006d36] rounded border-gray-300 focus:ring-[#006d36] cursor-pointer"
               />
-              <label htmlFor="terms" className="text-xs text-stone-700 font-bold cursor-pointer">
+              <label htmlFor="terms" className="text-xs text-[#475569] font-medium cursor-pointer">
                 I agree to the Avira Life Care Global Terms of Association.
               </label>
             </div>
 
-            {/* 3D Submit Button */}
-            <div className="pt-1">
+            {/* Submit Button */}
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 px-6 bg-[#1b3b32] hover:bg-[#234e40] text-white rounded-full font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#1b3b32]/25 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="neo-btn-primary w-full py-3.5 px-6 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>
@@ -481,24 +504,21 @@ export default function RegisterForm() {
           </form>
 
           {/* Login Link */}
-          <div className="pt-1 text-center text-xs text-stone-600 font-bold">
+          <div className="pt-2 text-center text-xs text-[#64748b] font-medium">
             Already have an associate account?{" "}
-            <Link href="/login" className="font-bold text-[#1b3b32] hover:underline ml-1">
+            <Link href="/login" className="font-bold text-[#006d36] hover:underline ml-1">
               Sign In here
             </Link>
           </div>
 
         </div>
-
       </div>
 
       {/* COMPACT CREDENTIALS POPUP */}
       {registeredMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="relative w-full max-w-md rounded-[38px] sm:rounded-[44px] bg-[#fafafc] border-[6px] sm:border-[8px] border-[#c8d0d9] p-7 sm:p-9 text-center shadow-[20px_32px_60px_rgba(20,30,45,0.3),inset_0_2px_5px_rgba(255,255,255,1)] animate-in zoom-in-95 font-[Arial,sans-serif]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-fadeIn">
+          <div className="relative w-full max-w-md rounded-[38px] sm:rounded-[44px] glass-card p-7 sm:p-9 text-center shadow-2xl border border-white space-y-4 animate-slideRight">
             
-            <div className="absolute inset-1 sm:inset-1.5 rounded-[32px] sm:rounded-[36px] border border-white pointer-events-none" />
-
             <button
               type="button"
               onClick={() => {
@@ -511,40 +531,40 @@ export default function RegisterForm() {
                 setCity("");
                 setStateName("");
               }}
-              className="absolute top-5 right-5 p-1.5 rounded-full bg-white border border-stone-200 hover:bg-stone-100 text-stone-400 hover:text-stone-700 transition-colors cursor-pointer z-20"
+              className="neo-btn-icon absolute top-5 right-5 p-2 rounded-xl text-[#64748b] hover:text-[#0f172a] cursor-pointer z-20"
               title="Close"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="text-center mb-5 relative z-10 flex flex-col items-center">
-              <div className="w-14 h-14 mb-2.5 rounded-full bg-emerald-50 border-2 border-emerald-300 flex items-center justify-center shadow-xs">
-                <CheckCircle2 className="w-8 h-8 text-[#1b3b32]" />
+            <div className="text-center mb-4 relative z-10 flex flex-col items-center">
+              <div className="w-14 h-14 mb-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-sm">
+                <CheckCircle2 className="w-8 h-8 text-[#006d36]" />
               </div>
-              <h3 className="text-xl font-bold text-stone-900 tracking-tight">
+              <h3 className="text-xl font-heading font-extrabold text-[#0f172a] tracking-tight">
                 Registration Successful!
               </h3>
-              <p className="text-xs text-stone-600 mt-0.5 font-bold">
+              <p className="text-xs text-[#64748b] mt-0.5 font-medium">
                 Welcome to Avira Life Care Global Network
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 border-2 border-stone-200 space-y-3 mb-5 relative z-10 text-left shadow-xs">
+            <div className="glass-panel rounded-2xl p-4 space-y-3 mb-4 relative z-10 text-left">
               <div>
-                <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider block">
+                <span className="text-[10px] text-[#64748b] font-bold uppercase tracking-wider block">
                   Associate Name
                 </span>
-                <span className="text-sm font-bold text-stone-900">
+                <span className="text-sm font-bold text-[#0f172a]">
                   {registeredMember.fullName}
                 </span>
               </div>
 
-              <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
+              <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider block">
-                    Your 5-Digit Member ID
+                  <span className="text-[10px] text-[#64748b] font-bold uppercase tracking-wider block">
+                    Your Member ID
                   </span>
-                  <span className="text-xl font-bold text-[#1b3b32] tracking-wider">
+                  <span className="text-xl font-bold font-mono text-[#006d36] tracking-wider">
                     {registeredMember.memberId}
                   </span>
                 </div>
@@ -554,7 +574,7 @@ export default function RegisterForm() {
                     navigator.clipboard.writeText(registeredMember.memberId);
                     alert(`Copied Member ID: ${registeredMember.memberId}`);
                   }}
-                  className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#1b3b32] border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  className="neo-btn-secondary px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
                   title="Copy ID"
                 >
                   <Copy className="w-3.5 h-3.5" />
@@ -562,12 +582,12 @@ export default function RegisterForm() {
                 </button>
               </div>
 
-              <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
+              <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider block">
+                  <span className="text-[10px] text-[#64748b] font-bold uppercase tracking-wider block">
                     Password
                   </span>
-                  <span className="text-sm font-bold text-stone-900 tracking-wide">
+                  <span className="text-sm font-bold text-[#0f172a] tracking-wide">
                     {registeredMember.passwordText}
                   </span>
                 </div>
@@ -577,7 +597,7 @@ export default function RegisterForm() {
                     navigator.clipboard.writeText(registeredMember.passwordText);
                     alert(`Copied Password!`);
                   }}
-                  className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#1b3b32] border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  className="neo-btn-secondary px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
                   title="Copy Password"
                 >
                   <Copy className="w-3.5 h-3.5" />
@@ -586,7 +606,7 @@ export default function RegisterForm() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 relative z-10">
+            <div className="flex flex-col sm:flex-row gap-2.5 relative z-10">
               <button
                 type="button"
                 onClick={() => {
@@ -594,15 +614,15 @@ export default function RegisterForm() {
                   navigator.clipboard.writeText(details);
                   alert("Copied all details to clipboard!");
                 }}
-                className="flex-1 py-3 bg-white hover:bg-stone-50 text-stone-800 border-2 border-stone-300 font-bold rounded-full text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="neo-btn-secondary flex-1 py-3 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5 text-[#1b3b32]" />
+                <Copy className="w-3.5 h-3.5 text-[#006d36]" />
                 <span>Copy All Details</span>
               </button>
 
               <Link
                 href="/login"
-                className="flex-1 py-3 bg-[#1b3b32] hover:bg-[#234e40] text-white font-bold rounded-full text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md transition-all"
+                className="neo-btn-primary flex-1 py-3 font-bold rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-1.5"
               >
                 <span>Go to Login</span>
                 <ArrowRight className="w-3.5 h-3.5" />

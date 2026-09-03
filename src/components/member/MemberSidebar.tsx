@@ -104,20 +104,20 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
   };
 
   return (
-    <div className="flex flex-col h-full justify-between bg-white select-none">
+    <div className="flex flex-col h-full justify-between glass-panel select-none">
       {/* 1. TOP LOGO & BRAND NAME */}
-      <div className="p-4 border-b border-gray-200 bg-gradient-to-b from-emerald-50/50 via-white to-white flex items-center gap-3">
+      <div className="p-4 border-b border-gray-200/60 bg-gradient-to-b from-white/80 via-white/50 to-transparent flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/avira-logo.png"
           alt="Avira Lifecare Global Private Limited"
-          className="h-11 w-auto object-contain shrink-0"
+          className="h-11 w-auto object-contain shrink-0 drop-shadow-2xs"
         />
         <div className="overflow-hidden">
-          <h2 className="font-black text-xs text-[#1a1c1c] tracking-tight leading-tight truncate">
+          <h2 className="font-heading font-extrabold text-xs text-[#0f172a] tracking-tight leading-tight truncate">
             AVIRA LIFECARE
           </h2>
-          <span className="text-[8px] font-bold text-[#5f5e5e] truncate block">
+          <span className="text-[8px] font-medium text-[#64748b] truncate block">
             Global Pvt. Ltd.
           </span>
           <span className="text-[9px] font-mono font-bold text-[#006d36] tracking-wider uppercase block">
@@ -128,14 +128,16 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
 
       {/* 2. USER MINI SUMMARY STRIP */}
       {user && (
-        <div className="px-4 py-3 bg-gray-50/75 border-b border-gray-100 flex items-center justify-between text-xs">
+        <div className="px-4 py-3 neo-inset border-b border-white/60 flex items-center justify-between text-xs">
           <div className="overflow-hidden">
-            <span className="font-black text-[#1a1c1c] block truncate text-xs">{user.fullName}</span>
+            <span className="font-extrabold text-[#0f172a] block truncate text-xs">{user.fullName}</span>
             <span className="font-mono text-[10px] text-[#006d36] font-bold block">{user.memberId}</span>
           </div>
           <span
-            className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
-              isUserActive ? "bg-emerald-100 text-[#006d36]" : "bg-red-100 text-red-700"
+            className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase shadow-2xs ${
+              isUserActive
+                ? "bg-emerald-500/15 text-[#006d36] border border-emerald-500/30"
+                : "bg-rose-500/15 text-rose-700 border border-rose-500/30"
             }`}
           >
             {isUserActive ? "Active" : "Red"}
@@ -149,17 +151,17 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
         <Link
           href="/dashboard"
           onClick={onNavigate}
-          className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
             pathname === "/dashboard"
-              ? "bg-[#006d36] text-white shadow-xs font-black"
-              : "text-[#5f5e5e] hover:text-[#1a1c1c] hover:bg-emerald-50/60"
+              ? "neo-btn-primary font-black"
+              : "text-[#64748b] hover:text-[#0f172a] hover:bg-white/60"
           }`}
         >
           <LayoutDashboard className="w-4 h-4 shrink-0" />
           <span>1. Dashboard</span>
         </Link>
 
-        {/* 2 to 5 ACCORDION CATEGORIES */}
+        {/* 2 to 6 ACCORDION CATEGORIES */}
         {menuGroups.map((group) => {
           const isOpen = Boolean(openGroups[group.category]);
           const isCategoryActive = group.links.some((l) => l.href === pathname);
@@ -170,10 +172,10 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
               <button
                 type="button"
                 onClick={() => toggleGroup(group.category)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                   isCategoryActive
-                    ? "text-[#006d36] bg-emerald-50/70"
-                    : "text-[#1a1c1c] hover:bg-gray-50"
+                    ? "text-[#006d36] bg-emerald-500/10 font-black"
+                    : "text-[#0f172a] hover:bg-white/60"
                 }`}
               >
                 <div className="flex items-center gap-2.5 truncate">
@@ -181,14 +183,14 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
                   <span className="truncate">{group.category}</span>
                 </div>
                 {isOpen ? (
-                  <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                  <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8]" />
                 ) : (
-                  <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />
                 )}
               </button>
 
               {isOpen && (
-                <div className="pl-6 pr-1 space-y-1 animate-fadeIn">
+                <div className="pl-5 pr-1 space-y-1 animate-fadeIn">
                   {group.links.map((link) => {
                     const LinkIcon = link.icon;
                     const isActive = pathname === link.href;
@@ -198,10 +200,10 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
                         key={link.name}
                         href={link.href}
                         onClick={onNavigate}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                           isActive
-                            ? "bg-[#006d36] text-white shadow-xs font-black"
-                            : "text-[#5f5e5e] hover:text-[#1a1c1c] hover:bg-emerald-50/50"
+                            ? "neo-btn-primary font-black"
+                            : "text-[#64748b] hover:text-[#0f172a] hover:bg-white/70"
                         }`}
                       >
                         <LinkIcon className="w-3.5 h-3.5 shrink-0" />
@@ -217,11 +219,11 @@ export default function MemberSidebar({ user, onLogout, onNavigate }: MemberSide
       </div>
 
       {/* 4. PINNED LOGOUT BUTTON */}
-      <div className="p-3 border-t border-gray-200">
+      <div className="p-3 border-t border-gray-200/60 bg-white/40">
         <button
           type="button"
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-red-200 text-red-700 hover:bg-red-50 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 hover:bg-rose-500/20 text-xs font-bold transition-all cursor-pointer shadow-2xs"
         >
           <LogOut className="w-4 h-4" />
           <span>Logout Associate</span>

@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, ShieldCheck, HeartHandshake } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 export default function HomeStory() {
   return (

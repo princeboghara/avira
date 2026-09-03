@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { Sparkles, ShieldCheck, Truck, Award, Phone } from "lucide-react";
 
 export default function AnnouncementTicker() {
   const items = [

@@ -49,7 +49,7 @@ export default function RootLayout({
       className={`${outfit.variable} ${plusJakarta.variable} ${inter.variable} h-full antialiased font-sans`}
     >
       <body
-        className="min-h-full flex flex-col bg-[#f8fafc] text-[#0f172a] selection:bg-[#1b3b32] selection:text-[#f8fafc]"
+        className="min-h-full flex flex-col bio-canvas-bg text-[#0f172a] selection:bg-[#006d36] selection:text-white"
       >
         {/* Animated Brand Preloader on Page Load / Reload */}
         <AviraPageLoader />

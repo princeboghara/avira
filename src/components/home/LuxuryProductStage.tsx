@@ -1,22 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   Star,
   Plus,
-  ShoppingBag,
-  ArrowLeft,
-  ArrowRight,
   Menu,
   X,
-  Sparkles,
-  ShieldCheck,
   Check,
   ChevronLeft,
   ChevronRight,
-  User,
   LogIn,
 } from "lucide-react";
 

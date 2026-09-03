@@ -149,13 +149,13 @@ export default function DataTable<T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
-      {/* Top Controls Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-100 shadow-2xs">
-        {/* Left: Page Size Selector & Title */}
+      {/* Top Controls Bar - Frosted Glass with Neumorphic Controls */}
+      <div className="glass-panel p-4 sm:p-5 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Left: Title & Page Size Selector */}
         <div className="flex items-center gap-3">
-          {title && <h3 className="font-bold text-sm text-[#1a1c1c]">{title}</h3>}
-          <div className="flex items-center gap-1.5 text-xs text-[#5f5e5e] font-semibold">
-            <span>Show:</span>
+          {title && <h3 className="font-heading font-extrabold text-sm text-[#0f172a]">{title}</h3>}
+          <div className="flex items-center gap-2 text-xs text-[#64748b] font-medium">
+            <span>Show</span>
             <select
               value={pageSize}
               onChange={(e) => {
@@ -163,7 +163,7 @@ export default function DataTable<T extends Record<string, any>>({
                 setPageSize(val);
                 setCurrentPage(1);
               }}
-              className="bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#1a1c1c] outline-hidden focus:border-[#006d36] cursor-pointer"
+              className="neo-inset rounded-xl px-3 py-1.5 text-xs font-bold text-[#0f172a] outline-none cursor-pointer"
             >
               <option value={10}>10</option>
               <option value={25}>25</option>
@@ -176,9 +176,9 @@ export default function DataTable<T extends Record<string, any>>({
         </div>
 
         {/* Right: Search Input & Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8]" />
             <input
               type="text"
               placeholder={searchPlaceholder}
@@ -187,14 +187,14 @@ export default function DataTable<T extends Record<string, any>>({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="pl-9 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:border-[#006d36] focus:bg-white w-48 sm:w-60 font-medium"
+              className="neo-input pl-10 pr-3.5 py-2 text-xs rounded-2xl w-48 sm:w-64 font-medium"
             />
           </div>
 
           <button
             type="button"
             onClick={handlePrint}
-            className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-[#5f5e5e] hover:text-[#1a1c1c] cursor-pointer transition-colors"
+            className="neo-btn-icon p-2.5 rounded-xl text-[#64748b] hover:text-[#006d36] cursor-pointer"
             title="Print / Export Table"
           >
             <Printer className="w-4 h-4" />
@@ -204,7 +204,7 @@ export default function DataTable<T extends Record<string, any>>({
             <button
               type="button"
               onClick={() => onBulkDelete(Array.from(selectedIds))}
-              className="px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 hover:bg-rose-500/20 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Delete ({selectedIds.size})</span>
@@ -215,14 +215,14 @@ export default function DataTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      {/* Table Container */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* Table Container - Frosted Glass Canvas */}
+      <div className="glass-card rounded-3xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50/75 text-[#5f5e5e] uppercase tracking-wider font-extrabold select-none">
+              <tr className="border-b border-gray-200/70 bg-white/50 text-[#475569] uppercase tracking-wider font-extrabold select-none">
                 {/* Select All Checkbox */}
-                <th className="py-3.5 px-4 w-10 text-center">
+                <th className="py-4 px-4 w-10 text-center">
                   <input
                     type="checkbox"
                     checked={allCurrentSelected}
@@ -232,7 +232,7 @@ export default function DataTable<T extends Record<string, any>>({
                 </th>
 
                 {/* Index / Sr. No. */}
-                <th className="py-3.5 px-4 w-14 font-mono">#</th>
+                <th className="py-4 px-4 w-14 font-mono">#</th>
 
                 {/* Columns */}
                 {columns.map((col, idx) => {
@@ -243,9 +243,9 @@ export default function DataTable<T extends Record<string, any>>({
                     <th
                       key={key}
                       onClick={() => col.sortable !== false && col.accessorKey && handleSort(col.accessorKey as string)}
-                      className={`py-3.5 px-4 ${col.className || ""} ${
+                      className={`py-4 px-4 ${col.className || ""} ${
                         col.align === "right" ? "text-right" : col.align === "center" ? "text-center" : "text-left"
-                      } ${col.sortable !== false && col.accessorKey ? "cursor-pointer hover:bg-gray-100/80 transition-colors" : ""}`}
+                      } ${col.sortable !== false && col.accessorKey ? "cursor-pointer hover:bg-white/80 transition-colors" : ""}`}
                     >
                       <div
                         className={`flex items-center gap-1.5 ${
@@ -254,7 +254,7 @@ export default function DataTable<T extends Record<string, any>>({
                       >
                         <span>{col.header}</span>
                         {col.sortable !== false && col.accessorKey && (
-                          <span className="text-gray-400">
+                          <span className="text-[#94a3b8]">
                             {isSorted ? (
                               sortDirection === "asc" ? (
                                 <ChevronUp className="w-3.5 h-3.5 text-[#006d36]" />
@@ -273,12 +273,12 @@ export default function DataTable<T extends Record<string, any>>({
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100/80">
               {paginatedData.length === 0 ? (
                 <tr>
                   <td
                     colSpan={columns.length + 2}
-                    className="py-12 text-center text-xs text-[#5f5e5e] font-medium"
+                    className="py-14 text-center text-xs text-[#64748b] font-medium"
                   >
                     {emptyMessage}
                   </td>
@@ -292,12 +292,12 @@ export default function DataTable<T extends Record<string, any>>({
                   return (
                     <tr
                       key={rowId}
-                      className={`hover:bg-emerald-50/30 transition-colors ${
-                        isSelected ? "bg-emerald-50/50" : ""
+                      className={`hover:bg-white/80 transition-colors ${
+                        isSelected ? "bg-emerald-50/70" : ""
                       }`}
                     >
                       {/* Checkbox */}
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center">
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -307,7 +307,7 @@ export default function DataTable<T extends Record<string, any>>({
                       </td>
 
                       {/* Sr No. */}
-                      <td className="py-3 px-4 font-mono font-bold text-[#5f5e5e] text-[11px]">
+                      <td className="py-3.5 px-4 font-mono font-bold text-[#64748b] text-[11px]">
                         {globalIndex}
                       </td>
 
@@ -315,7 +315,7 @@ export default function DataTable<T extends Record<string, any>>({
                       {columns.map((col, cIdx) => (
                         <td
                           key={String(col.accessorKey || cIdx)}
-                          className={`py-3 px-4 ${col.className || ""} ${
+                          className={`py-3.5 px-4 ${col.className || ""} ${
                             col.align === "right"
                               ? "text-right"
                               : col.align === "center"
@@ -339,17 +339,17 @@ export default function DataTable<T extends Record<string, any>>({
         </div>
 
         {/* Bottom Pagination Controls */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#5f5e5e]">
+        <div className="p-4 sm:p-5 border-t border-gray-100/90 bg-white/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#64748b]">
           <div>
             Showing{" "}
-            <strong className="text-[#1a1c1c]">
+            <strong className="text-[#0f172a]">
               {sortedData.length === 0 ? 0 : (clampedPage - 1) * (effectivePageSize || 1) + 1}
             </strong>{" "}
             to{" "}
-            <strong className="text-[#1a1c1c]">
+            <strong className="text-[#0f172a]">
               {Math.min(clampedPage * (effectivePageSize || 1), sortedData.length)}
             </strong>{" "}
-            of <strong className="text-[#1a1c1c]">{sortedData.length}</strong> entries
+            of <strong className="text-[#0f172a]">{sortedData.length}</strong> entries
             {selectedIds.size > 0 && (
               <span className="ml-2 text-[#006d36] font-bold">
                 ({selectedIds.size} selected)
@@ -358,18 +358,18 @@ export default function DataTable<T extends Record<string, any>>({
           </div>
 
           {pageSize !== "ALL" && totalPages > 1 && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                 disabled={clampedPage <= 1}
-                className="p-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                className="neo-btn-icon p-2 rounded-xl text-[#0f172a] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
                 title="Previous Page"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
 
-              <span className="px-3 py-1 font-bold text-[#1a1c1c] bg-white border border-gray-200 rounded-lg">
+              <span className="glass-pill px-4 py-1.5 font-bold text-[#0f172a] rounded-xl text-xs">
                 Page {clampedPage} of {totalPages}
               </span>
 
@@ -377,7 +377,7 @@ export default function DataTable<T extends Record<string, any>>({
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                 disabled={clampedPage >= totalPages}
-                className="p-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                className="neo-btn-icon p-2 rounded-xl text-[#0f172a] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
                 title="Next Page"
               >
                 <ChevronRight className="w-4 h-4" />

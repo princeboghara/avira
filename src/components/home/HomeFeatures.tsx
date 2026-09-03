@@ -11,8 +11,6 @@ import {
   ArrowRight,
   Sparkles,
   ChevronRight,
-  Wallet,
-  Coins,
 } from "lucide-react";
 
 export default function HomeFeatures() {

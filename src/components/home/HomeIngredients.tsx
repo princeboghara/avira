@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { Sparkles, FlaskConical, ArrowRight, Dna } from "lucide-react";
+import { Dna } from "lucide-react";
 
 const INGREDIENTS = [
   {

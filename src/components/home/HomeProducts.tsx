@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   Star,
   Sparkles,
-  ShieldCheck,
   CheckCircle2,
   X,
   ArrowRight,

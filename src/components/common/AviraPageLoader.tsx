@@ -47,32 +47,32 @@ export default function AviraPageLoader() {
 
   return (
     <div
-      className={`fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#fbfaf8]/95 backdrop-blur-md select-none transition-all duration-300 ease-out ${
+      className={`fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#f4f7f6]/90 backdrop-blur-xl select-none transition-all duration-300 ease-out ${
         isFadingOut
           ? "opacity-0 pointer-events-none scale-105"
           : "opacity-100 scale-100"
       }`}
     >
       {/* Soft Ambient Spotlight Glow */}
-      <div className="absolute w-96 h-96 bg-gradient-to-tr from-emerald-200/35 via-amber-100/25 to-white/70 rounded-full blur-3xl pointer-events-none animate-pulse" />
+      <div className="absolute w-96 h-96 bg-gradient-to-tr from-emerald-400/20 via-teal-300/15 to-white/80 rounded-full blur-3xl pointer-events-none animate-pulse" />
 
       {/* Main 3D Animated Logo Stage */}
-      <div className="relative flex flex-col items-center justify-center z-10 font-[Arial,sans-serif]">
+      <div className="relative flex flex-col items-center justify-center z-10 font-sans">
         
         {/* Outer Rotating 3D Aura Energy Ring */}
         <div className="relative w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center">
           
           {/* Outer Spin Ring 1 */}
-          <div className="absolute inset-0 rounded-full border-2 border-dashed border-[#1b3b32]/25 animate-[spin_5s_linear_infinite]" />
+          <div className="absolute inset-0 rounded-full border-2 border-dashed border-[#006d36]/20 animate-[spin_5s_linear_infinite]" />
           
           {/* Inner Spin Ring 2 (Reversed) */}
-          <div className="absolute inset-2 sm:inset-3 rounded-full border-2 border-[#10b981]/40 animate-[spin_3.5s_linear_infinite_reverse]" />
+          <div className="absolute inset-2 sm:inset-3 rounded-full border-2 border-[#50c878]/30 animate-[spin_3.5s_linear_infinite_reverse]" />
           
           {/* Golden Pulse Orbit */}
-          <div className="absolute inset-4 sm:inset-5 rounded-full border border-amber-400/40 animate-ping opacity-25" />
+          <div className="absolute inset-4 sm:inset-5 rounded-full border border-amber-400/30 animate-ping opacity-25" />
 
           {/* 3D Glass Disc Backdrop */}
-          <div className="relative w-24 h-24 sm:w-30 sm:h-30 rounded-full bg-white/95 backdrop-blur-md shadow-[0_12px_30px_rgba(27,59,50,0.15),inset_0_2px_4px_rgba(255,255,255,1)] border border-white flex items-center justify-center p-3">
+          <div className="relative w-24 h-24 sm:w-30 sm:h-30 rounded-full glass-card shadow-[0_12px_30px_rgba(0,109,54,0.15)] flex items-center justify-center p-3">
             
             {/* The Avira Logo with Smooth Breathing Zoom */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -90,27 +90,27 @@ export default function AviraPageLoader() {
 
           {/* Orbiting Emerald Energy Particle */}
           <div className="absolute inset-0 animate-[spin_2.5s_linear_infinite_reverse]">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#10b981] shadow-[0_0_8px_#10b981] border-2 border-white -bottom-1 left-1/2 -translate-x-1/2" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#50c878] shadow-[0_0_8px_#50c878] border-2 border-white -bottom-1 left-1/2 -translate-x-1/2" />
           </div>
         </div>
 
-        {/* Brand Text (Clean without Ayurvedic subtitle) */}
+        {/* Brand Text */}
         <div className="text-center mt-4 space-y-0.5">
-          <h2 className="text-base sm:text-lg font-bold tracking-wider text-[#1b3b32] uppercase">
+          <h2 className="text-base sm:text-lg font-heading font-extrabold tracking-wider text-[#006d36] uppercase">
             AVIRA LIFE CARE
           </h2>
         </div>
 
         {/* Slim Progress Bar */}
-        <div className="w-40 sm:w-48 h-1.5 bg-stone-200/80 rounded-full overflow-hidden mt-3.5 relative border border-stone-200">
+        <div className="w-40 sm:w-48 h-1.5 neo-inset rounded-full overflow-hidden mt-3.5 relative">
           <div
-            className="h-full bg-gradient-to-r from-[#1b3b32] via-[#059669] to-[#34d399] rounded-full transition-all duration-150 ease-out shadow-[0_0_8px_rgba(5,150,105,0.5)]"
+            className="h-full bg-gradient-to-r from-[#006d36] via-[#10b981] to-[#50c878] rounded-full transition-all duration-150 ease-out shadow-[0_0_8px_rgba(80,200,120,0.5)]"
             style={{ width: `${progress}%` }}
           />
         </div>
 
         {/* Simplified Loading Text */}
-        <span className="text-[11px] font-bold text-stone-500 mt-2 tracking-wider">
+        <span className="text-[11px] font-mono font-bold text-[#64748b] mt-2 tracking-wider">
           Loading... {progress}%
         </span>
 

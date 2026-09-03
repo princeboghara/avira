@@ -5,15 +5,11 @@ import Link from "next/link";
 import {
   Search,
   User,
-  ShoppingBag,
   Menu,
   X,
   ShieldCheck,
-  ChevronDown,
   Phone,
   Truck,
-  LogIn,
-  UserPlus,
 } from "lucide-react";
 
 export default function HomeNavbar() {
@@ -30,17 +26,17 @@ export default function HomeNavbar() {
 
   return (
     <>
-      {/* Top Real-World Notification Strip */}
-      <div className="bg-[#1b3b32] text-[#f4f1ea] py-2 px-4 text-xs font-medium border-b border-[#234e40]">
+      {/* Top Notification Strip */}
+      <div className="bg-[#005025] text-[#f4f7f6] py-2 px-4 text-xs font-medium border-b border-emerald-900/40">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4 text-[11px] tracking-wide">
-            <span className="flex items-center gap-1.5 text-emerald-300 font-semibold">
+            <span className="flex items-center gap-1.5 text-[#50c878] font-bold">
               <Truck className="w-3.5 h-3.5" />
               Free Express Delivery on orders above ₹999
             </span>
             <span className="hidden md:inline text-white/30">•</span>
             <span className="hidden md:inline text-white/80">
-              100% Ayurvedic & FSSAI Approved
+              100% Ayurvedic & FSSAI Certified
             </span>
           </div>
 
@@ -49,13 +45,13 @@ export default function HomeNavbar() {
               href="tel:+919712326273"
               className="hidden sm:flex items-center gap-1 text-white/80 hover:text-white transition-colors"
             >
-              <Phone className="w-3 h-3 text-amber-400" />
+              <Phone className="w-3 h-3 text-amber-300" />
               <span>Help: +91 97123 26273</span>
             </a>
             <span className="hidden sm:inline text-white/30">•</span>
             <Link
               href="/login"
-              className="text-amber-300 hover:text-amber-200 font-semibold transition-colors"
+              className="text-[#50c878] hover:text-emerald-200 font-bold transition-colors"
             >
               Associate Login
             </Link>
@@ -63,12 +59,12 @@ export default function HomeNavbar() {
         </div>
       </div>
 
-      {/* Main Human-Crafted Brand Header */}
+      {/* Main Frosted Glass Brand Header */}
       <header
-        className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 bg-white ${
+        className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 glass-header ${
           scrolled
-            ? "shadow-md shadow-slate-900/5 py-3 border-b border-stone-200"
-            : "py-4 border-b border-stone-200/80"
+            ? "py-3 shadow-md shadow-slate-900/5"
+            : "py-4"
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -80,55 +76,55 @@ export default function HomeNavbar() {
               <img
                 src="/images/avira-logo.png"
                 alt="Avira Life Care"
-                className="h-10 sm:h-11 w-auto object-contain"
+                className="h-10 sm:h-11 w-auto object-contain drop-shadow-2xs transition-transform group-hover:scale-105 duration-300"
               />
               <div className="flex flex-col">
-                <span className="font-extrabold text-lg sm:text-xl tracking-tight text-[#1b3b32] leading-tight group-hover:text-[#234e40] transition-colors">
+                <span className="font-heading font-extrabold text-lg sm:text-xl tracking-tight text-[#006d36] leading-tight transition-colors">
                   AVIRA LIFE CARE
                 </span>
-                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#8c827a]">
+                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#64748b]">
                   Ayurvedic Life Sciences
                 </span>
               </div>
             </Link>
 
             {/* Clean E-Commerce Category Links */}
-            <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold text-[#374151]">
+            <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold text-[#475569]">
               <Link
                 href="/products?category=juices"
-                className="hover:text-[#1b3b32] transition-colors"
+                className="hover:text-[#006d36] transition-colors"
               >
                 Himalayan Juices
               </Link>
               <Link
                 href="/products?category=wellness"
-                className="hover:text-[#1b3b32] transition-colors"
+                className="hover:text-[#006d36] transition-colors"
               >
                 Shilajit & Immunity
               </Link>
               <Link
                 href="/products?category=haircare"
-                className="hover:text-[#1b3b32] transition-colors"
+                className="hover:text-[#006d36] transition-colors"
               >
                 Hair Care
               </Link>
               <Link
                 href="/products?category=skincare"
-                className="hover:text-[#1b3b32] transition-colors"
+                className="hover:text-[#006d36] transition-colors"
               >
                 Skin Care
               </Link>
               <Link
                 href="/products?category=agriculture"
-                className="hover:text-[#1b3b32] transition-colors"
+                className="hover:text-[#006d36] transition-colors"
               >
                 Plant Care
               </Link>
               <Link
                 href="/products"
-                className="text-[#1b3b32] font-bold hover:text-emerald-700 transition-colors"
+                className="text-[#006d36] font-bold hover:text-emerald-700 transition-colors"
               >
-                All Products
+                All Formulations
               </Link>
             </nav>
 
@@ -136,15 +132,15 @@ export default function HomeNavbar() {
             <div className="flex items-center gap-3">
               <Link
                 href="/products"
-                className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#f7f5f0] hover:bg-[#eae6dc] text-stone-700 text-xs font-medium border border-stone-200 transition-colors"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-2xl neo-inset text-[#64748b] text-xs font-medium transition-all"
               >
-                <Search className="w-3.5 h-3.5 text-stone-500" />
+                <Search className="w-3.5 h-3.5 text-[#94a3b8]" />
                 <span>Search products...</span>
               </Link>
 
               <Link
                 href="/login"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-[#1b3b32] hover:bg-[#f7f5f0] border border-stone-300 transition-all"
+                className="neo-btn-secondary inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold text-[#006d36]"
               >
                 <User className="w-3.5 h-3.5" />
                 <span>Sign In</span>
@@ -152,7 +148,7 @@ export default function HomeNavbar() {
 
               <Link
                 href="/register"
-                className="hidden sm:inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#1b3b32] hover:bg-[#234e40] text-white font-bold text-xs shadow-sm hover:shadow transition-all"
+                className="neo-btn-primary hidden sm:inline-flex items-center gap-1.5 px-5 py-2 rounded-2xl font-bold text-xs"
               >
                 <span>Join Avira</span>
               </Link>
@@ -160,7 +156,7 @@ export default function HomeNavbar() {
               {/* Mobile Hamburger */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2 rounded-xl text-stone-800 hover:bg-stone-100 transition-colors"
+                className="neo-btn-icon lg:hidden p-2 rounded-2xl text-[#0f172a]"
                 aria-label="Menu"
               >
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -175,84 +171,84 @@ export default function HomeNavbar() {
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="fixed inset-0 bg-stone-900/50 backdrop-blur-xs"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs animate-fadeIn"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="fixed top-0 right-0 bottom-0 w-4/5 max-w-sm bg-white shadow-2xl p-6 flex flex-col justify-between overflow-y-auto">
+          <div className="fixed top-0 right-0 bottom-0 w-4/5 max-w-sm glass-panel shadow-2xl p-6 flex flex-col justify-between overflow-y-auto animate-slideRight">
             <div className="space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-stone-100">
+              <div className="flex items-center justify-between pb-4 border-b border-gray-100">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-[#1b3b32]" />
-                  <span className="font-bold text-base text-[#1b3b32]">
+                  <ShieldCheck className="w-5 h-5 text-[#006d36]" />
+                  <span className="font-heading font-extrabold text-base text-[#0f172a]">
                     Avira Categories
                   </span>
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-1 rounded-lg text-stone-500 hover:text-stone-900"
+                  className="neo-btn-icon p-1.5 rounded-xl text-[#64748b] hover:text-[#0f172a]"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="flex flex-col space-y-2 text-sm font-semibold text-stone-800">
+              <div className="flex flex-col space-y-2 text-sm font-semibold text-[#0f172a]">
                 <Link
                   href="/products?category=juices"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2.5 rounded-xl hover:bg-stone-50"
+                  className="p-3 rounded-2xl hover:bg-white/80 transition-colors"
                 >
                   Himalayan Wild Juices
                 </Link>
                 <Link
                   href="/products?category=wellness"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2.5 rounded-xl hover:bg-stone-50"
+                  className="p-3 rounded-2xl hover:bg-white/80 transition-colors"
                 >
                   Shilajit, Ashwagandha & Immunity
                 </Link>
                 <Link
                   href="/products?category=haircare"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2.5 rounded-xl hover:bg-stone-50"
+                  className="p-3 rounded-2xl hover:bg-white/80 transition-colors"
                 >
                   Hair & Scalp Care
                 </Link>
                 <Link
                   href="/products?category=skincare"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2.5 rounded-xl hover:bg-stone-50"
+                  className="p-3 rounded-2xl hover:bg-white/80 transition-colors"
                 >
                   Clinical Skin Care
                 </Link>
                 <Link
                   href="/products?category=agriculture"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2.5 rounded-xl hover:bg-stone-50"
+                  className="p-3 rounded-2xl hover:bg-white/80 transition-colors"
                 >
                   Organic Plant & Soil Nutrition
                 </Link>
                 <Link
                   href="/products"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2.5 rounded-xl text-[#1b3b32] font-bold bg-emerald-50"
+                  className="p-3 rounded-2xl text-[#006d36] font-bold bg-emerald-500/10 border border-emerald-500/20"
                 >
                   View All Formulations (40+)
                 </Link>
               </div>
             </div>
 
-            <div className="pt-6 border-t border-stone-100 space-y-3">
+            <div className="pt-6 border-t border-gray-100 space-y-3">
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full py-3 rounded-xl border border-stone-300 text-stone-800 font-bold text-xs text-center block"
+                className="neo-btn-secondary w-full py-3 rounded-2xl text-xs font-bold text-center block"
               >
                 Sign In to Account
               </Link>
               <Link
                 href="/register"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full py-3 rounded-xl bg-[#1b3b32] text-white font-bold text-xs text-center block shadow-md shadow-[#1b3b32]/20"
+                className="neo-btn-primary w-full py-3 rounded-2xl font-bold text-xs text-center block"
               >
                 New Associate Registration
               </Link>

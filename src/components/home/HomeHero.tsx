@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowRight,
-  ShieldCheck,
   Star,
   CheckCircle2,
   Sparkles,

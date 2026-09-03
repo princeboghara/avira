@@ -3,29 +3,30 @@
 @layer base {
   :root {
     --color-primary: #006d36;
+    --color-primary-dark: #005025;
     --color-primary-container: #50c878;
     --color-on-primary: #ffffff;
     --color-on-primary-container: #005025;
-    --color-background: #f9f9f9;
-    --color-surface: #f9f9f9;
-    --color-surface-bright: #f9f9f9;
+    --color-background: #f4f7f6;
+    --color-surface: #f4f7f6;
+    --color-surface-bright: #ffffff;
     --color-surface-container-lowest: #ffffff;
-    --color-surface-container-low: #f3f3f4;
-    --color-surface-container: #eeeeee;
-    --color-surface-container-high: #e8e8e8;
-    --color-surface-container-highest: #e2e2e2;
-    --color-surface-variant: #e2e2e2;
-    --color-on-surface: #1a1c1c;
-    --color-on-surface-variant: #3e4a3f;
-    --color-secondary: #5f5e5e;
-    --color-outline: #6e7a6e;
-    --color-outline-variant: #bdcabc;
-    --color-error: #ba1a1a;
+    --color-surface-container-low: #f0f4f3;
+    --color-surface-container: #e9eff0;
+    --color-surface-container-high: #e2e9ea;
+    --color-surface-container-highest: #dbe4e5;
+    --color-surface-variant: #dbe4e5;
+    --color-on-surface: #0f172a;
+    --color-on-surface-variant: #475569;
+    --color-secondary: #64748b;
+    --color-outline: #94a3b8;
+    --color-outline-variant: #cbd5e1;
+    --color-error: #e11d48;
   }
 
   body {
-    background-color: #f9f9f9;
-    color: #1a1c1c;
+    background-color: #f4f7f6;
+    color: #0f172a;
     font-family: var(--font-plus-jakarta), var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     overflow-x: hidden;
   }
@@ -36,90 +37,175 @@
   }
 }
 
-/* Neomorphic & Glassmorphism Utilities from Stitch */
-.neomorphic-btn-primary {
-  background-color: #006d36;
-  color: #ffffff;
-  box-shadow: -4px -4px 10px #ffffff, 4px 4px 10px rgba(80, 200, 120, 0.2);
-  transition: all 0.3s ease;
-}
+/* ==========================================================
+   AVIRA BIO-LUXE DESIGN SYSTEM
+   Neumorphism + Glassmorphism + Minimalism Architecture
+   ========================================================== */
 
-.neomorphic-btn-primary:hover {
-  box-shadow: -2px -2px 5px #ffffff, 2px 2px 5px rgba(80, 200, 120, 0.3);
-  transform: translateY(-1px);
-}
-
-.neomorphic-btn-primary:active {
-  transform: scale(0.95);
-}
-
-.neomorphic-btn-secondary {
-  background-color: #ffffff;
-  color: #006d36;
-  box-shadow: -4px -4px 10px #ffffff, 4px 4px 10px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.neomorphic-btn-secondary:hover {
-  box-shadow: -2px -2px 5px #ffffff, 2px 2px 5px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-}
-
-.neomorphic-btn-secondary:active {
-  transform: scale(0.95);
-}
-
+/* 1. Glassmorphism Utilities */
 .glass-card {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(226, 226, 226, 0.6);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.03);
-}
-
-.neo-shadow {
-  box-shadow: -8px -8px 16px #ffffff, 8px 8px 16px rgba(80, 200, 120, 0.1);
-}
-
-.neo-inset {
-  box-shadow: inset -4px -4px 8px #ffffff, inset 4px 4px 8px rgba(80, 200, 120, 0.15);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.03);
+}
+
+.glass-header {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.02);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+}
+
+.glass-dark {
+  background: rgba(15, 28, 23, 0.88);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(80, 200, 120, 0.25);
+  color: #ffffff;
+  box-shadow: 0 12px 40px rgba(0, 50, 25, 0.25);
+}
+
+/* 2. Neumorphism Soft UI Utilities */
+.neo-card {
+  background: #f4f7f6;
+  box-shadow: 8px 8px 20px rgba(166, 180, 200, 0.32), -8px -8px 20px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.neo-card-flat {
+  background: #f4f7f6;
+  box-shadow: 4px 4px 12px rgba(166, 180, 200, 0.24), -4px -4px 12px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.neo-card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neo-card-hover:hover {
+  box-shadow: 12px 12px 28px rgba(166, 180, 200, 0.4), -12px -12px 28px #ffffff;
+  transform: translateY(-2px);
+}
+
+.neo-inset {
+  background: #edf2f1;
+  box-shadow: inset 3px 3px 6px rgba(166, 180, 200, 0.28), inset -3px -3px 6px #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-.neo-base {
-  background: linear-gradient(145deg, #ffffff, #f0f0f0);
-  box-shadow: 12px 12px 24px rgba(80, 200, 120, 0.05), -12px -12px 24px #ffffff;
-}
-
-.glass-overlay {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-}
-
 .neo-input {
-  background: #f9f9f9;
-  box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.05), inset -4px -4px 8px #ffffff;
-  border: 1px solid transparent;
+  background: #eef3f2;
+  box-shadow: inset 3px 3px 6px rgba(166, 180, 200, 0.25), inset -3px -3px 6px #ffffff;
+  border: 1px solid rgba(220, 230, 228, 0.6);
+  color: #0f172a;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .neo-input:focus {
-  border-color: #006d36;
+  border-color: #50c878;
+  background: #ffffff;
+  box-shadow: inset 1px 1px 3px rgba(166, 180, 200, 0.15), inset -1px -1px 3px #ffffff, 0 0 0 3px rgba(80, 200, 120, 0.2);
   outline: none;
 }
 
-/* Animations */
+/* 3. Neomorphic & Minimal Buttons */
+.neomorphic-btn-primary,
+.neo-btn-primary {
+  background: linear-gradient(135deg, #006d36 0%, #005025 100%);
+  color: #ffffff;
+  box-shadow: 4px 4px 14px rgba(0, 109, 54, 0.28), -2px -2px 8px rgba(255, 255, 255, 0.85);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(80, 200, 120, 0.3);
+}
+
+.neomorphic-btn-primary:hover,
+.neo-btn-primary:hover {
+  box-shadow: 2px 2px 8px rgba(0, 109, 54, 0.35), -1px -1px 4px rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+
+.neomorphic-btn-primary:active,
+.neo-btn-primary:active {
+  transform: scale(0.97);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+.neomorphic-btn-secondary,
+.neo-btn-secondary {
+  background: #f4f7f6;
+  color: #006d36;
+  box-shadow: 4px 4px 10px rgba(166, 180, 200, 0.28), -4px -4px 10px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neomorphic-btn-secondary:hover,
+.neo-btn-secondary:hover {
+  box-shadow: 2px 2px 6px rgba(166, 180, 200, 0.32), -2px -2px 6px #ffffff;
+  transform: translateY(-1px);
+  color: #005025;
+}
+
+.neomorphic-btn-secondary:active,
+.neo-btn-secondary:active {
+  transform: scale(0.97);
+  box-shadow: inset 2px 2px 5px rgba(166, 180, 200, 0.3), inset -2px -2px 5px #ffffff;
+}
+
+.neo-btn-icon {
+  background: #f4f7f6;
+  box-shadow: 3px 3px 8px rgba(166, 180, 200, 0.25), -3px -3px 8px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
+}
+
+.neo-btn-icon:hover {
+  box-shadow: 2px 2px 5px rgba(166, 180, 200, 0.3), -2px -2px 5px #ffffff;
+  transform: translateY(-1px);
+}
+
+.neo-btn-icon:active {
+  box-shadow: inset 2px 2px 4px rgba(166, 180, 200, 0.25), inset -2px -2px 4px #ffffff;
+  transform: scale(0.95);
+}
+
+/* 4. Ambient Bio Glow Backgrounds */
+.bio-canvas-bg {
+  background-color: #f4f7f6;
+  background-image: 
+    radial-gradient(at 15% 15%, rgba(80, 200, 120, 0.08) 0px, transparent 50%),
+    radial-gradient(at 85% 20%, rgba(0, 109, 54, 0.05) 0px, transparent 50%),
+    radial-gradient(at 50% 80%, rgba(56, 189, 248, 0.04) 0px, transparent 50%);
+}
+
+.glow-bg {
+  background: radial-gradient(circle at 50% 50%, rgba(80, 200, 120, 0.06) 0%, rgba(244, 247, 246, 0) 70%);
+}
+
+/* 5. Minimalist Micro-Animations */
 @keyframes floatUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -128,7 +214,7 @@
 }
 
 .float-in {
-  animation: floatUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: floatUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes slideRight {
@@ -157,8 +243,137 @@
   animation: fadeIn 0.2s ease-out forwards;
 }
 
-.glow-bg {
-  background: radial-gradient(circle at 50% 50%, rgba(80, 200, 120, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+/* 6. Colorful Neumorphism Utilities */
+.neo-card-emerald {
+  background: linear-gradient(145deg, #f2fcf5 0%, #e2f8ec 100%);
+  box-shadow: 8px 8px 22px rgba(16, 185, 129, 0.16), 4px 4px 10px rgba(140, 165, 185, 0.18), -6px -6px 16px #ffffff;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+}
+
+.neo-card-sapphire {
+  background: linear-gradient(145deg, #f2f8ff 0%, #e1effe 100%);
+  box-shadow: 8px 8px 22px rgba(59, 130, 246, 0.16), 4px 4px 10px rgba(140, 165, 185, 0.18), -6px -6px 16px #ffffff;
+  border: 1px solid rgba(59, 130, 246, 0.28);
+}
+
+.neo-card-amber {
+  background: linear-gradient(145deg, #fffcf0 0%, #fef3c7 100%);
+  box-shadow: 8px 8px 22px rgba(245, 158, 11, 0.16), 4px 4px 10px rgba(140, 165, 185, 0.18), -6px -6px 16px #ffffff;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+}
+
+.neo-card-violet {
+  background: linear-gradient(145deg, #fbf7ff 0%, #f3e8ff 100%);
+  box-shadow: 8px 8px 22px rgba(168, 85, 247, 0.16), 4px 4px 10px rgba(140, 165, 185, 0.18), -6px -6px 16px #ffffff;
+  border: 1px solid rgba(168, 85, 247, 0.28);
+}
+
+.neo-card-rose {
+  background: linear-gradient(145deg, #fff3f4 0%, #ffe4e6 100%);
+  box-shadow: 8px 8px 22px rgba(244, 63, 94, 0.16), 4px 4px 10px rgba(140, 165, 185, 0.18), -6px -6px 16px #ffffff;
+  border: 1px solid rgba(244, 63, 94, 0.28);
+}
+
+/* Inset Wells with vivid inner tints */
+.neo-inset-emerald {
+  background: #e8f8ee;
+  box-shadow: inset 3px 3px 7px rgba(16, 185, 129, 0.2), inset -3px -3px 7px #ffffff;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.neo-inset-blue {
+  background: #e8f2fe;
+  box-shadow: inset 3px 3px 7px rgba(59, 130, 246, 0.2), inset -3px -3px 7px #ffffff;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.neo-inset-amber {
+  background: #fef7e6;
+  box-shadow: inset 3px 3px 7px rgba(245, 158, 11, 0.2), inset -3px -3px 7px #ffffff;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.neo-inset-purple {
+  background: #f5edfd;
+  box-shadow: inset 3px 3px 7px rgba(168, 85, 247, 0.2), inset -3px -3px 7px #ffffff;
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+/* Vivid Neumorphic Buttons */
+.neo-btn-indigo {
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+  color: #ffffff;
+  box-shadow: 4px 4px 14px rgba(79, 70, 229, 0.35), -2px -2px 8px rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(129, 140, 248, 0.4);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.neo-btn-indigo:hover {
+  box-shadow: 2px 2px 8px rgba(79, 70, 229, 0.45), -1px -1px 4px rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+.neo-btn-indigo:active {
+  transform: scale(0.97);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+.neo-btn-amber {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  box-shadow: 4px 4px 14px rgba(245, 158, 11, 0.35), -2px -2px 8px rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.neo-btn-amber:hover {
+  box-shadow: 2px 2px 8px rgba(245, 158, 11, 0.45), -1px -1px 4px rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+.neo-btn-amber:active {
+  transform: scale(0.97);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+/* Gradient Text Utilities */
+.text-gradient-emerald {
+  background: linear-gradient(135deg, #006d36 0%, #10b981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-sapphire {
+  background: linear-gradient(135deg, #1d4ed8 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-amber {
+  background: linear-gradient(135deg, #b45309 0%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-purple {
+  background: linear-gradient(135deg, #7e22ce 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom Minimal Frosted Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(244, 247, 246, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(166, 180, 200, 0.45);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 109, 54, 0.5);
 }
 
 /* Hide Next.js Dev Indicator Badge ("N" logo in bottom left) */

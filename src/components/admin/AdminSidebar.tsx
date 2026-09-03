@@ -87,23 +87,23 @@ export default function AdminSidebar({
       category: "3. Order Manager",
       icon: ShoppingCart,
       badge: pendingOrdersCount > 0 ? pendingOrdersCount : null,
-      badgeColor: "bg-amber-100 text-amber-800",
+      badgeColor: "bg-amber-500/15 text-amber-900",
       links: [
-        { name: "Pending For Approval", href: "/admin/orders/approve", icon: CheckCircle, badge: pendingOrdersCount, badgeColor: "bg-amber-100 text-amber-800" },
-        { name: "Confirmed Orders", href: "/admin/orders/confirmed", icon: CheckCircle2, badge: confirmedOrdersCount, badgeColor: "bg-teal-100 text-teal-800" },
-        { name: "Orders in Packing", href: "/admin/orders/packing", icon: Boxes, badge: packedOrdersCount, badgeColor: "bg-indigo-100 text-indigo-800" },
-        { name: "Dispatched Orders", href: "/admin/orders/dispatched", icon: Truck, badge: dispatchedOrdersCount, badgeColor: "bg-blue-100 text-blue-800" },
-        { name: "All Orders Registry", href: "/admin/orders", icon: FileText, badge: totalOrdersCount, badgeColor: "bg-gray-100 text-gray-700" },
+        { name: "Pending For Approval", href: "/admin/orders/approve", icon: CheckCircle, badge: pendingOrdersCount, badgeColor: "bg-amber-500/15 text-amber-900" },
+        { name: "Confirmed Orders", href: "/admin/orders/confirmed", icon: CheckCircle2, badge: confirmedOrdersCount, badgeColor: "bg-teal-500/15 text-teal-900" },
+        { name: "Orders in Packing", href: "/admin/orders/packing", icon: Boxes, badge: packedOrdersCount, badgeColor: "bg-indigo-500/15 text-indigo-900" },
+        { name: "Dispatched Orders", href: "/admin/orders/dispatched", icon: Truck, badge: dispatchedOrdersCount, badgeColor: "bg-blue-500/15 text-blue-900" },
+        { name: "All Orders Registry", href: "/admin/orders", icon: FileText, badge: totalOrdersCount, badgeColor: "bg-slate-500/15 text-slate-900" },
       ],
     },
     {
       category: "4. Member Manager",
       icon: Users,
       badge: kycPendingCount > 0 ? kycPendingCount : null,
-      badgeColor: "bg-amber-100 text-amber-800",
+      badgeColor: "bg-amber-500/15 text-amber-900",
       links: [
-        { name: "Member Master", href: "/admin/members", icon: Users, badge: totalMembersCount, badgeColor: "bg-gray-100 text-gray-700" },
-        { name: "KYC Master", href: "/admin/kyc", icon: FileCheck, badge: kycPendingCount, badgeColor: "bg-amber-100 text-amber-800" },
+        { name: "Member Master", href: "/admin/members", icon: Users, badge: totalMembersCount, badgeColor: "bg-slate-500/15 text-slate-900" },
+        { name: "KYC Master", href: "/admin/kyc", icon: FileCheck, badge: kycPendingCount, badgeColor: "bg-amber-500/15 text-amber-900" },
       ],
     },
     {
@@ -160,20 +160,20 @@ export default function AdminSidebar({
   };
 
   return (
-    <div className="flex flex-col h-full justify-between bg-white select-none">
+    <div className="flex flex-col h-full justify-between glass-panel select-none">
       {/* 1. TOP LOGO & BRAND */}
-      <div className="p-4 border-b border-gray-200 bg-gradient-to-b from-emerald-50/50 via-white to-white flex items-center gap-3">
+      <div className="p-4 border-b border-gray-200/60 bg-gradient-to-b from-white/80 via-white/50 to-transparent flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/avira-logo.png"
           alt="Avira Lifecare Global Private Limited"
-          className="h-11 w-auto object-contain shrink-0"
+          className="h-11 w-auto object-contain shrink-0 drop-shadow-2xs"
         />
         <div className="overflow-hidden">
-          <h2 className="font-black text-xs text-[#1a1c1c] tracking-tight leading-tight truncate">
+          <h2 className="font-heading font-extrabold text-xs text-[#0f172a] tracking-tight leading-tight truncate">
             AVIRA LIFECARE
           </h2>
-          <span className="text-[8px] font-bold text-[#5f5e5e] truncate block">
+          <span className="text-[8px] font-medium text-[#64748b] truncate block">
             Global Pvt. Ltd.
           </span>
           <span className="text-[9px] font-mono font-bold text-[#006d36] tracking-wider uppercase block">
@@ -188,17 +188,17 @@ export default function AdminSidebar({
         <Link
           href="/admin/dashboard"
           onClick={onNavigate}
-          className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
             pathname === "/admin/dashboard"
-              ? "bg-[#006d36] text-white shadow-xs font-black"
-              : "text-[#5f5e5e] hover:text-[#1a1c1c] hover:bg-emerald-50/60"
+              ? "neo-btn-primary font-black"
+              : "text-[#64748b] hover:text-[#0f172a] hover:bg-white/60"
           }`}
         >
           <LayoutDashboard className="w-4 h-4 shrink-0" />
           <span>1. Dashboard</span>
         </Link>
 
-        {/* 2 to 6 GROUPS */}
+        {/* 2 to 8 GROUPS */}
         {adminNavGroups.map((group) => {
           const isOpen = Boolean(openCategories[group.category]);
           const isCategoryActive = group.links.some((l) => l.href.split("?")[0] === pathname);
@@ -209,10 +209,10 @@ export default function AdminSidebar({
               <button
                 type="button"
                 onClick={() => toggleCategory(group.category)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                   isCategoryActive
-                    ? "text-[#006d36] bg-emerald-50/70"
-                    : "text-[#1a1c1c] hover:bg-gray-50"
+                    ? "text-[#006d36] bg-emerald-500/10 font-black"
+                    : "text-[#0f172a] hover:bg-white/60"
                 }`}
               >
                 <div className="flex items-center gap-2.5 truncate">
@@ -223,23 +223,23 @@ export default function AdminSidebar({
                 <div className="flex items-center gap-1.5 shrink-0">
                   {group.badge !== undefined && group.badge !== null && group.badge > 0 && (
                     <span
-                      className={`px-1.5 py-0.5 rounded-full text-[9px] font-black font-mono ${
-                        group.badgeColor || "bg-amber-100 text-amber-800"
+                      className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold ${
+                        group.badgeColor || "bg-amber-500/15 text-amber-900"
                       }`}
                     >
                       {group.badge}
                     </span>
                   )}
                   {isOpen ? (
-                    <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                    <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8]" />
                   ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                    <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />
                   )}
                 </div>
               </button>
 
               {isOpen && (
-                <div className="pl-6 pr-1 space-y-1 animate-fadeIn">
+                <div className="pl-5 pr-1 space-y-1 animate-fadeIn">
                   {group.links.map((link) => {
                     const LinkIcon = link.icon;
                     const isActive = pathname === link.href.split("?")[0];
@@ -251,8 +251,8 @@ export default function AdminSidebar({
                         onClick={onNavigate}
                         className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                           isActive
-                            ? "bg-[#006d36] text-white shadow-xs font-black"
-                            : "text-[#5f5e5e] hover:text-[#1a1c1c] hover:bg-emerald-50/50"
+                            ? "neo-btn-primary font-black"
+                            : "text-[#64748b] hover:text-[#0f172a] hover:bg-white/70"
                         }`}
                       >
                         <div className="flex items-center gap-2 truncate">
@@ -264,7 +264,7 @@ export default function AdminSidebar({
                             className={`px-1.5 py-0.5 rounded-full text-[9px] font-mono font-bold ${
                               isActive
                                 ? "bg-white text-[#006d36]"
-                                : link.badgeColor || "bg-amber-100 text-amber-800"
+                                : link.badgeColor || "bg-amber-500/15 text-amber-900"
                             }`}
                           >
                             {link.badge}
@@ -281,11 +281,11 @@ export default function AdminSidebar({
       </div>
 
       {/* 3. PINNED LOGOUT BUTTON */}
-      <div className="p-3 border-t border-gray-200">
+      <div className="p-3 border-t border-gray-200/60 bg-white/40">
         <button
           type="button"
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-red-200 text-red-700 hover:bg-red-50 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 hover:bg-rose-500/20 text-xs font-bold transition-all cursor-pointer shadow-2xs"
         >
           <LogOut className="w-4 h-4" />
           <span>Logout Admin</span>

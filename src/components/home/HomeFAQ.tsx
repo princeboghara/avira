@@ -44,19 +44,19 @@ export default function HomeFAQ() {
   };
 
   return (
-    <section id="faq" className="py-24 bg-white relative z-20 border-t border-slate-200 overflow-hidden">
+    <section id="faq" className="py-24 relative overflow-hidden">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
         <div className="text-center mb-16 flex flex-col items-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-bold text-xs mb-3 shadow-xs uppercase tracking-wider">
-            <HelpCircle className="w-3.5 h-3.5 text-[#0b3d2e]" />
+          <div className="glass-pill inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[#006d36] font-bold text-xs mb-3 uppercase tracking-wider">
+            <HelpCircle className="w-3.5 h-3.5" />
             <span>Formulation FAQ</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
+          <h2 className="text-3xl sm:text-5xl font-heading font-extrabold text-[#0f172a] mb-4 tracking-tight">
             Frequently Inquired
           </h2>
-          <p className="text-sm sm:text-base text-slate-600 max-w-xl text-balance">
+          <p className="text-sm sm:text-base text-[#64748b] max-w-xl font-medium text-balance">
             Answers to your queries regarding botanical sourcing, extraction purity, dosages, and certified standards.
           </p>
         </div>
@@ -68,30 +68,32 @@ export default function HomeFAQ() {
             return (
               <div
                 key={idx}
-                className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
+                className={`glass-card rounded-[28px] transition-all duration-300 overflow-hidden ${
                   isOpen
-                    ? "bg-slate-50 border-emerald-300 shadow-sm"
-                    : "bg-white border-slate-200 hover:border-slate-300"
+                    ? "border-emerald-500/40 shadow-md"
+                    : "hover:border-gray-300"
                 }`}
               >
                 <button
                   onClick={() => toggleFAQ(idx)}
-                  className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 font-bold text-slate-900 text-sm sm:text-base focus:outline-none"
+                  className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 font-heading font-extrabold text-[#0f172a] text-sm sm:text-base focus:outline-none cursor-pointer"
                   aria-expanded={isOpen}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0b3d2e] shrink-0" />
+                    <span className="w-2 h-2 rounded-full bg-[#006d36] shrink-0" />
                     <span>{faq.question}</span>
                   </div>
-                  <ChevronDown
-                    className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${
-                      isOpen ? "rotate-180 text-[#0b3d2e]" : ""
+                  <div
+                    className={`neo-btn-icon p-2 rounded-xl shrink-0 transition-transform duration-300 ${
+                      isOpen ? "rotate-180 text-[#006d36]" : "text-[#94a3b8]"
                     }`}
-                  />
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
                 </button>
 
                 {isOpen && (
-                  <div className="px-5 sm:px-6 pb-6 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/60 bg-white/60">
+                  <div className="px-5 sm:px-6 pb-6 pt-1 text-xs sm:text-sm text-[#64748b] leading-relaxed border-t border-gray-100 bg-white/40 animate-fadeIn font-medium">
                     <p>{faq.answer}</p>
                   </div>
                 )}

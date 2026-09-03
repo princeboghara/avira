@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
-import { Sparkles, ArrowRight, CheckCircle2, Mail, ShieldCheck } from "lucide-react";
+import { Sparkles, CheckCircle2, Mail, ShieldCheck } from "lucide-react";
 
 export default function HomeCTA() {
   const [email, setEmail] = useState("");

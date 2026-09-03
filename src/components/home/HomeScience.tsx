@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Dna, Sparkles, ShieldCheck, CheckCircle2, FlaskConical, ArrowRight } from "lucide-react";
+import { Dna, CheckCircle2, ArrowRight } from "lucide-react";
 
 export default function HomeScience() {
   return (
