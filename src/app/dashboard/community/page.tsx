@@ -299,7 +299,7 @@ export default function CommunityPage() {
             </div>
 
             {treeData ? (
-              <BinaryGenealogyTree rootNode={treeData} viewerMemberId={user?.memberId} />
+              <BinaryGenealogyTree rootNode={treeData} viewerMemberId={user?.memberId || treeData.memberId} />
             ) : (
               <div className="p-12 text-center bg-white rounded-3xl border border-[#e2e2e2]">
                 <p className="text-xs text-[#5f5e5e]">No tree data found for this account.</p>

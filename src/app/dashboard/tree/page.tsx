@@ -71,7 +71,7 @@ export default function TreeViewPage() {
 
   return (
     <MemberLayout>
-      <div className="space-y-6 animate-fadeIn max-w-7xl mx-auto pb-12">
+      <div className="space-y-4 animate-fadeIn w-full pb-12">
         {/* Error Notification */}
         {errorMsg && (
           <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center justify-between shadow-xs">

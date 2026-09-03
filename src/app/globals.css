@@ -869,14 +869,16 @@ html.dark .hover\:bg-white\/60:hover {
    8. MLM BINARY NEUMORPHIC CIRCULAR TREE DESIGN SYSTEM
    ========================================================== */
 .neo-tree-canvas {
-  background: #eef3f8;
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  box-shadow: inset 5px 5px 14px rgba(160, 178, 202, 0.45), inset -5px -5px 14px #ffffff;
+  background-color: #f8fafc;
+  background-image: radial-gradient(rgba(148, 163, 184, 0.28) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+  border: 1px solid #e2e8f0;
 }
 html.dark .neo-tree-canvas {
-  background: #091319;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: inset 5px 5px 16px rgba(0, 0, 0, 0.7), inset -4px -4px 12px rgba(255, 255, 255, 0.03);
+  background-color: #070f14;
+  background-image: radial-gradient(rgba(51, 65, 85, 0.45) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .neo-disc-base {

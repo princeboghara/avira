@@ -100,51 +100,103 @@ export default function BinaryGenealogyTree({
       ? totalNetworkMembers
       : treeData.totalTeamCount || (treeData.leftTeamCount + treeData.rightTeamCount) || 1678;
 
+  // 2D Transform Panning and Zooming: Free 360° motion (left, right, up, down, cross/diagonal)
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+
+  const effectiveViewerId = viewerMemberId || treeData.memberId || rootNode.memberId;
+
   // Auto Fit Screen: measures tree dimensions and scales down so whole tree fits on screen
   const handleFitToScreen = () => {
     if (!canvasRef.current || !treeContentRef.current) return;
     const containerWidth = canvasRef.current.clientWidth;
+    const containerHeight = canvasRef.current.clientHeight;
     const treeWidth = treeContentRef.current.scrollWidth;
+    const treeHeight = treeContentRef.current.scrollHeight;
 
     if (containerWidth > 0 && treeWidth > 0) {
-      const unscaledWidth = treeWidth / zoomScale;
-      // Allow scale down to 0.15 so entire tree fits 100% on any screen
-      const ideal = Math.max(0.15, Math.min(1, (containerWidth - 32) / unscaledWidth));
+      const scaleX = (containerWidth - 40) / treeWidth;
+      const scaleY = (containerHeight - 80) / treeHeight;
+      const ideal = Math.max(0.2, Math.min(1.0, Math.min(scaleX, scaleY)));
       setZoomScale(parseFloat(ideal.toFixed(2)));
-
-      setTimeout(() => {
-        if (canvasRef.current) {
-          canvasRef.current.scrollLeft =
-            (canvasRef.current.scrollWidth - canvasRef.current.clientWidth) / 2;
-        }
-      }, 50);
+      setPan({ x: 0, y: 10 });
     }
   };
 
-  // Canvas Mouse Drag Panning (Grab to move canvas)
-  const [isPanning, setIsPanning] = useState(false);
-  const [panStart, setPanStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
+  const handleResetView = () => {
+    setPan({ x: 0, y: 0 });
+    setZoomScale(1);
+  };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest("button, a, input")) return;
+  const handleZoomIn = () => {
+    setZoomScale((z) => Math.min(1.8, parseFloat((z + 0.15).toFixed(2))));
+  };
+
+  const handleZoomOut = () => {
+    setZoomScale((z) => Math.max(0.2, parseFloat((z - 0.15).toFixed(2))));
+  };
+
+  // Pointer-based free drag panning: Works in all directions without boundaries
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest("button, a, input, [role='button']")) return;
     if (!canvasRef.current) return;
+    try {
+      canvasRef.current.setPointerCapture(e.pointerId);
+    } catch {}
     setIsPanning(true);
-    setPanStart({
+    panStartRef.current = {
       x: e.clientX,
       y: e.clientY,
-      scrollLeft: canvasRef.current.scrollLeft,
-      scrollTop: canvasRef.current.scrollTop,
+      panX: pan.x,
+      panY: pan.y,
+    };
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isPanning) return;
+    const dx = e.clientX - panStartRef.current.x;
+    const dy = e.clientY - panStartRef.current.y;
+    setPan({
+      x: panStartRef.current.panX + dx,
+      y: panStartRef.current.panY + dy,
     });
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isPanning || !canvasRef.current) return;
-    e.preventDefault();
-    canvasRef.current.scrollLeft = panStart.scrollLeft - (e.clientX - panStart.x);
-    canvasRef.current.scrollTop = panStart.scrollTop - (e.clientY - panStart.y);
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (isPanning) {
+      setIsPanning(false);
+      try {
+        canvasRef.current?.releasePointerCapture(e.pointerId);
+      } catch {}
+    }
   };
 
-  const handleMouseUp = () => setIsPanning(false);
+  // Mouse Wheel & Trackpad 2D Scrolling: Left, Right, Up, Down, Diagonal
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (e.ctrlKey || e.metaKey) {
+        // Pinch zoom
+        const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+        setZoomScale((prev) => Math.max(0.2, Math.min(1.8, parseFloat((prev * zoomFactor).toFixed(2)))));
+      } else {
+        // Free diagonal/cross, horizontal and vertical scrolling
+        setPan((prev) => ({
+          x: prev.x - e.deltaX * 1.1,
+          y: prev.y - e.deltaY * 1.1,
+        }));
+      }
+    };
+
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      canvas.removeEventListener("wheel", onWheel);
+    };
+  }, []);
 
   // Recursively update a node in treeData
   const updateNodeInTree = (
@@ -321,13 +373,13 @@ export default function BinaryGenealogyTree({
             </button>
           )}
 
-          {/* Zoom Buttons: Mobile friendly with wider range from 15% to 150% + Auto Fit */}
+          {/* Zoom & Screen Controls */}
           <div className="flex items-center neo-inset rounded-xl p-1 gap-0.5">
             <button
               type="button"
-              onClick={() => setZoomScale((z) => Math.max(0.15, parseFloat((z - 0.1).toFixed(2))))}
+              onClick={handleZoomOut}
               className="p-1.5 text-[#64748b] hover:text-[#0f172a] rounded-lg hover:bg-white transition-colors cursor-pointer"
-              title="Zoom Out (Down to 15%)"
+              title="Zoom Out (-)"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
@@ -336,9 +388,9 @@ export default function BinaryGenealogyTree({
             </span>
             <button
               type="button"
-              onClick={() => setZoomScale((z) => Math.min(1.5, parseFloat((z + 0.1).toFixed(2))))}
+              onClick={handleZoomIn}
               className="p-1.5 text-[#64748b] hover:text-[#0f172a] rounded-lg hover:bg-white transition-colors cursor-pointer"
-              title="Zoom In (Up to 150%)"
+              title="Zoom In (+)"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
@@ -349,27 +401,45 @@ export default function BinaryGenealogyTree({
               title="Auto-Fit entire tree into screen"
             >
               <Maximize2 className="w-3 h-3" />
-              <span>Fit Screen</span>
+              <span>Fit</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleResetView}
+              className="px-2.5 py-1 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-xs active:scale-95"
+              title="Center Tree and Reset View"
+            >
+              <RotateCcw className="w-3 h-3 text-[#006d36]" />
+              <span>Center</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* 2. Main Interactive Neumorphic Tree Canvas Tray (Ultra Responsive Touch Panning + Mouse Drag) */}
+      {/* 2. Main Interactive Free-Panning Tree Canvas Tray (360° Free Drag & Scroll in all directions) */}
       <div
         ref={canvasRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        className={`neo-tree-canvas rounded-[24px] sm:rounded-[32px] p-2 sm:p-8 overflow-x-auto overflow-y-auto min-h-[500px] sm:min-h-[640px] w-full touch-pan-x touch-pan-y flex justify-center ${
-          isPanning ? "cursor-grabbing select-none" : "cursor-grab"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        className={`neo-tree-canvas relative w-full h-[650px] sm:h-[750px] rounded-2xl overflow-hidden select-none touch-none flex items-center justify-center ${
+          isPanning ? "cursor-grabbing" : "cursor-grab"
         }`}
       >
+        {/* Floating Navigation & Action Pill */}
+        <div className="absolute bottom-3 left-3 z-30 pointer-events-none hidden sm:flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-slate-600 dark:text-slate-300 shadow-xs">
+          <span>🖐️ Drag anywhere to move (Left, Right, Up, Down, Cross) • Trackpad / Wheel to scroll • Pinch to zoom</span>
+        </div>
+
+        {/* Free 2D Pan and Zoom Tree Container */}
         <div
           ref={treeContentRef}
-          className="inline-flex justify-center transition-transform duration-300 origin-top min-w-max pb-16 pt-4 px-2 sm:px-4"
-          style={{ transform: `scale(${zoomScale})` }}
+          className="absolute left-1/2 top-8 transition-transform duration-75 ease-out select-none will-change-transform"
+          style={{
+            transform: `translate3d(calc(-50% + ${pan.x}px), ${pan.y}px, 0) scale(${zoomScale})`,
+            transformOrigin: "top center",
+          }}
         >
           <RecursiveTreeNode
             node={treeData}
@@ -381,7 +451,7 @@ export default function BinaryGenealogyTree({
             onSelectRootId={onSelectRootId}
             isExtremeLeft={true}
             isExtremeRight={true}
-            viewerMemberId={viewerMemberId || rootNode.memberId}
+            viewerMemberId={effectiveViewerId}
           />
         </div>
       </div>
@@ -413,14 +483,17 @@ function RecursiveTreeNode({
   onSelectRootId?: (id: string) => void;
   isExtremeLeft?: boolean;
   isExtremeRight?: boolean;
-  viewerMemberId?: string;
+  viewerMemberId: string;
 }) {
   const isExpanded = Boolean(expandedNodes[node.id]);
   const isLoading = Boolean(loadingNodes[node.id]);
 
-  const effectiveViewerId = viewerMemberId || node.memberId;
-  const leftSponsorId = isExtremeLeft ? effectiveViewerId : node.memberId;
-  const rightSponsorId = isExtremeRight ? effectiveViewerId : node.memberId;
+  // MLM Binary Tree Sponsor Placement Rule:
+  // 1. Extreme left downline vacant spot -> Sponsor is viewerMemberId (open ID)
+  // 2. Extreme right downline vacant spot -> Sponsor is viewerMemberId (open ID)
+  // 3. Any inner / personal downline leg -> Sponsor is the parent node itself (node.memberId)
+  const leftSponsorId = isExtremeLeft ? viewerMemberId : node.memberId;
+  const rightSponsorId = isExtremeRight ? viewerMemberId : node.memberId;
 
   // Adaptive horizontal branch gap: keeps deeper levels compact so tree easily fits on screen
   const branchGap =
@@ -476,7 +549,7 @@ function RecursiveTreeNode({
                   onSelectRootId={onSelectRootId}
                   isExtremeLeft={isExtremeLeft}
                   isExtremeRight={false}
-                  viewerMemberId={effectiveViewerId}
+                  viewerMemberId={viewerMemberId}
                 />
               ) : (
                 <VacantNeumorphicSlot
@@ -502,7 +575,7 @@ function RecursiveTreeNode({
                   onSelectRootId={onSelectRootId}
                   isExtremeLeft={false}
                   isExtremeRight={isExtremeRight}
-                  viewerMemberId={effectiveViewerId}
+                  viewerMemberId={viewerMemberId}
                 />
               ) : (
                 <VacantNeumorphicSlot
@@ -665,18 +738,21 @@ function VacantNeumorphicSlot({
   return (
     <div className="flex flex-col items-center">
       <Link
-        href={`/register?sponsor=${sponsorId}&ref=${sponsorId}&parent=${parentId}&pos=${position}`}
-        className="w-24 h-24 sm:w-28 sm:h-28 rounded-full neo-disc-vacant flex flex-col items-center justify-center p-2 cursor-pointer group"
-        title={`Register new member on ${position} leg`}
+        href={`/register?sponsor=${encodeURIComponent(sponsorId)}&ref=${encodeURIComponent(sponsorId)}&parent=${encodeURIComponent(parentId)}&pos=${position}`}
+        className="w-24 h-24 sm:w-28 sm:h-28 rounded-full neo-disc-vacant flex flex-col items-center justify-center p-2 cursor-pointer group transition-all duration-200 hover:scale-105 active:scale-95 shadow-xs hover:shadow-md"
+        title={`Register new member on ${position} leg\nSponsor: ${sponsorId}\nParent: ${parentId}`}
       >
-        <div className="w-8 h-8 rounded-full neo-inset flex items-center justify-center text-[#006d36] mb-1 group-hover:scale-110 transition-transform">
-          <Plus className="w-4 h-4" />
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full neo-inset flex items-center justify-center text-[#006d36] mb-1 group-hover:scale-110 transition-transform">
+          <Plus className="w-4 h-4 stroke-[3]" />
         </div>
-        <span className="font-extrabold text-[11px] text-[#334155] group-hover:text-[#006d36] transition-colors leading-tight">
+        <span className="font-extrabold text-[11px] text-[#334155] dark:text-slate-200 group-hover:text-[#006d36] transition-colors leading-tight">
           + Add
         </span>
-        <span className="text-[8.5px] font-mono font-bold text-[#64748b] uppercase">
+        <span className="text-[9px] font-mono font-black text-[#006d36] uppercase tracking-wider">
           {position} Leg
+        </span>
+        <span className="text-[8px] font-mono font-bold text-[#64748b] dark:text-slate-400 truncate max-w-[85px] mt-0.5" title={`Sponsor ID: ${sponsorId}`}>
+          Sp: {sponsorId}
         </span>
       </Link>
     </div>
