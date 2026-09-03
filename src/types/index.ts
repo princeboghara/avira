@@ -185,13 +185,14 @@ export interface Product {
 }
 
 export interface OrderItem {
-  productId: string;
+  productId?: string;
   name: string;
   quantity: number;
-  mrp: number;
+  mrp?: number;
+  price?: number;
   pv: number;
-  subtotalMrp: number;
-  subtotalPv: number;
+  subtotalMrp?: number;
+  subtotalPv?: number;
 }
 
 export interface Order {
@@ -218,7 +219,32 @@ export interface Order {
   pv: number;
   items?: OrderItem[];
   status?: string;
+  shoppyId?: string;
+  shoppyName?: string;
+  shoppyTransferredAt?: string;
+  courierName?: string;
+  trackingNumber?: string;
+  dispatchedAt?: string;
   createdAt: string;
+}
+
+export interface Shoppy {
+  id: string;
+  shoppyId: string; // e.g. "SHP1001"
+  storeName: string;
+  ownerName: string;
+  mobile: string;
+  email?: string;
+  passwordHash?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  createdAt?: string;
+  updatedAt?: string;
+  totalOrdersCount?: number;
+  totalRevenueFulfilled?: number;
 }
 
 export interface FundRequest {

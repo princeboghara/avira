@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { User, Transaction, Order } from "@/types";
+import { User, Transaction, Order, Shoppy } from "@/types";
 
 function getConnectionString(): string {
   // 1. Check DATABASE_URL or DIRECT_URL first (Top Priority)
@@ -493,6 +493,12 @@ export function mapRowToOrder(row: any): Order {
     pv: Number(row.pv || 0),
     items: parsedItems,
     status: row.status || "COMPLETED",
+    shoppyId: row.shoppy_id || "",
+    shoppyName: row.store_name || row.shoppy_name || "",
+    shoppyTransferredAt: row.shoppy_transferred_at ? new Date(row.shoppy_transferred_at).toISOString() : undefined,
+    courierName: row.courier_name || "",
+    trackingNumber: row.tracking_number || "",
+    dispatchedAt: row.dispatched_at ? new Date(row.dispatched_at).toISOString() : undefined,
     createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
   };
 }
@@ -523,6 +529,124 @@ export async function getOrdersForUser(userId: string, memberId?: string): Promi
     }
 
     query += `) ORDER BY o.created_at DESC LIMIT 100`;
+
+    const res = await client.query(query, params);
+    return res.rows.map(mapRowToOrder);
+  } finally {
+    client.release();
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function mapRowToShoppy(row: any): Shoppy {
+  return {
+    id: row.id,
+    shoppyId: row.shoppy_id,
+    storeName: row.store_name,
+    ownerName: row.owner_name,
+    mobile: row.mobile,
+    email: row.email || "",
+    passwordHash: row.password_hash,
+    address: row.address || "",
+    city: row.city || "",
+    state: row.state || "",
+    pincode: row.pincode || "",
+    status: (row.status || "ACTIVE") as "ACTIVE" | "INACTIVE" | "SUSPENDED",
+    createdAt: row.created_at ? new Date(row.created_at).toISOString() : undefined,
+    updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : undefined,
+    totalOrdersCount: Number(row.total_orders_count || 0),
+    totalRevenueFulfilled: Number(row.total_revenue_fulfilled || 0),
+  };
+}
+
+export async function findShoppyByIdentifier(identifier: string): Promise<Shoppy | null> {
+  const client = await pool.connect();
+  try {
+    const res = await client.query(
+      `SELECT s.*, 
+        COUNT(o.id) as total_orders_count,
+        COALESCE(SUM(CASE WHEN o.status = 'DELIVERED' THEN o.amount ELSE 0 END), 0) as total_revenue_fulfilled
+       FROM shoppies s
+       LEFT JOIN orders o ON o.shoppy_id = s.shoppy_id
+       WHERE UPPER(s.shoppy_id) = UPPER($1) OR s.mobile = $1
+       GROUP BY s.id
+       LIMIT 1`,
+      [identifier.trim()]
+    );
+    if (res.rows.length === 0) return null;
+    return mapRowToShoppy(res.rows[0]);
+  } finally {
+    client.release();
+  }
+}
+
+export async function findShoppyById(id: string): Promise<Shoppy | null> {
+  const client = await pool.connect();
+  try {
+    const res = await client.query(
+      `SELECT s.*, 
+        COUNT(o.id) as total_orders_count,
+        COALESCE(SUM(CASE WHEN o.status = 'DELIVERED' THEN o.amount ELSE 0 END), 0) as total_revenue_fulfilled
+       FROM shoppies s
+       LEFT JOIN orders o ON o.shoppy_id = s.shoppy_id
+       WHERE s.id = $1 OR UPPER(s.shoppy_id) = UPPER($1)
+       GROUP BY s.id
+       LIMIT 1`,
+      [id]
+    );
+    if (res.rows.length === 0) return null;
+    return mapRowToShoppy(res.rows[0]);
+  } finally {
+    client.release();
+  }
+}
+
+export async function getAllShoppies(): Promise<Shoppy[]> {
+  const client = await pool.connect();
+  try {
+    const res = await client.query(
+      `SELECT s.*, 
+        COUNT(o.id) as total_orders_count,
+        COALESCE(SUM(CASE WHEN o.status = 'DELIVERED' THEN o.amount ELSE 0 END), 0) as total_revenue_fulfilled
+       FROM shoppies s
+       LEFT JOIN orders o ON o.shoppy_id = s.shoppy_id
+       GROUP BY s.id
+       ORDER BY s.created_at DESC`
+    );
+    return res.rows.map(mapRowToShoppy);
+  } finally {
+    client.release();
+  }
+}
+
+export async function getOrdersForShoppy(shoppyId: string, status?: string): Promise<Order[]> {
+  const client = await pool.connect();
+  try {
+    let query = `
+      SELECT 
+        o.*, 
+        u.member_id,
+        b.full_name as buyer_name,
+        b.mobile as buyer_mobile,
+        b.address as buyer_address,
+        b.city as buyer_city,
+        b.state as buyer_state,
+        b.pincode as buyer_pincode,
+        s.store_name as shoppy_name
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      LEFT JOIN users b ON UPPER(o.billed_by) = UPPER(b.member_id)
+      LEFT JOIN shoppies s ON UPPER(o.shoppy_id) = UPPER(s.shoppy_id)
+      WHERE UPPER(o.shoppy_id) = UPPER($1)
+    `;
+    const params: unknown[] = [shoppyId.trim()];
+
+    if (status && status !== "ALL") {
+      params.push(status);
+      query += ` AND o.status = $${params.length}`;
+    }
+
+    query += ` ORDER BY o.created_at DESC LIMIT 200`;
 
     const res = await client.query(query, params);
     return res.rows.map(mapRowToOrder);

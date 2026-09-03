@@ -29,6 +29,12 @@ export async function GET(req: NextRequest) {
         o.payment_slip,
         o.shipping_address,
         o.rejection_reason,
+        o.shoppy_id,
+        o.shoppy_transferred_at,
+        o.courier_name,
+        o.tracking_number,
+        o.dispatched_at,
+        s.store_name as shoppy_name,
         u.member_id,
         u.full_name,
         u.mobile,
@@ -46,6 +52,7 @@ export async function GET(req: NextRequest) {
       FROM orders o
       LEFT JOIN users u ON o.user_id = u.id
       LEFT JOIN users b ON UPPER(o.billed_by) = UPPER(b.member_id)
+      LEFT JOIN shoppies s ON UPPER(o.shoppy_id) = UPPER(s.shoppy_id)
     `;
 
     const queryParams: (string | number)[] = [];
@@ -120,6 +127,16 @@ export async function GET(req: NextRequest) {
         pv: parseFloat(row.pv || "0"),
         items: parsedItems,
         status: currentStatus,
+        shoppyId: row.shoppy_id || "",
+        shoppyName: row.shoppy_name || "",
+        shoppyTransferredAt: row.shoppy_transferred_at
+          ? new Date(row.shoppy_transferred_at).toISOString()
+          : undefined,
+        courierName: row.courier_name || "",
+        trackingNumber: row.tracking_number || "",
+        dispatchedAt: row.dispatched_at
+          ? new Date(row.dispatched_at).toISOString()
+          : undefined,
         createdAt: row.created_at
           ? new Date(row.created_at).toISOString()
           : new Date().toISOString(),

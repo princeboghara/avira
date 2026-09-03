@@ -188,7 +188,77 @@
   transform: scale(0.95);
 }
 
-/* 4. Ambient Bio Glow Backgrounds */
+/* 4. Shoppy Neumorphism Design System */
+.shoppy-bg {
+  background-color: #e6ecf2;
+}
+
+.shoppy-surface {
+  background: #e6ecf2;
+  box-shadow: 8px 8px 18px #c2ccd6, -8px -8px 18px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.shoppy-surface-sm {
+  background: #e6ecf2;
+  box-shadow: 4px 4px 10px #c2ccd6, -4px -4px 10px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.shoppy-surface-lg {
+  background: #e6ecf2;
+  box-shadow: 12px 12px 26px #b8c5d1, -12px -12px 26px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.shoppy-inset {
+  background: #dfe5ec;
+  box-shadow: inset 4px 4px 8px #c2ccd6, inset -4px -4px 8px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.shoppy-inset-sm {
+  background: #dfe5ec;
+  box-shadow: inset 2px 2px 5px #c2ccd6, inset -2px -2px 5px #ffffff;
+}
+
+.shoppy-btn {
+  background: #e6ecf2;
+  color: #1e293b;
+  box-shadow: 5px 5px 12px #c2ccd6, -5px -5px 12px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shoppy-btn:hover {
+  box-shadow: 3px 3px 8px #c2ccd6, -3px -3px 8px #ffffff;
+  transform: translateY(-1px);
+}
+
+.shoppy-btn:active {
+  box-shadow: inset 3px 3px 6px #c2ccd6, inset -3px -3px 6px #ffffff;
+  transform: translateY(1px);
+}
+
+.shoppy-btn-primary {
+  background: linear-gradient(135deg, #007a3d 0%, #005527 100%);
+  color: #ffffff;
+  box-shadow: 6px 6px 14px rgba(0, 109, 54, 0.35), -4px -4px 12px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shoppy-btn-primary:hover {
+  box-shadow: 4px 4px 10px rgba(0, 109, 54, 0.45), -2px -2px 8px #ffffff;
+  transform: translateY(-1px);
+}
+
+.shoppy-btn-primary:active {
+  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.45);
+  transform: translateY(1px);
+}
+
+/* 5. Ambient Bio Glow Backgrounds */
 .bio-canvas-bg {
   background-color: #f4f7f6;
   background-image: 

@@ -3,8 +3,8 @@ const { parse } = require("url");
 const next = require("next");
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = "0.0.0.0";
 const port = parseInt(process.env.PORT || "3000", 10);
+const hostname = process.env.HOSTNAME || "localhost";
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
@@ -24,7 +24,7 @@ app.prepare().then(() => {
       console.error(err);
       process.exit(1);
     })
-    .listen(port, () => {
-      console.log(`> Avira LifeCare Production Server running on http://${hostname}:${port}`);
+    .listen(port, "0.0.0.0", () => {
+      console.log(`> Avira LifeCare Production Server listening on 0.0.0.0:${port}`);
     });
 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/auth";
 import { findUserByMemberId } from "@/lib/db";
 import { signAccessToken, signRefreshToken } from "@/lib/jwt";
+import { getPublicUrl } from "@/lib/url";
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdminSession(req);
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
   const accessToken = signAccessToken(tokenPayload);
   const refreshToken = signRefreshToken(tokenPayload);
 
-  const redirectUrl = new URL("/dashboard", req.url);
+  const redirectUrl = getPublicUrl("/dashboard", req);
   const response = NextResponse.redirect(redirectUrl);
 
   response.cookies.set("avira_access_token", accessToken, {

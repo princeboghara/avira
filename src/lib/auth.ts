@@ -125,3 +125,63 @@ export async function requireAdminSession(req?: NextRequest): Promise<
   }
   return { session };
 }
+
+/**
+ * Extracts and verifies the Shoppy (Franchise) session.
+ * Checks shoppy_access_token cookie or Authorization Bearer header.
+ */
+export async function getShoppySession(req?: NextRequest): Promise<TokenPayload | null> {
+  try {
+    let token = "";
+
+    if (req) {
+      const authHeader = req.headers.get("authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.substring(7);
+      } else {
+        token = req.cookies.get("shoppy_access_token")?.value || "";
+      }
+    } else {
+      const cookieStore = await cookies();
+      token = cookieStore.get("shoppy_access_token")?.value || "";
+
+      if (!token) {
+        const headerList = await headers();
+        const authHeader = headerList.get("authorization");
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+          token = authHeader.substring(7);
+        }
+      }
+    }
+
+    if (!token) return null;
+
+    const payload = verifyAccessToken(token);
+    if (!payload || payload.role !== "SHOPPY") return null;
+
+    return payload;
+  } catch (err) {
+    console.error("Shoppy session retrieval error:", err);
+    return null;
+  }
+}
+
+/**
+ * Route handler guard for Shoppy-authenticated API routes.
+ */
+export async function requireShoppySession(req?: NextRequest): Promise<
+  | { session: TokenPayload; errorResponse?: null }
+  | { session: null; errorResponse: NextResponse }
+> {
+  const session = await getShoppySession(req);
+  if (!session || session.role !== "SHOPPY") {
+    return {
+      session: null,
+      errorResponse: NextResponse.json(
+        { success: false, message: "Unauthorized. Shoppy authentication required." },
+        { status: 401 }
+      ),
+    };
+  }
+  return { session };
+}

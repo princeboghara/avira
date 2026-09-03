@@ -39,10 +39,20 @@ export async function POST(
       );
     }
 
-    // Update order status to CONFIRMED inside transaction
+    let shoppyId: string = "AVS01";
+    try {
+      const body = await req.json();
+      if (body && body.shoppyId && body.shoppyId !== "CENTRAL" && body.shoppyId !== "NONE") {
+        shoppyId = body.shoppyId.trim();
+      }
+    } catch {
+      // Body may be empty if simple approve without body
+    }
+
+    // Update order status to CONFIRMED inside transaction and assign to SURAT PARCEL HUB (AVS01)
     await client.query(
-      `UPDATE orders SET status = 'CONFIRMED' WHERE id = $1`,
-      [id]
+      `UPDATE orders SET status = 'CONFIRMED', shoppy_id = $1, shoppy_transferred_at = NOW() WHERE id = $2`,
+      [shoppyId, id]
     );
 
     let parsedItems = [];

@@ -25,6 +25,7 @@ import {
   ChevronDown,
   ChevronRight,
   Award,
+  Store,
 } from "lucide-react";
 import { User } from "@/types";
 
@@ -91,14 +92,19 @@ export default function AdminSidebar({
       badgeColor: "bg-amber-500/15 text-amber-900",
       links: [
         { name: "Pending For Approval", href: "/admin/orders/approve", icon: CheckCircle, badge: pendingOrdersCount, badgeColor: "bg-amber-500/15 text-amber-900" },
-        { name: "Confirmed Orders", href: "/admin/orders/confirmed", icon: CheckCircle2, badge: confirmedOrdersCount, badgeColor: "bg-teal-500/15 text-teal-900" },
-        { name: "Orders in Packing", href: "/admin/orders/packing", icon: Boxes, badge: packedOrdersCount, badgeColor: "bg-indigo-500/15 text-indigo-900" },
-        { name: "Dispatched Orders", href: "/admin/orders/dispatched", icon: Truck, badge: dispatchedOrdersCount, badgeColor: "bg-blue-500/15 text-blue-900" },
         { name: "All Orders Registry", href: "/admin/orders", icon: FileText, badge: totalOrdersCount, badgeColor: "bg-slate-500/15 text-slate-900" },
       ],
     },
     {
-      category: "4. Member Manager",
+      category: "4. Shoppy Manager",
+      icon: Store,
+      links: [
+        { name: "Shoppy Master", href: "/admin/shoppies", icon: Store },
+        { name: "Shoppy Orders Tracking", href: "/admin/shoppies/orders", icon: Truck },
+      ],
+    },
+    {
+      category: "5. Member Manager",
       icon: Users,
       badge: kycPendingCount > 0 ? kycPendingCount : null,
       badgeColor: "bg-amber-500/15 text-amber-900",
@@ -108,14 +114,14 @@ export default function AdminSidebar({
       ],
     },
     {
-      category: "5. Fund & Finance Manager",
+      category: "6. Fund & Finance Manager",
       icon: Wallet,
       links: [
         { name: "Fund Deposit Requests", href: "/admin/funds", icon: CheckCircle },
       ],
     },
     {
-      category: "6. PV Manager",
+      category: "7. PV Manager",
       icon: Zap,
       links: [
         { name: "Self PV Transfer", href: "/admin/pv/self", icon: Zap },
@@ -123,7 +129,7 @@ export default function AdminSidebar({
       ],
     },
     {
-      category: "7. Business Reports",
+      category: "8. Business Reports",
       icon: BarChart3,
       links: [
         { name: "Today's Report", href: "/admin/reports?range=today", icon: Calendar },
@@ -133,7 +139,7 @@ export default function AdminSidebar({
       ],
     },
     {
-      category: "8. Plan Settings",
+      category: "9. Plan Settings",
       icon: Award,
       links: [
         { name: "Leadership Bonus Setup", href: "/admin/settings/leadership", icon: Award },
