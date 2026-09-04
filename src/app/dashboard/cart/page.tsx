@@ -18,6 +18,11 @@ import {
   CheckCircle2,
   FileText,
   Percent,
+  Calculator,
+  Lock,
+  Unlock,
+  Building,
+  Hash,
 } from "lucide-react";
 import MemberLayout from "@/components/member/MemberLayout";
 import { Product, User } from "@/types";
@@ -40,6 +45,12 @@ export default function MemberCartPage() {
   const [memberVerified, setMemberVerified] = useState(false);
   const [memberError, setMemberError] = useState("");
   const [shippingAddress, setShippingAddress] = useState("");
+  const [targetPincode, setTargetPincode] = useState("");
+  const [targetCity, setTargetCity] = useState("");
+  const [targetState, setTargetState] = useState("");
+  const [targetGstin, setTargetGstin] = useState("");
+  const [isAddressLocked, setIsAddressLocked] = useState(true);
+  const [fetchingPincode, setFetchingPincode] = useState(false);
   const [shippingCharge, setShippingCharge] = useState(0);
 
   useEffect(() => {
@@ -56,6 +67,11 @@ export default function MemberCartPage() {
           setTargetMemberName("");
           setTargetMemberMobile("");
           setShippingAddress("");
+          setTargetPincode("");
+          setTargetCity("");
+          setTargetState("");
+          setTargetGstin("");
+          setIsAddressLocked(true);
           setMemberVerified(false);
         }
         if (shipRes) {
@@ -115,6 +131,11 @@ export default function MemberCartPage() {
       setMemberVerified(false);
       setTargetMemberName("");
       setTargetMemberMobile("");
+      setShippingAddress("");
+      setTargetPincode("");
+      setTargetCity("");
+      setTargetState("");
+      setTargetGstin("");
       setMemberError("Please enter an Associate Member ID");
       return;
     }
@@ -128,22 +149,30 @@ export default function MemberCartPage() {
         const usr = data.user || data;
         const name = usr.fullName || "";
         const mobile = usr.mobile || "";
-        const addr =
-          usr.address ||
-          [usr.city, usr.state, usr.pincode ? `PIN: ${usr.pincode}` : ""]
-            .filter(Boolean)
-            .join(", ");
+        const addr = usr.address || "";
+        const pin = usr.pincode || "";
+        const city = usr.city || "";
+        const state = usr.state || "";
+        const gstin = usr.gstin || usr.gstNumber || "";
 
         setTargetMemberName(name);
         setTargetMemberMobile(mobile);
-        if (addr) {
-          setShippingAddress(addr);
-        }
+        setShippingAddress(addr);
+        setTargetPincode(pin);
+        setTargetCity(city);
+        setTargetState(state);
+        setTargetGstin(gstin);
+        setIsAddressLocked(true); // Address starts locked by default for safety
         setMemberVerified(true);
       } else {
         setMemberVerified(false);
         setTargetMemberName("");
         setTargetMemberMobile("");
+        setShippingAddress("");
+        setTargetPincode("");
+        setTargetCity("");
+        setTargetState("");
+        setTargetGstin("");
         setMemberError(data.message || "Associate Member ID not found in Avira network");
       }
     } catch {
@@ -161,7 +190,40 @@ export default function MemberCartPage() {
     setTargetMemberName("");
     setTargetMemberMobile("");
     setShippingAddress("");
+    setTargetPincode("");
+    setTargetCity("");
+    setTargetState("");
+    setTargetGstin("");
+    setIsAddressLocked(true);
     setMemberError("");
+  };
+
+  const handlePincodeChange = async (val: string) => {
+    const cleanPin = val.replace(/\D/g, "").slice(0, 6);
+    setTargetPincode(cleanPin);
+
+    // If even a single digit is erased, clear city and state immediately!
+    if (cleanPin.length < 6) {
+      setTargetCity("");
+      setTargetState("");
+      return;
+    }
+
+    if (cleanPin.length === 6) {
+      setFetchingPincode(true);
+      try {
+        const res = await fetch(`/api/pincode/${cleanPin}`);
+        const data = await res.json();
+        if (data.success) {
+          if (data.city) setTargetCity(data.city);
+          if (data.state) setTargetState(data.state);
+        }
+      } catch (err) {
+        console.error("Error auto-fetching pincode:", err);
+      } finally {
+        setFetchingPincode(false);
+      }
+    }
   };
 
   useEffect(() => {
@@ -192,18 +254,46 @@ export default function MemberCartPage() {
   // 4. Total PV (NO '+' prefix)
   const totalPv = cart.reduce((acc, it) => acc + it.product.pv * it.quantity, 0);
 
-  // 5. Estimated GST Tax Breakdown based on HSN/GST Rate
-  const totalGstEstimated = cart.reduce((acc, it) => {
-    const price = (it.product.discountPrice || it.product.mrp) * it.quantity;
-    const rate = (it.product as any).gstRate || 18; // standard GST rate
-    const tax = price - price / (1 + rate / 100);
-    return acc + tax;
-  }, 0);
+  // 5. Accurate GST Tax Breakdown based on HSN/GST Rate of each product
+  let totalTaxableAmount = 0;
+  let totalGstEstimated = 0;
+  const gstBreakdownByRate: Record<number, { taxable: number; gst: number }> = {};
 
-  // Fallback to highest product shipping charge if API is pending or zero
-  const effectiveShipping = shippingCharge > 0 
-    ? shippingCharge 
-    : Math.max(0, ...cart.map((it) => Number((it.product as any)?.shippingCharge) || 0));
+  cart.forEach((it) => {
+    const p = it.product;
+    const unitPrice = p.discountPrice || p.mrp;
+    const rate =
+      p.gstRate !== undefined && p.gstRate > 0
+        ? p.gstRate
+        : p.hsnGst !== undefined && p.hsnGst > 0
+        ? p.hsnGst
+        : p.hsnCode?.startsWith("3401") ||
+          p.hsnCode?.startsWith("3305") ||
+          p.hsnCode?.startsWith("3304") ||
+          p.hsnCode?.startsWith("3307") ||
+          p.hsnCode?.startsWith("3306")
+        ? 18
+        : 5;
+
+    const basePerUnit = Number((unitPrice / (1 + rate / 100)).toFixed(2));
+    const taxableTotal = Number((basePerUnit * it.quantity).toFixed(2));
+    const gstTotal = Number(((unitPrice - basePerUnit) * it.quantity).toFixed(2));
+
+    totalTaxableAmount += taxableTotal;
+    totalGstEstimated += gstTotal;
+
+    if (!gstBreakdownByRate[rate]) {
+      gstBreakdownByRate[rate] = { taxable: 0, gst: 0 };
+    }
+    gstBreakdownByRate[rate].taxable += taxableTotal;
+    gstBreakdownByRate[rate].gst += gstTotal;
+  });
+
+  // Effective shipping charge
+  const effectiveShipping =
+    shippingCharge > 0
+      ? shippingCharge
+      : Math.max(75, ...cart.map((it) => Number((it.product as any)?.shippingCharge) || 0));
 
   const handleProceedToCheckout = () => {
     if (cart.length === 0) {
@@ -216,10 +306,26 @@ export default function MemberCartPage() {
       return;
     }
 
-    if (!shippingAddress.trim()) {
+    const cleanAddress = shippingAddress.trim();
+    const cleanPin = targetPincode.trim();
+    const cleanCity = targetCity.trim();
+    const cleanState = targetState.trim();
+
+    if (!cleanAddress && !cleanCity) {
       alert("Please provide the delivery shipping address.");
       return;
     }
+
+    const fullShippingAddress = [
+      cleanAddress,
+      cleanCity,
+      cleanState,
+      cleanPin ? `PIN: ${cleanPin}` : "",
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    const isIntraState = cleanState.toLowerCase() === "gujarat";
 
     // Store checkout session in localStorage
     localStorage.setItem(
@@ -228,15 +334,25 @@ export default function MemberCartPage() {
         memberId: targetMemberId.trim().toUpperCase(),
         fullName: targetMemberName,
         mobile: targetMemberMobile,
-        address: shippingAddress.trim(),
+        address: fullShippingAddress,
+        shippingAddress: fullShippingAddress,
+        rawAddress: cleanAddress,
+        pincode: cleanPin,
+        city: cleanCity,
+        state: cleanState,
+        consigneeGstin: targetGstin.trim(),
+        buyerGstin: user?.gstNumber || "",
+        buyerMobile: user?.mobile || "",
         totalMrpAmount: totalMrpAmount,
         totalDiscount: totalDiscount,
+        totalTaxableAmount: Number(totalTaxableAmount.toFixed(2)),
         totalAmount: totalPayableAmount + effectiveShipping,
         totalPv: totalPv,
         shippingCharge: effectiveShipping,
-        taxAmount: Math.round(totalGstEstimated),
+        taxAmount: Number(totalGstEstimated.toFixed(2)),
         billedBy: user?.memberId || "",
         billedByName: user?.fullName || "",
+        isIntraState: isIntraState,
       })
     );
 
@@ -300,6 +416,20 @@ export default function MemberCartPage() {
                   const unitPrice = p.discountPrice || p.mrp;
                   const itemTotal = unitPrice * item.quantity;
                   const itemPv = p.pv * item.quantity;
+                  const gstRate =
+                    p.gstRate !== undefined && p.gstRate > 0
+                      ? p.gstRate
+                      : p.hsnGst !== undefined && p.hsnGst > 0
+                      ? p.hsnGst
+                      : p.hsnCode?.startsWith("3401") ||
+                        p.hsnCode?.startsWith("3305") ||
+                        p.hsnCode?.startsWith("3304") ||
+                        p.hsnCode?.startsWith("3307") ||
+                        p.hsnCode?.startsWith("3306")
+                      ? 18
+                      : 5;
+                  const basePrice = Number((unitPrice / (1 + gstRate / 100)).toFixed(2));
+                  const itemGstAmt = Number(((unitPrice - basePrice) * item.quantity).toFixed(2));
 
                   return (
                     <div key={p.id} className="pt-3 flex items-center justify-between gap-4">
@@ -314,12 +444,25 @@ export default function MemberCartPage() {
                         </div>
                         <div>
                           <h4 className="font-bold text-xs text-[#1a1c1c] line-clamp-1">{p.name}</h4>
-                          <span className="font-mono text-[10px] text-purple-700 font-bold block">
-                            {itemPv} PV • HSN: {p.hsnCode || "3004"}
-                          </span>
-                          <span className="font-mono text-xs font-black text-[#1a1c1c]">
-                            ₹{unitPrice}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                            <span className="font-mono text-[10px] text-purple-700 font-bold">
+                              {itemPv} PV
+                            </span>
+                            <span className="text-gray-300">•</span>
+                            <span className="font-mono text-[10px] text-gray-600 font-medium">
+                              HSN: {p.hsnCode || "3004"}
+                            </span>
+                            <span className="text-gray-300">•</span>
+                            <span className="font-mono text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                              {gstRate}% GST (₹{itemGstAmt.toFixed(2)})
+                            </span>
+                          </div>
+                          <div className="font-mono text-xs font-black text-[#1a1c1c] mt-1 flex items-center gap-2">
+                            <span>₹{unitPrice}</span>
+                            <span className="text-[10px] text-gray-400 font-normal">
+                              (Base: ₹{basePrice.toFixed(2)})
+                            </span>
+                          </div>
                         </div>
                       </div>
 
@@ -361,11 +504,11 @@ export default function MemberCartPage() {
 
             {/* Right: Invoice Summary & Recipient Form */}
             <div className="lg:col-span-5 space-y-6">
-              {/* Recipient Member ID Validation */}
+              {/* Recipient Member ID Validation & Consignee Address */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-4">
                 <h3 className="font-bold text-xs uppercase text-[#1a1c1c] tracking-wider pb-2 border-b border-gray-100 flex items-center gap-2">
                   <UserCheck className="w-4 h-4 text-[#006d36]" />
-                  <span>Order Recipient Member ID</span>
+                  <span>Order Recipient (Consignee) Details</span>
                 </h3>
 
                 <div>
@@ -386,11 +529,18 @@ export default function MemberCartPage() {
                   </div>
 
                   {memberVerified && (
-                    <div className="mt-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-[#006d36] font-bold flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 shrink-0" />
-                      <div>
-                        <span>{targetMemberName}</span>
-                        <span className="block font-mono text-[10px] text-gray-500 font-normal">{targetMemberMobile}</span>
+                    <div className="mt-2.5 p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-xs text-[#006d36] font-bold space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4 shrink-0 text-[#006d36]" />
+                          <span>{targetMemberName}</span>
+                        </span>
+                        <span className="font-mono text-[10px] text-gray-500 font-normal">ID: {targetMemberId}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 text-[10px] text-gray-600 font-normal pt-1 border-t border-emerald-200/60 font-mono">
+                        <span>📱 {targetMemberMobile || "No Mobile"}</span>
+                        <span>•</span>
+                        <span>GSTIN: {targetGstin || "URP (Unregistered)"}</span>
                       </div>
                     </div>
                   )}
@@ -403,17 +553,181 @@ export default function MemberCartPage() {
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-bold text-[#5f5e5e] mb-1">
-                    Delivery Shipping Address:
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="Street Address, City, State, Pincode..."
-                    value={shippingAddress}
-                    onChange={(e) => setShippingAddress(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs text-[#1a1c1c] outline-hidden focus:border-[#006d36]"
-                  />
+                {/* Delivery Shipping Address with Unlock for Edit */}
+                <div className="pt-3 border-t border-gray-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-[#1a1c1c] flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#006d36]" />
+                      <span>Delivery Shipping Address:</span>
+                    </label>
+                    {memberVerified && (
+                      <button
+                        type="button"
+                        onClick={() => setIsAddressLocked(!isAddressLocked)}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          isAddressLocked
+                            ? "bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 shadow-2xs"
+                            : "bg-emerald-50 hover:bg-emerald-100 text-[#006d36] border border-emerald-300 shadow-2xs"
+                        }`}
+                        title={isAddressLocked ? "Click to unlock address editing" : "Click to lock address"}
+                      >
+                        {isAddressLocked ? (
+                          <>
+                            <Lock className="w-3.5 h-3.5 text-amber-600" />
+                            <span>Unlock for Edit</span>
+                          </>
+                        ) : (
+                          <>
+                            <Unlock className="w-3.5 h-3.5 text-[#006d36]" />
+                            <span>Lock Address</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+
+                  {memberVerified && (
+                    <div className={`text-[11px] rounded-xl p-2.5 flex items-center gap-2 border ${
+                      isAddressLocked
+                        ? "bg-amber-50/70 border-amber-200 text-amber-800"
+                        : "bg-emerald-50/70 border-emerald-200 text-emerald-800"
+                    }`}>
+                      {isAddressLocked ? (
+                        <>
+                          <Lock className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+                          <span>Address is locked to protect member details. Click <strong>&quot;Unlock for Edit&quot;</strong> to modify.</span>
+                        </>
+                      ) : (
+                        <>
+                          <Unlock className="w-3.5 h-3.5 shrink-0 text-[#006d36]" />
+                          <span>Address editing unlocked. You can modify street address, enter a 6-digit Pincode to auto-fetch State/City.</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Street Address */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 mb-1">
+                      Street / Flat / Area Address:
+                    </label>
+                    <textarea
+                      rows={2}
+                      disabled={isAddressLocked && memberVerified}
+                      placeholder="e.g. 102, Shanti Complex, Station Road..."
+                      value={shippingAddress}
+                      onChange={(e) => setShippingAddress(e.target.value)}
+                      className={`w-full rounded-xl p-2.5 text-xs text-[#1a1c1c] outline-hidden border transition-all ${
+                        isAddressLocked && memberVerified
+                          ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-600"
+                          : "bg-gray-50 border-gray-200 focus:border-[#006d36] focus:bg-white"
+                      }`}
+                    />
+                  </div>
+
+                  {/* Pincode & City & State Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 mb-1">
+                        Pincode:
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          maxLength={6}
+                          disabled={isAddressLocked && memberVerified}
+                          placeholder="e.g. 380001"
+                          value={targetPincode}
+                          onChange={(e) => handlePincodeChange(e.target.value)}
+                          className={`w-full rounded-xl py-2 px-2.5 font-mono font-bold text-xs text-[#1a1c1c] outline-hidden border transition-all ${
+                            isAddressLocked && memberVerified
+                              ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-600"
+                              : "bg-gray-50 border-gray-200 focus:border-[#006d36] focus:bg-white"
+                          }`}
+                        />
+                        {fetchingPincode && (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin absolute right-2.5 top-1/2 -translate-y-1/2 text-[#006d36]" />
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 mb-1">
+                        City:
+                      </label>
+                      <input
+                        type="text"
+                        disabled={isAddressLocked && memberVerified}
+                        placeholder="e.g. Ahmedabad"
+                        value={targetCity}
+                        onChange={(e) => setTargetCity(e.target.value)}
+                        className={`w-full rounded-xl py-2 px-2.5 text-xs font-semibold text-[#1a1c1c] outline-hidden border transition-all ${
+                          isAddressLocked && memberVerified
+                            ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-600"
+                            : "bg-gray-50 border-gray-200 focus:border-[#006d36] focus:bg-white"
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 mb-1">
+                        State:
+                      </label>
+                      <input
+                        type="text"
+                        disabled={isAddressLocked && memberVerified}
+                        placeholder="e.g. Gujarat"
+                        value={targetState}
+                        onChange={(e) => setTargetState(e.target.value)}
+                        className={`w-full rounded-xl py-2 px-2.5 text-xs font-semibold text-[#1a1c1c] outline-hidden border transition-all ${
+                          isAddressLocked && memberVerified
+                            ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-600"
+                            : "bg-gray-50 border-gray-200 focus:border-[#006d36] focus:bg-white"
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Consignee Mobile & GSTIN Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 mb-1">
+                        Recipient Mobile:
+                      </label>
+                      <input
+                        type="tel"
+                        maxLength={10}
+                        disabled={isAddressLocked && memberVerified}
+                        placeholder="10-digit mobile"
+                        value={targetMemberMobile}
+                        onChange={(e) => setTargetMemberMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                        className={`w-full rounded-xl py-2 px-2.5 font-mono text-xs text-[#1a1c1c] outline-hidden border transition-all ${
+                          isAddressLocked && memberVerified
+                            ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-600"
+                            : "bg-gray-50 border-gray-200 focus:border-[#006d36] focus:bg-white"
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 mb-1">
+                        Consignee GSTIN (Optional):
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={15}
+                        disabled={isAddressLocked && memberVerified}
+                        placeholder="e.g. 24AAAAA0000A1Z5"
+                        value={targetGstin}
+                        onChange={(e) => setTargetGstin(e.target.value.toUpperCase())}
+                        className={`w-full rounded-xl py-2 px-2.5 font-mono text-xs uppercase text-[#1a1c1c] outline-hidden border transition-all ${
+                          isAddressLocked && memberVerified
+                            ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-600"
+                            : "bg-gray-50 border-gray-200 focus:border-[#006d36] focus:bg-white"
+                        }`}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -445,21 +759,51 @@ export default function MemberCartPage() {
                     <span className="font-mono">{totalPv} PV</span>
                   </div>
 
-                  {/* 4. Shipping Charges */}
+                  {/* 4. Taxable Value */}
+                  <div className="flex items-center justify-between text-[#5f5e5e] pt-1 border-t border-gray-100">
+                    <span>Taxable Value (Excl. Tax):</span>
+                    <span className="font-mono font-bold text-gray-800">₹{totalTaxableAmount.toFixed(2)}</span>
+                  </div>
+
+                  {/* 5. Detailed GST Breakdown Strip */}
+                  <div className="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 space-y-1.5 text-[11px]">
+                    <div className="flex items-center justify-between text-emerald-950 font-bold">
+                      <span className="flex items-center gap-1.5">
+                        <Calculator className="w-3.5 h-3.5 text-[#006d36]" />
+                        <span>Total GST Amount (Included):</span>
+                      </span>
+                      <span className="font-mono text-[#006d36]">₹{totalGstEstimated.toFixed(2)}</span>
+                    </div>
+                    {Object.entries(gstBreakdownByRate).map(([rateStr, val]) => (
+                      <div key={rateStr} className="flex items-center justify-between text-gray-600 text-[10px] pl-5">
+                        <span>GST @ {rateStr}%:</span>
+                        <span className="font-mono font-medium">₹{val.gst.toFixed(2)} (Taxable: ₹{val.taxable.toFixed(2)})</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between text-[10px] pt-1 border-t border-emerald-200/60 pl-5 font-mono">
+                      {(targetState || "").trim().toLowerCase() === "gujarat" ? (
+                        <>
+                          <span className="text-[#006d36] font-semibold">CGST: ₹{(totalGstEstimated / 2).toFixed(2)}</span>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-[#006d36] font-semibold">SGST: ₹{(totalGstEstimated / 2).toFixed(2)}</span>
+                        </>
+                      ) : (
+                        <span className="text-blue-700 font-semibold">
+                          IGST: ₹{totalGstEstimated.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 6. Shipping Charges */}
                   <div className="flex items-center justify-between text-[#5f5e5e]">
                     <span>Shipping Charges:</span>
                     <span className="font-mono font-bold text-[#006d36]">
-                      {effectiveShipping > 0 ? `₹${effectiveShipping}` : "₹0 (Free Delivery)"}
+                      ₹{effectiveShipping}
                     </span>
                   </div>
 
-                  {/* 5. Tax (GST Included by HSN - Clean without ~) */}
-                  <div className="flex items-center justify-between text-[#5f5e5e] pt-1 border-t border-gray-100">
-                    <span>Tax (GST by HSN):</span>
-                    <span className="font-mono">Included (₹{Math.round(totalGstEstimated).toLocaleString("en-IN")})</span>
-                  </div>
-
-                  {/* 6. Final Payable Amount */}
+                  {/* 7. Final Payable Amount */}
                   <div className="flex items-center justify-between text-sm font-black text-[#1a1c1c] pt-2 border-t border-gray-200">
                     <span>Final Payable Amount:</span>
                     <span className="font-mono text-base text-[#006d36]">₹{(totalPayableAmount + effectiveShipping).toLocaleString("en-IN")}</span>

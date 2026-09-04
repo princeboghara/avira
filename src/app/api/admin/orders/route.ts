@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
     let query = `
       SELECT 
         o.id,
+        o.invoice_no,
         o.user_id,
         o.purchase_type,
         o.package_name,
@@ -57,8 +58,12 @@ export async function GET(req: NextRequest) {
 
     const queryParams: (string | number)[] = [];
     if (statusParam && statusParam !== "ALL") {
-      queryParams.push(statusParam);
-      query += ` WHERE o.status = $1`;
+      if (statusParam === "TRANSFER_QUEUE" || statusParam === "APPROVED") {
+        query += ` WHERE (o.status = 'APPROVED' OR (o.status = 'CONFIRMED' AND (o.shoppy_id IS NULL OR o.shoppy_id = '')))`;
+      } else {
+        queryParams.push(statusParam);
+        query += ` WHERE o.status = $1`;
+      }
     }
 
     const limitParam = searchParams.get("limit");
@@ -75,6 +80,7 @@ export async function GET(req: NextRequest) {
       SELECT 
         COUNT(*) as total_orders,
         COUNT(CASE WHEN status IN ('PENDING', 'PENDING_APPROVAL') THEN 1 END) as pending_orders,
+        COUNT(CASE WHEN status = 'APPROVED' OR (status = 'CONFIRMED' AND (shoppy_id IS NULL OR shoppy_id = '')) THEN 1 END) as transfer_orders,
         COUNT(CASE WHEN status IN ('CONFIRMED', 'APPROVED', 'COMPLETED') THEN 1 END) as confirmed_orders,
         COUNT(CASE WHEN status = 'PACKED' THEN 1 END) as packed_orders,
         COUNT(CASE WHEN status IN ('DISPATCHED', 'IN_TRANSIT') THEN 1 END) as dispatched_orders,
@@ -104,6 +110,7 @@ export async function GET(req: NextRequest) {
 
       return {
         id: row.id,
+        invoiceNo: row.invoice_no ? parseInt(row.invoice_no, 10) : 1,
         userId: row.user_id,
         billedBy: row.billed_by || row.member_id || "N/A",
         buyerName: row.buyer_name || row.billed_by || "Associate",
@@ -149,6 +156,7 @@ export async function GET(req: NextRequest) {
       summary: {
         totalOrders: parseInt(summary.total_orders || "0", 10),
         pendingOrders: parseInt(summary.pending_orders || "0", 10),
+        transferOrders: parseInt(summary.transfer_orders || "0", 10),
         confirmedOrders: parseInt(summary.confirmed_orders || "0", 10),
         packedOrders: parseInt(summary.packed_orders || "0", 10),
         dispatchedOrders: parseInt(summary.dispatched_orders || "0", 10),

@@ -37,6 +37,10 @@ export default function AdminItemManagerPage() {
     try {
       setRefreshing(true);
       const res = await fetch("/api/admin/products", { cache: "no-store" });
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = "/admin/login";
+        return;
+      }
       const data = await res.json();
       if (data.success && Array.isArray(data.products)) {
         const normalized = data.products.map((p: any) => ({

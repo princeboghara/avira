@@ -14,7 +14,7 @@ export async function PATCH(
 
   try {
     const body = await req.json();
-    const { status, customerName, customerMobile, amount, pv } = body;
+    const { status, customerName, customerMobile, amount, pv, shoppyId } = body;
 
     let query = "UPDATE orders SET ";
     const updates: string[] = [];
@@ -40,6 +40,14 @@ export async function PATCH(
     if (pv !== undefined) {
       updates.push(`pv = $${idx++}`);
       values.push(pv);
+    }
+    if (shoppyId !== undefined) {
+      updates.push(`shoppy_id = $${idx++}`);
+      values.push(shoppyId);
+      updates.push(`shoppy_transferred_at = NOW()`);
+    } else if (status === "CONFIRMED") {
+      updates.push(`shoppy_id = COALESCE(shoppy_id, 'AVS01')`);
+      updates.push(`shoppy_transferred_at = COALESCE(shoppy_transferred_at, NOW())`);
     }
 
     if (updates.length === 0) {

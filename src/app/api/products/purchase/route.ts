@@ -36,6 +36,7 @@ const purchaseSchema = z.object({
   totalPv: z.number().optional(),
   purchaseType: z.enum(["ACTIVATION", "REPURCHASE"]).default("ACTIVATION"),
   items: z.array(orderItemSchema).min(1, "Order cart cannot be empty"),
+  shippingCharge: z.number().nonnegative().optional().default(0),
   fundWalletUsed: z.number().nonnegative().default(0),
 });
 
@@ -82,6 +83,7 @@ export async function POST(req: NextRequest) {
       memberId: (rawBody.memberId || rawBody.targetMemberId || "").trim().toUpperCase(),
       amount: Number(rawBody.amount !== undefined ? rawBody.amount : rawBody.totalAmount || 0),
       pv: Number(rawBody.pv !== undefined ? rawBody.pv : rawBody.totalPv || 0),
+      shippingCharge: Number(rawBody.shippingCharge || 0),
       paymentSlip: rawBody.paymentSlip || rawBody.paymentSlipUrl || "",
       fundWalletUsed: Number(rawBody.fundWalletUsed || 0),
       items: normalizedItems,
@@ -106,6 +108,7 @@ export async function POST(req: NextRequest) {
       pv,
       purchaseType,
       items,
+      shippingCharge,
       fundWalletUsed,
     } = result.data;
 
@@ -178,26 +181,23 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine descriptive package/order name
-    let finalOrderName = result.data.packageName;
-    if (!finalOrderName || finalOrderName.trim() === "") {
-      if (items && items.length > 0) {
-        finalOrderName = items.map((it) => `${it.name} (${it.quantity}x)`).join(", ");
-      } else {
-        finalOrderName = `Product Order (${pv} PV)`;
-      }
+    let finalOrderName = result.data.packageName?.trim();
+    if (!finalOrderName) {
+      finalOrderName = "Product Order";
     }
 
     const finalCustomerName = customerName?.trim() || user.fullName;
     const finalCustomerMobile = customerMobile?.trim() || user.mobile;
     const finalShippingAddress =
       shippingAddress?.trim() ||
-      [user.city, user.state, user.pincode ? `PIN: ${user.pincode}` : ""]
+      [user.address, user.city, user.state, user.pincode ? `PIN: ${user.pincode}` : ""]
         .filter(Boolean)
         .join(", ") ||
       "Main Delivery Address";
 
-    const uniqueSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const orderId = `AV-ORD-${Date.now().toString().slice(-6)}-${uniqueSuffix}`;
+    // Generate Order ID format: AO- followed by 6 characters (e.g. AO-345281)
+    const random6 = Math.floor(100000 + Math.random() * 900000).toString();
+    const orderId = `AO-${random6}`;
     const finalSlipUrl = paymentSlip ? await uploadToCloudinary(paymentSlip, "slips") : "";
     const finalTxnId = transactionId.trim() || (fundWalletUsed >= amount ? "100% FUND WALLET" : "FUND_WALLET");
 
@@ -245,15 +245,17 @@ export async function POST(req: NextRequest) {
           amount, 
           pv, 
           items, 
+          shipping_charge,
           status, 
           billed_by, 
           customer_name, 
           customer_mobile, 
           shipping_address, 
           transaction_id, 
-          payment_slip
+          payment_slip,
+          invoice_no
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING', $8, $9, $10, $11, $12, $13);
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $14, 'PENDING', $8, $9, $10, $11, $12, $13, nextval('order_invoice_seq'));
       `,
         [
           orderId,
@@ -269,6 +271,7 @@ export async function POST(req: NextRequest) {
           finalShippingAddress,
           finalTxnId,
           finalSlipUrl,
+          shippingCharge || 0,
         ]
       );
 

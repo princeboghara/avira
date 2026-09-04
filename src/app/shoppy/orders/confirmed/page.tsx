@@ -14,6 +14,7 @@ import {
   X,
   PackageCheck,
   ShieldCheck,
+  Tag,
 } from "lucide-react";
 import { Order } from "@/types";
 
@@ -141,7 +142,7 @@ export default function ShoppyConfirmedOrdersPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={handlePrintManifest}
@@ -152,19 +153,39 @@ export default function ShoppyConfirmedOrdersPage() {
             </button>
 
             {selectedOrderIds.length > 0 && (
-              <button
-                type="button"
-                onClick={() => handleSendForPackaging(selectedOrderIds)}
-                disabled={processingStatus}
-                className="shoppy-btn-primary px-5 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2 cursor-pointer"
-              >
-                {processingStatus ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Boxes className="w-4 h-4" />
-                )}
-                <span>Send {selectedOrderIds.length} to Packing</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => window.open(`/slip/bulk?ids=${selectedOrderIds.join(",")}`, "_blank")}
+                  className="px-3.5 py-2.5 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Tag className="w-3.5 h-3.5" />
+                  <span>Bulk Slips ({selectedOrderIds.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => window.open(`/invoice/bulk?ids=${selectedOrderIds.join(",")}`, "_blank")}
+                  className="px-3.5 py-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-[#006d36] border border-emerald-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Bulk Bills ({selectedOrderIds.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSendForPackaging(selectedOrderIds)}
+                  disabled={processingStatus}
+                  className="shoppy-btn-primary px-5 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2 cursor-pointer"
+                >
+                  {processingStatus ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Boxes className="w-4 h-4" />
+                  )}
+                  <span>Send {selectedOrderIds.length} to Packing</span>
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -209,11 +230,11 @@ export default function ShoppyConfirmedOrdersPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <div className="shoppy-inset rounded-2xl p-2">
+              <div className="rounded-2xl border border-slate-200/90 bg-white shadow-[3px_3px_10px_rgba(0,0,0,0.03),-3px_-3px_10px_rgba(255,255,255,0.9)] overflow-hidden">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="text-slate-500 font-mono text-[11px] font-black uppercase border-b border-slate-300/60">
-                      <th className="py-3 px-4 w-10">
+                  <thead className="bg-slate-50/90 border-b border-slate-200/90">
+                    <tr className="text-slate-500 font-mono text-[11px] font-black uppercase">
+                      <th className="py-3 px-3.5 w-10 text-center">
                         <input
                           type="checkbox"
                           checked={
@@ -224,25 +245,25 @@ export default function ShoppyConfirmedOrdersPage() {
                           className="rounded text-[#006d36] focus:ring-0 cursor-pointer"
                         />
                       </th>
-                      <th className="py-3 px-4">Order ID & Date</th>
-                      <th className="py-3 px-4">Member / Recipient</th>
-                      <th className="py-3 px-4">Package & Items</th>
-                      <th className="py-3 px-4">Amount & PV</th>
-                      <th className="py-3 px-4">Delivery Address</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
+                      <th className="py-3 px-3.5">Order ID & Date</th>
+                      <th className="py-3 px-3.5">Member / Recipient</th>
+                      <th className="py-3 px-3.5">Package & Items</th>
+                      <th className="py-3 px-3.5">Amount & PV</th>
+                      <th className="py-3 px-3.5">Delivery Address</th>
+                      <th className="py-3 px-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-300/40">
+                  <tbody className="divide-y divide-slate-100">
                     {filteredOrders.map((ord) => {
                       const isSelected = selectedOrderIds.includes(ord.id);
                       return (
                         <tr
                           key={ord.id}
                           className={`transition-colors ${
-                            isSelected ? "bg-amber-100/40" : "hover:bg-white/40"
+                            isSelected ? "bg-amber-50/50" : "hover:bg-slate-50/60"
                           }`}
                         >
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-3.5 text-center">
                             <input
                               type="checkbox"
                               checked={isSelected}
@@ -274,16 +295,13 @@ export default function ShoppyConfirmedOrdersPage() {
                             </span>
                           </td>
                           <td className="py-3 px-4">
-                            <span className="font-bold text-slate-800 block">
-                              {ord.packageName || "Product Package"}
-                            </span>
                             <button
                               type="button"
                               onClick={() => setViewOrder(ord)}
-                              className="text-[11px] font-bold text-[#006d36] hover:underline flex items-center gap-1 mt-0.5 cursor-pointer"
+                              className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006d36] border border-emerald-200 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
                             >
-                              <Eye className="w-3 h-3" />
-                              <span>View {ord.items?.length || 1} Item(s)</span>
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>View Items ({ord.items?.length || 1})</span>
                             </button>
                           </td>
                           <td className="py-3 px-4">
@@ -300,14 +318,35 @@ export default function ShoppyConfirmedOrdersPage() {
                             </p>
                           </td>
                           <td className="py-3 px-4 text-right">
-                            <button
-                              type="button"
-                              onClick={() => handleSendForPackaging([ord.id])}
-                              className="shoppy-btn-primary px-3 py-1.5 rounded-xl font-black text-xs inline-flex items-center gap-1 cursor-pointer"
-                            >
-                              <Boxes className="w-3.5 h-3.5" />
-                              <span>Pack</span>
-                            </button>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => window.open(`/slip/${ord.id}?print=1`, "_blank")}
+                                className="p-1.5 px-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                                title="Print Parcel Slip"
+                              >
+                                <Tag className="w-3.5 h-3.5" />
+                                <span>Slip</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => window.open(`/invoice/${ord.id}?print=1`, "_blank")}
+                                className="p-1.5 px-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006d36] border border-emerald-200 text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                                title="Print GST Invoice"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                <span>Bill</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSendForPackaging([ord.id])}
+                                className="shoppy-btn-primary px-3 py-1.5 rounded-xl font-black text-xs inline-flex items-center gap-1 cursor-pointer"
+                                title="Send to Packing Queue"
+                              >
+                                <Boxes className="w-3.5 h-3.5" />
+                                <span>Pack</span>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );

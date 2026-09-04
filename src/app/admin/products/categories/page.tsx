@@ -35,7 +35,11 @@ export default function AdminCategoryMasterPage() {
   const loadCategories = async () => {
     try {
       setRefreshing(true);
-      const res = await fetch("/api/admin/categories");
+      const res = await fetch("/api/admin/categories", { cache: "no-store" });
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = "/admin/login";
+        return;
+      }
       const data = await res.json();
       if (data.success && data.categories) {
         setCategories(data.categories);

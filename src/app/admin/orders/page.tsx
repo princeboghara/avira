@@ -4,17 +4,18 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Loader2,
-  CheckCircle2,
   FileText,
   Edit2,
   Trash2,
   X,
-  Printer,
   Tag,
   ShoppingBag,
+  ArrowRightLeft,
+  Eye,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import DataTable, { Column } from "@/components/ui/DataTable";
+import OrderItemsModal from "@/components/orders/OrderItemsModal";
 
 interface AdminOrder {
   id: string;
@@ -50,6 +51,9 @@ export default function AdminAllOrdersPage() {
   // Status Filter Tabs
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
+  // View Items Modal
+  const [viewingOrderItems, setViewingOrderItems] = useState<AdminOrder | null>(null);
+
   // Edit Modal
   const [editingOrderModalOpen, setEditingOrderModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<AdminOrder | null>(null);
@@ -83,6 +87,7 @@ export default function AdminAllOrdersPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadOrders();
   }, []);
 
@@ -152,11 +157,47 @@ export default function AdminAllOrdersPage() {
     await loadOrders();
   };
 
+  const handleQuickTransferToShoppy = async (orderId: string) => {
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/transfer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shoppyId: "AVS01" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`✅ Order #${orderId} transferred to Shoppy (SURAT PARCEL HUB) successfully!`);
+        await loadOrders();
+      } else {
+        alert(data.message || "Transfer failed");
+      }
+    } catch {
+      alert("Error transferring order to Shoppy");
+    }
+  };
+
   const filteredOrders = statusFilter === "ALL"
     ? orders
     : orders.filter((o) => o.status === statusFilter);
 
   const columns: Column<AdminOrder>[] = [
+    {
+      header: "Date",
+      accessorKey: "createdAt",
+      sortable: true,
+      cell: (row) => {
+        const d = row.createdAt
+          ? new Date(row.createdAt).toLocaleString("en-IN", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "—";
+        return <span className="font-mono text-xs font-bold text-[#1a1c1c] whitespace-nowrap">{d}</span>;
+      },
+    },
     {
       header: "Order ID",
       accessorKey: "id",
@@ -178,6 +219,20 @@ export default function AdminAllOrdersPage() {
             {row.memberId} • {row.mobile}
           </div>
         </div>
+      ),
+    },
+    {
+      header: "Items",
+      align: "center",
+      cell: (row) => (
+        <button
+          type="button"
+          onClick={() => setViewingOrderItems(row)}
+          className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006d36] border border-emerald-200 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+        >
+          <Eye className="w-3.5 h-3.5" />
+          <span>View Items ({row.items?.length || 1})</span>
+        </button>
       ),
     },
     {
@@ -261,15 +316,6 @@ export default function AdminAllOrdersPage() {
       },
     },
     {
-      header: "Date",
-      accessorKey: "createdAt",
-      sortable: true,
-      cell: (row) => {
-        const d = row.createdAt ? new Date(row.createdAt).toLocaleDateString("en-IN") : "—";
-        return <span className="font-mono text-xs text-[#5f5e5e]">{d}</span>;
-      },
-    },
-    {
       header: "Actions",
       align: "right",
       sortable: false,
@@ -294,6 +340,15 @@ export default function AdminAllOrdersPage() {
 
           {row.status !== "PENDING" && (
             <>
+              <button
+                type="button"
+                onClick={() => handleQuickTransferToShoppy(row.id)}
+                className="p-1.5 px-2 rounded-lg border border-purple-200 text-purple-700 hover:bg-purple-50 cursor-pointer inline-flex items-center gap-1 text-[11px] font-bold"
+                title="Transfer to Shoppy (Surat Hub)"
+              >
+                <ArrowRightLeft className="w-3.5 h-3.5" />
+                <span>Transfer</span>
+              </button>
               <Link
                 href={`/slip/${row.id}`}
                 target="_blank"
@@ -320,19 +375,47 @@ export default function AdminAllOrdersPage() {
   return (
     <AdminLayout onRefresh={loadOrders} refreshing={refreshing}>
       <div className="space-y-8 max-w-7xl mx-auto pb-12">
-        {/* Header */}
-        <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#006d36] via-[#005a2c] to-[#4f378a] text-white shadow-xl shadow-[#006d36]/15 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        {/* Neumorphic Header Card */}
+        <div className="neo-card rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-white/80">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-emerald-200 text-xs font-bold font-mono">
-              <ShoppingBag className="w-4 h-4" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full neo-inset text-[#006d36] text-xs font-bold font-mono border border-emerald-200/50">
+              <ShoppingBag className="w-4 h-4 text-[#006d36]" />
               <span>Orders Registry & Fulfillment Operations</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0f172a] tracking-tight">
               All Orders Master Registry
             </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl">
+            <p className="text-xs sm:text-sm text-[#64748b] max-w-xl font-medium">
               Complete log of all customer and associate orders with live dispatch slips and GST invoice generation.
             </p>
+          </div>
+
+          {/* Neumorphic Metric Counters */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="neo-inset p-3.5 rounded-2xl text-center min-w-[110px] border border-white/60">
+              <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider block">
+                Total Orders
+              </span>
+              <span className="text-xl font-black font-mono text-[#0f172a]">
+                {orders.length}
+              </span>
+            </div>
+            <div className="neo-inset p-3.5 rounded-2xl text-center min-w-[110px] border border-white/60">
+              <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">
+                Pending
+              </span>
+              <span className="text-xl font-black font-mono text-amber-900">
+                {orders.filter((o) => o.status === "PENDING" || o.status === "PENDING_APPROVAL").length}
+              </span>
+            </div>
+            <div className="neo-inset p-3.5 rounded-2xl text-center min-w-[110px] border border-white/60">
+              <span className="text-[10px] font-bold text-[#006d36] uppercase tracking-wider block">
+                Confirmed
+              </span>
+              <span className="text-xl font-black font-mono text-[#006d36]">
+                {orders.filter((o) => o.status === "CONFIRMED" || o.status === "APPROVED" || o.status === "COMPLETED").length}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -343,10 +426,10 @@ export default function AdminAllOrdersPage() {
               key={tab}
               type="button"
               onClick={() => setStatusFilter(tab)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 statusFilter === tab
-                  ? "bg-[#006d36] text-white shadow-xs"
-                  : "bg-white border border-gray-200 text-[#5f5e5e] hover:bg-emerald-50"
+                  ? "neo-btn-primary shadow-xs"
+                  : "neo-card-flat text-[#64748b] hover:text-[#006d36]"
               }`}
             >
               {tab}
@@ -475,6 +558,11 @@ export default function AdminAllOrdersPage() {
             </div>
           </div>
         )}
+        {/* Order Items Modal */}
+        <OrderItemsModal
+          order={viewingOrderItems}
+          onClose={() => setViewingOrderItems(null)}
+        />
       </div>
     </AdminLayout>
   );

@@ -19,11 +19,11 @@ export async function GET(req: NextRequest) {
   try {
     const countsRes = await client.query(
       `SELECT 
-        COUNT(CASE WHEN status IN ('CONFIRMED', 'APPROVED', 'COMPLETED') THEN 1 END) as assigned_orders,
+        COUNT(CASE WHEN status IN ('CONFIRMED', 'APPROVED') THEN 1 END) as assigned_orders,
         COUNT(CASE WHEN status = 'PACKED' THEN 1 END) as packing_orders,
         COUNT(CASE WHEN status IN ('DISPATCHED', 'IN_TRANSIT') THEN 1 END) as dispatched_orders,
         COUNT(CASE WHEN status = 'DELIVERED' THEN 1 END) as delivered_orders,
-        COUNT(CASE WHEN status IN ('RETURNED', 'RTO', 'CANCELLED') THEN 1 END) as returned_orders,
+        COUNT(CASE WHEN status IN ('RETURNED', 'RTO') THEN 1 END) as returned_orders,
         COUNT(*) as total_orders,
         COALESCE(SUM(CASE WHEN status NOT IN ('REJECTED', 'PENDING') THEN amount ELSE 0 END), 0) as total_volume
        FROM orders

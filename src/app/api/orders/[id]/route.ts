@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
-import { getSession, getAdminSession } from "@/lib/auth";
+import { getSession, getAdminSession, getShoppySession } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
@@ -14,13 +14,14 @@ export async function GET(
     );
   }
 
-  // 1. Authenticate requester (Admin or Member)
-  const [memberSession, adminSession] = await Promise.all([
+  // 1. Authenticate requester (Admin, Shoppy Hub, or Member)
+  const [memberSession, adminSession, shoppySession] = await Promise.all([
     getSession(req),
     getAdminSession(req),
+    getShoppySession(req),
   ]);
 
-  if (!memberSession && !adminSession) {
+  if (!memberSession && !adminSession && !shoppySession) {
     return NextResponse.json(
       { success: false, message: "Authentication required to access order invoice." },
       { status: 401 }
@@ -39,6 +40,8 @@ export async function GET(
         o.amount,
         o.pv,
         o.items,
+        o.shipping_charge,
+        o.invoice_no,
         o.status,
         o.billed_by,
         o.customer_name,
@@ -77,8 +80,8 @@ export async function GET(
 
     const r = res.rows[0];
 
-    // 2. Authorize requester (Admin or Order Recipient or Biller)
-    if (!adminSession) {
+    // 2. Authorize requester (Admin, Shoppy, or Order Recipient or Biller)
+    if (!adminSession && !shoppySession) {
       const requesterMemberId = (memberSession?.memberId || "").toUpperCase();
       const requesterUserId = memberSession?.userId || "";
       const isRecipient =
@@ -108,6 +111,8 @@ export async function GET(
       amount: parseFloat(r.amount || "0"),
       pv: parseFloat(r.pv || "0"),
       items: parsedItems,
+      shippingCharge: parseFloat(r.shipping_charge || "0"),
+      invoiceNo: parseInt(r.invoice_no || "1", 10),
       status: r.status,
       billedBy: r.billed_by,
       buyerName: r.buyer_name || r.billed_by,

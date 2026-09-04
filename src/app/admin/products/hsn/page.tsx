@@ -44,7 +44,11 @@ export default function AdminHsnCodePage() {
   const loadHsn = async () => {
     try {
       setRefreshing(true);
-      const res = await fetch("/api/admin/hsn");
+      const res = await fetch("/api/admin/hsn", { cache: "no-store" });
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = "/admin/login";
+        return;
+      }
       const data = await res.json();
       if (data.success && data.hsnCodes) {
         setHsnCodes(data.hsnCodes);

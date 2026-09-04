@@ -8,10 +8,11 @@ export async function GET(req: NextRequest) {
 
   const client = await pool.connect();
   try {
-    // 1. Pending Counts (Orders & KYC)
+    // 1. Pending Counts (Orders, Transfer Orders & KYC)
     const pendingRes = await client.query(`
       SELECT 
-        (SELECT COUNT(*) FROM orders WHERE status = 'PENDING') as pending_orders,
+        (SELECT COUNT(*) FROM orders WHERE status IN ('PENDING', 'PENDING_APPROVAL')) as pending_orders,
+        (SELECT COUNT(*) FROM orders WHERE status = 'APPROVED' OR (status = 'CONFIRMED' AND (shoppy_id IS NULL OR shoppy_id = ''))) as transfer_orders,
         (SELECT COUNT(*) FROM user_kyc WHERE kyc_status = 'PENDING' OR aadhaar_status = 'PENDING' OR pan_status = 'PENDING' OR bank_status = 'PENDING') as pending_kyc;
     `);
 
@@ -62,6 +63,7 @@ export async function GET(req: NextRequest) {
       data: {
         // Pending Alert Counters
         pendingOrders: parseInt(pending.pending_orders || "0", 10),
+        transferOrders: parseInt(pending.transfer_orders || "0", 10),
         pendingKyc: parseInt(pending.pending_kyc || "0", 10),
 
         // Today's Performance

@@ -39,20 +39,10 @@ export async function POST(
       );
     }
 
-    let shoppyId: string = "AVS01";
-    try {
-      const body = await req.json();
-      if (body && body.shoppyId && body.shoppyId !== "CENTRAL" && body.shoppyId !== "NONE") {
-        shoppyId = body.shoppyId.trim();
-      }
-    } catch {
-      // Body may be empty if simple approve without body
-    }
-
-    // Update order status to CONFIRMED inside transaction and assign to SURAT PARCEL HUB (AVS01)
+    // Update order status to APPROVED inside transaction (ready for Transfer Queue, shoppy not assigned yet)
     await client.query(
-      `UPDATE orders SET status = 'CONFIRMED', shoppy_id = $1, shoppy_transferred_at = NOW() WHERE id = $2`,
-      [shoppyId, id]
+      `UPDATE orders SET status = 'APPROVED', shoppy_id = NULL, shoppy_transferred_at = NULL WHERE id = $1`,
+      [id]
     );
 
     let parsedItems = [];
@@ -82,7 +72,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: `Order #${id} approved successfully! Status set to CONFIRMED and +${order.pv} PV credited to member.`,
+      message: `Order #${id} approved successfully! Moved to Transfer Queue and +${order.pv} PV credited to member.`,
     });
   } catch (error) {
     await client.query("ROLLBACK");

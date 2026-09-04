@@ -26,6 +26,7 @@ import {
   ChevronRight,
   Award,
   Store,
+  ArrowRightLeft,
 } from "lucide-react";
 import { User } from "@/types";
 
@@ -50,6 +51,7 @@ interface AdminSidebarProps {
   adminUser?: User | null;
   onNavigate?: () => void;
   pendingOrdersCount?: number;
+  transferOrdersCount?: number;
   confirmedOrdersCount?: number;
   packedOrdersCount?: number;
   dispatchedOrdersCount?: number;
@@ -64,6 +66,7 @@ export default function AdminSidebar({
   adminUser,
   onNavigate,
   pendingOrdersCount = 0,
+  transferOrdersCount = 0,
   confirmedOrdersCount = 0,
   packedOrdersCount = 0,
   dispatchedOrdersCount = 0,
@@ -88,10 +91,11 @@ export default function AdminSidebar({
     {
       category: "3. Order Manager",
       icon: ShoppingCart,
-      badge: pendingOrdersCount > 0 ? pendingOrdersCount : null,
+      badge: (pendingOrdersCount + transferOrdersCount) > 0 ? (pendingOrdersCount + transferOrdersCount) : null,
       badgeColor: "bg-amber-500/15 text-amber-900",
       links: [
         { name: "Pending For Approval", href: "/admin/orders/approve", icon: CheckCircle, badge: pendingOrdersCount, badgeColor: "bg-amber-500/15 text-amber-900" },
+        { name: "Transfer Orders", href: "/admin/orders/transfer", icon: ArrowRightLeft, badge: transferOrdersCount, badgeColor: "bg-indigo-500/15 text-indigo-900" },
         { name: "All Orders Registry", href: "/admin/orders", icon: FileText, badge: totalOrdersCount, badgeColor: "bg-slate-500/15 text-slate-900" },
       ],
     },

@@ -90,6 +90,46 @@ const PREFIX_STATE_MAP: Record<string, { state: string; defaultCity: string }> =
   "83": { state: "Jharkhand", defaultCity: "Ranchi" },
 };
 
+// 3-digit regional prefix mapping for instant 0ms zero-latency resolution
+const PREFIX_3_MAP: Record<string, { city: string; state: string; district: string }> = {
+  // Gujarat
+  "380": { city: "Ahmedabad", state: "Gujarat", district: "Ahmedabad" },
+  "382": { city: "Gandhinagar", state: "Gujarat", district: "Gandhinagar" },
+  "383": { city: "Himmatnagar", state: "Gujarat", district: "Sabarkantha" },
+  "384": { city: "Mehsana", state: "Gujarat", district: "Mehsana" },
+  "385": { city: "Palanpur", state: "Gujarat", district: "Banaskantha" },
+  "387": { city: "Nadiad", state: "Gujarat", district: "Kheda" },
+  "388": { city: "Anand", state: "Gujarat", district: "Anand" },
+  "389": { city: "Godhra", state: "Gujarat", district: "Panchmahal" },
+  "390": { city: "Vadodara", state: "Gujarat", district: "Vadodara" },
+  "391": { city: "Vadodara Rural", state: "Gujarat", district: "Vadodara" },
+  "392": { city: "Bharuch", state: "Gujarat", district: "Bharuch" },
+  "393": { city: "Ankleshwar", state: "Gujarat", district: "Bharuch" },
+  "394": { city: "Surat Rural", state: "Gujarat", district: "Surat" },
+  "395": { city: "Surat", state: "Gujarat", district: "Surat" },
+  "396": { city: "Navsari / Valsad", state: "Gujarat", district: "Navsari" },
+  "360": { city: "Rajkot", state: "Gujarat", district: "Rajkot" },
+  "361": { city: "Jamnagar", state: "Gujarat", district: "Jamnagar" },
+  "362": { city: "Junagadh", state: "Gujarat", district: "Junagadh" },
+  "363": { city: "Surendranagar", state: "Gujarat", district: "Surendranagar" },
+  "364": { city: "Bhavnagar", state: "Gujarat", district: "Bhavnagar" },
+  "365": { city: "Amreli", state: "Gujarat", district: "Amreli" },
+  "370": { city: "Bhuj / Kutch", state: "Gujarat", district: "Kutch" },
+  // Maharashtra
+  "400": { city: "Mumbai", state: "Maharashtra", district: "Mumbai" },
+  "401": { city: "Thane", state: "Maharashtra", district: "Thane" },
+  "411": { city: "Pune", state: "Maharashtra", district: "Pune" },
+  "422": { city: "Nashik", state: "Maharashtra", district: "Nashik" },
+  "440": { city: "Nagpur", state: "Maharashtra", district: "Nagpur" },
+  // Rajasthan
+  "302": { city: "Jaipur", state: "Rajasthan", district: "Jaipur" },
+  "313": { city: "Udaipur", state: "Rajasthan", district: "Udaipur" },
+  "324": { city: "Kota", state: "Rajasthan", district: "Kota" },
+  "342": { city: "Jodhpur", state: "Rajasthan", district: "Jodhpur" },
+  // Delhi
+  "110": { city: "New Delhi", state: "Delhi", district: "New Delhi" },
+};
+
 export async function lookupPincode(pincode: string): Promise<PincodeInfo> {
   const cleaned = pincode.trim().replace(/\D/g, "");
 
@@ -102,7 +142,7 @@ export async function lookupPincode(pincode: string): Promise<PincodeInfo> {
     };
   }
 
-  // 1. Direct match in local dictionary
+  // 1. Direct match in local dictionary (0ms instant)
   if (PINCODE_MAP[cleaned]) {
     const entry = PINCODE_MAP[cleaned];
     return {
@@ -114,10 +154,23 @@ export async function lookupPincode(pincode: string): Promise<PincodeInfo> {
     };
   }
 
-  // 2. Try online Indian Postal Service API with 2000ms timeout
+  // 2. High-speed 3-digit regional prefix match (0ms instant)
+  const pref3 = cleaned.substring(0, 3);
+  if (PREFIX_3_MAP[pref3]) {
+    const entry = PREFIX_3_MAP[pref3];
+    return {
+      success: true,
+      pincode: cleaned,
+      city: entry.city,
+      state: entry.state,
+      district: entry.district,
+    };
+  }
+
+  // 3. Try online Indian Postal Service API with fast 800ms timeout
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 800);
 
     const response = await fetch(`https://api.postalpincode.in/pincode/${cleaned}`, {
       signal: controller.signal,

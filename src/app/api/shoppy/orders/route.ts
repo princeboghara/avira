@@ -38,8 +38,20 @@ export async function GET(req: NextRequest) {
 
     if (statusParam && statusParam !== "ALL") {
       if (statusParam === "CONFIRMED") {
-        queryParams.push("CONFIRMED", "APPROVED", "COMPLETED");
-        query += ` AND o.status IN ($2, $3, $4)`;
+        queryParams.push("CONFIRMED", "APPROVED");
+        query += ` AND o.status IN ($2, $3)`;
+      } else if (statusParam === "PACKED") {
+        queryParams.push("PACKED");
+        query += ` AND o.status = $2`;
+      } else if (statusParam === "DISPATCHED") {
+        queryParams.push("DISPATCHED", "IN_TRANSIT");
+        query += ` AND o.status IN ($2, $3)`;
+      } else if (statusParam === "DELIVERED") {
+        queryParams.push("DELIVERED");
+        query += ` AND o.status = $2`;
+      } else if (statusParam === "RETURNED") {
+        queryParams.push("RETURNED", "RTO");
+        query += ` AND o.status IN ($2, $3)`;
       } else {
         queryParams.push(statusParam);
         query += ` AND o.status = $${queryParams.length}`;
@@ -53,11 +65,11 @@ export async function GET(req: NextRequest) {
     const summaryRes = await client.query(
       `SELECT 
         COUNT(*) as total_orders,
-        COUNT(CASE WHEN status IN ('CONFIRMED', 'APPROVED', 'COMPLETED') THEN 1 END) as confirmed_orders,
+        COUNT(CASE WHEN status IN ('CONFIRMED', 'APPROVED') THEN 1 END) as confirmed_orders,
         COUNT(CASE WHEN status = 'PACKED' THEN 1 END) as packed_orders,
         COUNT(CASE WHEN status IN ('DISPATCHED', 'IN_TRANSIT') THEN 1 END) as dispatched_orders,
         COUNT(CASE WHEN status = 'DELIVERED' THEN 1 END) as delivered_orders,
-        COUNT(CASE WHEN status IN ('RETURNED', 'RTO', 'CANCELLED') THEN 1 END) as returned_orders,
+        COUNT(CASE WHEN status IN ('RETURNED', 'RTO') THEN 1 END) as returned_orders,
         COALESCE(SUM(CASE WHEN status NOT IN ('REJECTED', 'PENDING') THEN amount ELSE 0 END), 0) as total_revenue,
         COALESCE(SUM(CASE WHEN status NOT IN ('REJECTED', 'PENDING') THEN pv ELSE 0 END), 0) as total_pv
       FROM orders

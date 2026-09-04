@@ -14,6 +14,7 @@ import {
   Clock,
   Printer,
   ShieldCheck,
+  Tag,
 } from "lucide-react";
 import { Order } from "@/types";
 
@@ -24,6 +25,7 @@ export default function ShoppyAllOrdersRegistryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [viewOrder, setViewOrder] = useState<Order | null>(null);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
 
   const loadOrders = async () => {
     try {
@@ -62,6 +64,40 @@ export default function ShoppyAllOrdersRegistryPage() {
     });
   }, [orders, statusFilter, searchQuery]);
 
+  const toggleSelectAll = () => {
+    if (selectedOrderIds.length === filteredOrders.length && filteredOrders.length > 0) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(filteredOrders.map((o) => o.id));
+    }
+  };
+
+  const toggleSelectOrder = (id: string) => {
+    if (selectedOrderIds.includes(id)) {
+      setSelectedOrderIds(selectedOrderIds.filter((item) => item !== id));
+    } else {
+      setSelectedOrderIds([...selectedOrderIds, id]);
+    }
+  };
+
+  const handleOpenBulkSlips = () => {
+    const ids = selectedOrderIds.length > 0 ? selectedOrderIds : filteredOrders.map((o) => o.id);
+    if (ids.length === 0) {
+      alert("No orders available to print delivery slips.");
+      return;
+    }
+    window.open(`/slip/bulk?ids=${ids.join(",")}`, "_blank");
+  };
+
+  const handleOpenBulkBills = () => {
+    const ids = selectedOrderIds.length > 0 ? selectedOrderIds : filteredOrders.map((o) => o.id);
+    if (ids.length === 0) {
+      alert("No orders available to print tax invoices.");
+      return;
+    }
+    window.open(`/invoice/bulk?ids=${ids.join(",")}`, "_blank");
+  };
+
   return (
     <ShoppyLayout onRefresh={loadOrders} refreshing={refreshing}>
       <div className="space-y-6 animate-fadeIn">
@@ -82,6 +118,29 @@ export default function ShoppyAllOrdersRegistryPage() {
             <p className="text-xs text-slate-500 mt-1">
               Complete dispatch history, tracking codes, and fulfillment audit records for SURAT PARCEL HUB.
             </p>
+          </div>
+
+          {/* Bulk Slips and Bills Buttons */}
+          <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+            <button
+              type="button"
+              onClick={handleOpenBulkSlips}
+              className="px-4 py-2.5 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-bold flex items-center gap-2 cursor-pointer shadow-2xs transition-all active:scale-95"
+              title="Print Bulk Packaging/Delivery Slips"
+            >
+              <Tag className="w-4 h-4 text-blue-600" />
+              <span>Bulk Slips {selectedOrderIds.length > 0 ? `(${selectedOrderIds.length})` : ""}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenBulkBills}
+              className="px-4 py-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-[#006d36] border border-emerald-200 text-xs font-bold flex items-center gap-2 cursor-pointer shadow-2xs transition-all active:scale-95"
+              title="Print Bulk Official Tax Invoices"
+            >
+              <FileText className="w-4 h-4 text-[#006d36]" />
+              <span>Bulk Bills {selectedOrderIds.length > 0 ? `(${selectedOrderIds.length})` : ""}</span>
+            </button>
           </div>
         </div>
 
@@ -142,23 +201,40 @@ export default function ShoppyAllOrdersRegistryPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <div className="shoppy-inset rounded-2xl p-2">
+              <div className="rounded-2xl border border-slate-200/90 bg-white shadow-[3px_3px_10px_rgba(0,0,0,0.03),-3px_-3px_10px_rgba(255,255,255,0.9)] overflow-hidden">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="text-slate-500 font-mono text-[11px] font-black uppercase border-b border-slate-300/60">
-                      <th className="py-3 px-4">Order ID & Date</th>
-                      <th className="py-3 px-4">Buyer / Customer</th>
-                      <th className="py-3 px-4">Package</th>
-                      <th className="py-3 px-4">Amount & PV</th>
-                      <th className="py-3 px-4">Courier & Tracking</th>
-                      <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4 text-right">Receipt</th>
+                  <thead className="bg-slate-50/90 border-b border-slate-200/90">
+                    <tr className="text-slate-500 font-mono text-[11px] font-black uppercase">
+                      <th className="py-3.5 px-3 w-10 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedOrderIds.length > 0 && selectedOrderIds.length === filteredOrders.length}
+                          onChange={toggleSelectAll}
+                          className="w-4 h-4 rounded text-[#006d36] focus:ring-[#006d36] cursor-pointer"
+                          title="Select all matching orders"
+                        />
+                      </th>
+                      <th className="py-3 px-3.5">Order ID & Date</th>
+                      <th className="py-3 px-3.5">Buyer / Customer</th>
+                      <th className="py-3 px-3.5">Package & Items</th>
+                      <th className="py-3 px-3.5">Amount & PV</th>
+                      <th className="py-3 px-3.5">Courier & Tracking</th>
+                      <th className="py-3 px-3.5">Status</th>
+                      <th className="py-3 px-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-300/40">
+                  <tbody className="divide-y divide-slate-100">
                     {filteredOrders.map((ord) => (
-                      <tr key={ord.id} className="hover:bg-white/40 transition-colors">
-                        <td className="py-3 px-4">
+                      <tr key={ord.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3 px-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedOrderIds.includes(ord.id)}
+                            onChange={() => toggleSelectOrder(ord.id)}
+                            className="w-4 h-4 rounded text-[#006d36] focus:ring-[#006d36] cursor-pointer"
+                          />
+                        </td>
+                        <td className="py-3 px-3.5">
                           <span className="font-mono font-black text-slate-900 block">
                             #{ord.id}
                           </span>
@@ -170,7 +246,7 @@ export default function ShoppyAllOrdersRegistryPage() {
                             })}
                           </span>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-3.5">
                           <span className="font-black text-slate-900 block">
                             {ord.buyerName || ord.customerName}
                           </span>
@@ -181,15 +257,17 @@ export default function ShoppyAllOrdersRegistryPage() {
                             {ord.buyerMobile || ord.customerMobile || "—"}
                           </span>
                         </td>
-                        <td className="py-3 px-4">
-                          <span className="font-bold text-slate-800 block">
-                            {ord.packageName || "Product Package"}
-                          </span>
-                          <span className="text-[10px] text-slate-500 block font-mono">
-                            {ord.items?.length || 1} Item(s)
-                          </span>
+                        <td className="py-3 px-3.5">
+                          <button
+                            type="button"
+                            onClick={() => setViewOrder(ord)}
+                            className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006d36] border border-emerald-200 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>View Items ({ord.items?.length || 1})</span>
+                          </button>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-3.5">
                           <span className="font-mono font-black text-slate-900 block">
                             ₹{Number(ord.amount || 0).toLocaleString("en-IN")}
                           </span>
@@ -197,19 +275,19 @@ export default function ShoppyAllOrdersRegistryPage() {
                             {ord.pv} PV
                           </span>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-3.5">
                           <span className="font-bold text-slate-800 block">
                             {ord.courierName || "—"}
                           </span>
                           {ord.trackingNumber ? (
-                            <span className="font-mono text-[10px] text-slate-600 bg-white/70 px-1.5 py-0.5 rounded block w-fit mt-0.5 border border-slate-300">
+                            <span className="font-mono text-[10px] text-slate-700 bg-slate-100/90 px-1.5 py-0.5 rounded block w-fit mt-0.5 border border-slate-200">
                               {ord.trackingNumber}
                             </span>
                           ) : (
                             <span className="text-[10px] text-slate-400 font-mono">—</span>
                           )}
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-3.5">
                           {ord.status === "DELIVERED" && (
                             <span className="px-2.5 py-1 rounded-xl bg-emerald-100 text-[#006d36] font-mono text-[10px] font-black border border-emerald-300 inline-block">
                               DELIVERED
@@ -230,16 +308,40 @@ export default function ShoppyAllOrdersRegistryPage() {
                               ASSIGNED
                             </span>
                           )}
+                          {(ord.status === "RETURNED" || ord.status === "RTO") && (
+                            <span className="px-2.5 py-1 rounded-xl bg-rose-100 text-rose-800 font-mono text-[10px] font-black border border-rose-300 inline-block">
+                              RETURNED
+                            </span>
+                          )}
                         </td>
-                        <td className="py-3 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => setViewOrder(ord)}
-                            className="shoppy-btn px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-[#006d36] inline-flex items-center gap-1 cursor-pointer"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>Slip</span>
-                          </button>
+                        <td className="py-3 px-3.5 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => window.open(`/slip/${ord.id}?print=1`, "_blank")}
+                              className="p-1.5 px-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                              title="Print Parcel Slip"
+                            >
+                              <span>Slip</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => window.open(`/invoice/${ord.id}?print=1`, "_blank")}
+                              className="p-1.5 px-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006d36] border border-emerald-200 text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                              title="Print GST Invoice"
+                            >
+                              <span>Bill</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setViewOrder(ord)}
+                              className="p-1.5 px-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                              title="View Details"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>View</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

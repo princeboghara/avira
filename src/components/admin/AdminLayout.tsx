@@ -49,6 +49,7 @@ export default function AdminLayout({
 
   // Live Notification Counts for Badge
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const [transferOrdersCount, setTransferOrdersCount] = useState(0);
   const [confirmedOrdersCount, setConfirmedOrdersCount] = useState(0);
   const [packedOrdersCount, setPackedOrdersCount] = useState(0);
   const [dispatchedOrdersCount, setDispatchedOrdersCount] = useState(0);
@@ -67,12 +68,20 @@ export default function AdminLayout({
             if (typeof window !== "undefined") {
               sessionStorage.setItem("avira_admin", JSON.stringify(data.admin));
             }
-          } else if (!adminUser) {
+          } else {
+            if (typeof window !== "undefined") {
+              sessionStorage.removeItem("avira_admin");
+            }
+            setAdminUser(null);
             router.push("/admin/login");
           }
         })
         .catch(() => {
-          if (!adminUser) router.push("/admin/login");
+          if (typeof window !== "undefined") {
+            sessionStorage.removeItem("avira_admin");
+          }
+          setAdminUser(null);
+          router.push("/admin/login");
         });
 
       // 2. Fetch all badge counters in a SINGLE fast query
@@ -81,6 +90,7 @@ export default function AdminLayout({
         .then((res) => {
           if (res.success && res.data) {
             setPendingOrdersCount(res.data.pendingOrders || 0);
+            setTransferOrdersCount(res.data.transferOrders || 0);
             setKycPendingCount(res.data.pendingKyc || 0);
             setTotalOrdersCount(res.data.totalOrders || 0);
             setTotalMembersCount(res.data.totalMembers || 0);
@@ -144,6 +154,7 @@ export default function AdminLayout({
             <AdminSidebar
               user={adminUser}
               pendingOrdersCount={pendingOrdersCount}
+              transferOrdersCount={transferOrdersCount}
               confirmedOrdersCount={confirmedOrdersCount}
               packedOrdersCount={packedOrdersCount}
               dispatchedOrdersCount={dispatchedOrdersCount}
@@ -184,6 +195,7 @@ export default function AdminLayout({
                 <AdminSidebar
                   user={adminUser}
                   pendingOrdersCount={pendingOrdersCount}
+                  transferOrdersCount={transferOrdersCount}
                   confirmedOrdersCount={confirmedOrdersCount}
                   packedOrdersCount={packedOrdersCount}
                   dispatchedOrdersCount={dispatchedOrdersCount}

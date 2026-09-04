@@ -9,16 +9,19 @@ import {
   FileText,
   Printer,
   ShoppingBag,
+  Eye,
 } from "lucide-react";
 import { User, Order } from "@/types";
 import MemberLayout from "@/components/member/MemberLayout";
 import DataTable, { Column } from "@/components/ui/DataTable";
+import OrderItemsModal from "@/components/orders/OrderItemsModal";
 
 export default function PastOrdersPage() {
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"MY_ORDERS" | "OTHERS_ORDERS">("MY_ORDERS");
+  const [viewingOrderItems, setViewingOrderItems] = useState<Order | null>(null);
 
   useEffect(() => {
     async function loadOrders() {
@@ -103,18 +106,17 @@ export default function PastOrdersPage() {
       ),
     },
     {
-      header: "Package / Items",
-      accessorKey: "packageName",
-      sortable: true,
+      header: "Items",
+      align: "center",
       cell: (row) => (
-        <div>
-          <div className="font-bold text-[#1a1c1c] text-xs">
-            {row.packageName || `${row.items?.length || 1} Botanical Item(s)`}
-          </div>
-          <div className="text-[10px] text-[#5f5e5e] font-mono">
-            {row.customerName ? `Recipient: ${row.customerName}` : ""}
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => setViewingOrderItems(row)}
+          className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006d36] border border-emerald-200 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+        >
+          <Eye className="w-3.5 h-3.5" />
+          <span>View Items ({row.items?.length || 1})</span>
+        </button>
       ),
     },
     {
@@ -276,6 +278,11 @@ export default function PastOrdersPage() {
             }
           />
         )}
+        {/* Order Items Modal */}
+        <OrderItemsModal
+          order={viewingOrderItems}
+          onClose={() => setViewingOrderItems(null)}
+        />
       </div>
     </MemberLayout>
   );

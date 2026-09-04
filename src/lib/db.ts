@@ -481,9 +481,12 @@ export function mapRowToOrder(row: any): Order {
     buyerCity: row.buyer_city || "",
     buyerState: row.buyer_state || "",
     buyerPincode: row.buyer_pincode || "",
+    buyerGstin: row.buyer_gstin || "",
     customerName: row.customer_name || row.buyer_name || "",
     customerMobile: row.customer_mobile || row.buyer_mobile || "",
     shippingAddress: row.shipping_address || row.buyer_address || "",
+    consigneeGstin: row.recipient_gstin || "",
+    consigneeMemberId: row.member_id || "",
     transactionId: row.transaction_id || "",
     paymentSlip: row.payment_slip || "",
     rejectionReason: row.rejection_reason || "",
@@ -499,6 +502,7 @@ export function mapRowToOrder(row: any): Order {
     courierName: row.courier_name || "",
     trackingNumber: row.tracking_number || "",
     dispatchedAt: row.dispatched_at ? new Date(row.dispatched_at).toISOString() : undefined,
+    invoiceNo: row.invoice_no ? parseInt(row.invoice_no, 10) : undefined,
     createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
   };
 }
@@ -515,10 +519,14 @@ export async function getOrdersForUser(userId: string, memberId?: string): Promi
         b.address as buyer_address,
         b.city as buyer_city,
         b.state as buyer_state,
-        b.pincode as buyer_pincode
+        b.pincode as buyer_pincode,
+        uk.gst_number as recipient_gstin,
+        bk.gst_number as buyer_gstin
       FROM orders o
       LEFT JOIN users u ON o.user_id = u.id
+      LEFT JOIN user_kyc uk ON u.id = uk.user_id
       LEFT JOIN users b ON UPPER(o.billed_by) = UPPER(b.member_id)
+      LEFT JOIN user_kyc bk ON b.id = bk.user_id
       WHERE (o.user_id = $1
     `;
     const params: unknown[] = [userId];

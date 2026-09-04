@@ -18,11 +18,13 @@ export async function GET(
   const client = await pool.connect();
   try {
     const res = await client.query(
-      `SELECT * FROM products 
-       WHERE id = $1 
-          OR slug = $1 
-          OR slug = REPLACE($1, 'prod_', '')
-          OR id = 'prod_' || $1
+      `SELECT p.*, h.sgst as hsn_sgst, h.cgst as hsn_cgst
+       FROM products p
+       LEFT JOIN hsn_codes h ON p.hsn_code = h.hsn_code
+       WHERE p.id = $1 
+          OR p.slug = $1 
+          OR p.slug = REPLACE($1, 'prod_', '')
+          OR p.id = 'prod_' || $1
        LIMIT 1`,
       [id]
     );
@@ -32,6 +34,11 @@ export async function GET(
     }
 
     const r = res.rows[0];
+    const calculatedGst =
+      r.hsn_sgst !== null && r.hsn_sgst !== undefined && r.hsn_cgst !== null && r.hsn_cgst !== undefined
+        ? Number(r.hsn_sgst) + Number(r.hsn_cgst)
+        : 5.0;
+
     const product = {
       id: r.id,
       name: r.name,
@@ -39,7 +46,7 @@ export async function GET(
       categoryId: r.category_id || "",
       category: r.category_name || r.category || "General",
       hsnCode: r.hsn_code || "3004",
-      hsnGst: 5.0,
+      hsnGst: calculatedGst,
       stock: r.stock_quantity !== null && r.stock_quantity !== undefined ? Number(r.stock_quantity) : (r.stock || 100),
       netQuantity: r.net_quantity || "1 Unit",
       mrp: parseFloat(r.mrp || "0"),

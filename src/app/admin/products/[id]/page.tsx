@@ -17,6 +17,7 @@ import {
   Layers,
   Sparkles,
   ExternalLink,
+  Calculator,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 
@@ -64,9 +65,13 @@ export default function EditProductPage() {
           if (catData.success && catData.categories) setCategories(catData.categories);
         }
 
+        let loadedHsnList: Array<{ id: string; hsnCode: string; sgst: number; cgst: number; description?: string }> = [];
         if (hsnRes.status === "fulfilled") {
           const hsnData = await hsnRes.value.json();
-          if (hsnData.success && hsnData.hsnCodes) setHsnCodes(hsnData.hsnCodes);
+          if (hsnData.success && hsnData.hsnCodes) {
+            loadedHsnList = hsnData.hsnCodes;
+            setHsnCodes(hsnData.hsnCodes);
+          }
         }
 
         if (prodRes.status === "fulfilled") {
@@ -74,10 +79,15 @@ export default function EditProductPage() {
           if (prodData.success && prodData.product) {
             const p = prodData.product;
             setName(p.name || "");
-            setCategory(p.category || "Health & Wellness");
+            setCategory(p.category || "");
             setNetQuantity(p.netQuantity || "1 Unit");
-            setHsnCode(p.hsnCode || "30049011");
-            setHsnGst(p.hsnGst || 5.0);
+            setHsnCode(p.hsnCode || "");
+            let calculatedGst = p.hsnGst || 0;
+            if (p.hsnCode && loadedHsnList.length > 0) {
+              const foundHsn = loadedHsnList.find((h) => h.hsnCode === p.hsnCode);
+              if (foundHsn) calculatedGst = Number(foundHsn.sgst) + Number(foundHsn.cgst);
+            }
+            setHsnGst(calculatedGst);
             setMrp(p.mrp || 0);
             setDiscountPrice(p.discountPrice && p.discountPrice < p.mrp ? p.discountPrice : "");
             setPv(p.pv || 0);
@@ -119,6 +129,8 @@ export default function EditProductPage() {
     const found = hsnCodes.find((h) => h.hsnCode === code);
     if (found) {
       setHsnGst(Number(found.sgst) + Number(found.cgst));
+    } else {
+      setHsnGst(0);
     }
   };
 
@@ -297,14 +309,7 @@ export default function EditProductPage() {
                       onChange={(e) => setCategory(e.target.value)}
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-[#006d36]/20 focus:border-[#006d36] bg-white"
                     >
-                      <option value="Health & Wellness">Health & Wellness</option>
-                      <option value="Agriculture & Plant Care">Agriculture & Plant Care</option>
-                      <option value="Personal Care & Skin">Personal Care & Skin</option>
-                      <option value="Hair Care">Hair Care</option>
-                      <option value="Combo & Activation Packages">Combo & Activation Packages</option>
-                      <option value="Oral Care">Oral Care</option>
-                      <option value="Beverages">Beverages</option>
-                      <option value="Women Care & Hygiene">Women Care & Hygiene</option>
+                      <option value="">-- Select Category --</option>
                       {categories.map((c) => (
                         <option key={c.id} value={c.name}>
                           {c.name}
@@ -399,6 +404,7 @@ export default function EditProductPage() {
                       onChange={(e) => handleHsnSelect(e.target.value)}
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-mono font-bold focus:outline-hidden focus:ring-2 focus:ring-[#006d36]/20 focus:border-[#006d36] bg-white cursor-pointer"
                     >
+                      <option value="">-- Select HSN Code --</option>
                       {hsnCodes.map((h) => (
                         <option key={h.id} value={h.hsnCode}>
                           HSN: {h.hsnCode} — {Number(h.sgst) + Number(h.cgst)}% GST ({h.description || "General"})
@@ -414,6 +420,107 @@ export default function EditProductPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Live GST Tax Breakdown Strip */}
+                {(() => {
+                  const effectiveSellingPrice = discountPrice !== "" && Number(discountPrice) > 0 ? Number(discountPrice) : Number(mrp || 0);
+                  const effectiveGstRate = Number(hsnGst || 0);
+                  const baseRateWithoutGst = effectiveGstRate > 0
+                    ? Number((effectiveSellingPrice / (1 + effectiveGstRate / 100)).toFixed(2))
+                    : effectiveSellingPrice;
+                  const gstAmount = Number((effectiveSellingPrice - baseRateWithoutGst).toFixed(2));
+                  const cgstAmount = Number((gstAmount / 2).toFixed(2));
+                  const sgstAmount = Number((gstAmount - cgstAmount).toFixed(2));
+
+                  return (
+                    <div className="mt-5 p-5 rounded-3xl bg-[#edf2f0] border border-white/80 shadow-[8px_8px_18px_#d1dad5,-8px_-8px_18px_#ffffff] space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-300/60 pb-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-[#edf2f0] shadow-[inset_2px_2px_5px_#d1dad5,inset_-2px_-2px_5px_#ffffff] flex items-center justify-center text-[#006d36]">
+                            <Calculator className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-black text-gray-800 uppercase tracking-wider block">
+                              GST Tax Breakdown
+                            </span>
+                            <span className="text-[10px] text-gray-500 font-medium">
+                              Live Neumorphic Inclusive Tax Calculator
+                            </span>
+                          </div>
+                        </div>
+                        {hsnCode ? (
+                          <span className="px-3 py-1 rounded-xl bg-[#edf2f0] text-emerald-800 text-[11px] font-mono font-bold shadow-[3px_3px_8px_#d1dad5,-3px_-3px_8px_#ffffff] border border-white/60">
+                            HSN: {hsnCode} • {effectiveGstRate}% GST
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-bold text-amber-700 bg-[#edf2f0] px-3 py-1 rounded-xl shadow-[inset_2px_2px_4px_#d1dad5,inset_-2px_-2px_4px_#ffffff]">
+                            Select an HSN Code to calculate GST
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                        {/* 1. Base Price Without GST */}
+                        <div className="bg-[#edf2f0] rounded-2xl p-4 shadow-[inset_3px_3px_7px_#d1dad5,inset_-3px_-3px_7px_#ffffff] border border-white/60 flex flex-col justify-between">
+                          <div>
+                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider block">
+                              GST વગર રકમ (Base Rate)
+                            </span>
+                            <div className="text-lg sm:text-xl font-black font-mono text-gray-900 mt-1">
+                              ₹{baseRateWithoutGst.toFixed(2)}
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-gray-500 font-medium mt-1.5 block">
+                            Taxable value before {effectiveGstRate}% GST
+                          </span>
+                        </div>
+
+                        {/* 2. Total GST Amount */}
+                        <div className="bg-[#edf2f0] rounded-2xl p-4 shadow-[inset_3px_3px_7px_#d1dad5,inset_-3px_-3px_7px_#ffffff] border border-white/60 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-black text-emerald-800 uppercase tracking-wider block">
+                                GST રકમ ({effectiveGstRate}%)
+                              </span>
+                              {effectiveGstRate > 0 && (
+                                <span className="text-[9px] font-mono font-bold text-emerald-700 px-2 py-0.5 rounded-lg bg-[#edf2f0] shadow-[2px_2px_5px_#d1dad5,-2px_-2px_5px_#ffffff]">
+                                  {(effectiveGstRate / 2).toFixed(1)}% + {(effectiveGstRate / 2).toFixed(1)}%
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-lg sm:text-xl font-black font-mono text-emerald-700 mt-1">
+                              ₹{gstAmount.toFixed(2)}
+                            </div>
+                          </div>
+                          {effectiveGstRate > 0 ? (
+                            <div className="text-[10px] text-gray-600 font-mono mt-1.5 pt-1.5 border-t border-gray-300/50 flex items-center justify-between">
+                              <span>CGST: ₹{cgstAmount.toFixed(2)}</span>
+                              <span>•</span>
+                              <span>SGST: ₹{sgstAmount.toFixed(2)}</span>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-gray-500 mt-1.5 block">0% GST applied</span>
+                          )}
+                        </div>
+
+                        {/* 3. Final Selling Price */}
+                        <div className="bg-gradient-to-br from-[#022814] via-[#04331b] to-[#01170b] text-white rounded-2xl p-4 shadow-[6px_6px_16px_rgba(2,40,20,0.35),-4px_-4px_12px_#ffffff] border border-emerald-500/20 flex flex-col justify-between">
+                          <div>
+                            <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider block">
+                              Final Selling Price (Inc. GST)
+                            </span>
+                            <div className="text-lg sm:text-xl font-black font-mono text-white mt-1">
+                              ₹{effectiveSellingPrice.toFixed(2)}
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-emerald-200/80 mt-1.5 block">
+                            {discountPrice !== "" && Number(discountPrice) > 0 ? "Discounted Price" : "Standard MRP"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 

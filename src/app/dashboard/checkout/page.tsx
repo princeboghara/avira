@@ -19,6 +19,8 @@ import {
   Coins,
   CreditCard,
   Zap,
+  MapPin,
+  UserCheck,
 } from "lucide-react";
 import MemberLayout from "@/components/member/MemberLayout";
 import { Product, User } from "@/types";
@@ -39,8 +41,15 @@ export default function MemberCheckoutPage() {
   const [targetMemberName, setTargetMemberName] = useState("");
   const [targetMemberMobile, setTargetMemberMobile] = useState("");
   const [shippingAddress, setShippingAddress] = useState("");
+  const [targetPincode, setTargetPincode] = useState("");
+  const [targetCity, setTargetCity] = useState("");
+  const [targetState, setTargetState] = useState("");
+  const [consigneeGstin, setConsigneeGstin] = useState("");
+  const [buyerGstin, setBuyerGstin] = useState("");
+  const [isIntraState, setIsIntraState] = useState(true);
   const [totalMrpAmount, setTotalMrpAmount] = useState(0);
   const [totalDiscount, setTotalDiscount] = useState(0);
+  const [shippingCharge, setShippingCharge] = useState(75);
   const [totalAmount, setTotalAmount] = useState(0);
   const [totalPv, setTotalPv] = useState(0);
 
@@ -94,6 +103,7 @@ export default function MemberCheckoutPage() {
       }
 
       // Load checkout target info
+      let parsedShipping = 75;
       try {
         const savedTarget = localStorage.getItem("aviracare_checkout_target");
         if (savedTarget) {
@@ -105,7 +115,20 @@ export default function MemberCheckoutPage() {
           setTargetMemberId(parsed.memberId || "");
           setTargetMemberName(parsed.fullName || "");
           setTargetMemberMobile(parsed.mobile || "");
-          setShippingAddress(parsed.shippingAddress || "");
+          setShippingAddress(parsed.shippingAddress || parsed.address || "");
+          setTargetPincode(parsed.pincode || "");
+          setTargetCity(parsed.city || "");
+          setTargetState(parsed.state || "");
+          setConsigneeGstin(parsed.consigneeGstin || "");
+          setBuyerGstin(parsed.buyerGstin || "");
+          if (parsed.isIntraState !== undefined) {
+            setIsIntraState(parsed.isIntraState);
+          } else if (parsed.state) {
+            setIsIntraState(parsed.state.toLowerCase() === "gujarat");
+          }
+          if (typeof parsed.shippingCharge === "number") {
+            parsedShipping = parsed.shippingCharge;
+          }
         } else {
           router.replace("/dashboard/cart");
           return;
@@ -114,6 +137,8 @@ export default function MemberCheckoutPage() {
         router.replace("/dashboard/cart");
         return;
       }
+
+      setShippingCharge(parsedShipping);
 
       // Calculate totals
       let mrpSum = 0;
@@ -133,7 +158,7 @@ export default function MemberCheckoutPage() {
 
       setTotalMrpAmount(mrpSum);
       setTotalDiscount(mrpSum - finalSum);
-      setTotalAmount(finalSum);
+      setTotalAmount(finalSum + parsedShipping);
       setTotalPv(pvSum);
     }
 
@@ -205,7 +230,8 @@ export default function MemberCheckoutPage() {
           items: cart.map((it) => ({
             productId: it.product.id,
             name: it.product.name,
-            hsnCode: it.product.hsnCode || "30049011",
+            hsnCode: it.product.hsnCode || "3004",
+            gst: Number(it.product.gstRate || it.product.hsnGst || 5),
             mrp: Number(it.product.mrp || it.product.discountPrice || 0),
             price: Number(it.product.discountPrice || it.product.mrp || 0),
             discountPrice: Number(it.product.discountPrice || it.product.mrp || 0),
@@ -214,6 +240,7 @@ export default function MemberCheckoutPage() {
           })),
           amount: totalAmount,
           pv: totalPv,
+          shippingCharge: shippingCharge,
           fundWalletUsed: walletDeduction,
           transactionId: txnId,
           paymentSlip: slip,
@@ -221,6 +248,11 @@ export default function MemberCheckoutPage() {
           shippingAddress: shippingAddress.trim(),
           customerName: targetMemberName,
           customerMobile: targetMemberMobile,
+          recipientPincode: targetPincode,
+          recipientCity: targetCity,
+          recipientState: targetState,
+          consigneeGstin: consigneeGstin,
+          buyerGstin: buyerGstin || user?.gstNumber || "",
         }),
       });
 
@@ -517,20 +549,86 @@ export default function MemberCheckoutPage() {
                 <span>Order Summary</span>
               </h3>
 
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-[#5f5e5e]">Recipient Associate:</span>
-                  <strong className="text-[#1a1c1c]">{targetMemberName} ({targetMemberId})</strong>
+              <div className="space-y-3 text-xs">
+                {/* Consignee Recipient Details */}
+                <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-emerald-950 flex items-center gap-1.5">
+                      <UserCheck className="w-3.5 h-3.5 text-[#006d36]" />
+                      <span>Consignee (Recipient):</span>
+                    </span>
+                    <span className="font-mono font-bold text-xs text-[#006d36]">
+                      {targetMemberId}
+                    </span>
+                  </div>
+                  <div className="text-[11px] font-bold text-gray-900">
+                    {targetMemberName || "Valued Associate"}
+                  </div>
+                  {targetMemberMobile && (
+                    <div className="text-[10px] text-gray-600 font-mono">
+                      📱 Mobile: {targetMemberMobile}
+                    </div>
+                  )}
+                  <div className="text-[10px] text-gray-600 font-mono">
+                    GSTIN: {consigneeGstin || "URP (Unregistered)"}
+                  </div>
                 </div>
-                <div className="flex justify-between">
+
+                {/* Delivery Shipping Address Box */}
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-2xl space-y-1.5">
+                  <div className="flex items-center justify-between text-gray-700 font-bold text-[11px]">
+                    <span className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#006d36]" />
+                      <span>Shipping Delivery Address:</span>
+                    </span>
+                    {targetPincode && (
+                      <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white border border-gray-200 font-bold">
+                        PIN: {targetPincode}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-gray-800 leading-relaxed font-medium">
+                    {shippingAddress || [targetCity, targetState, targetPincode ? `PIN: ${targetPincode}` : ""].filter(Boolean).join(", ") || "Address not provided"}
+                  </p>
+                </div>
+
+                {/* Buyer / Billed By Info */}
+                <div className="flex justify-between items-center text-[11px] text-gray-600 px-1">
+                  <span>Billed By (Buyer):</span>
+                  <span className="font-semibold text-gray-800">
+                    {user?.fullName || "Self"} ({user?.memberId || "Self"})
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-[11px] text-gray-600 px-1 font-mono">
+                  <span>Buyer GSTIN:</span>
+                  <span className="text-gray-700">
+                    {buyerGstin || user?.gstNumber || "URP (Unregistered)"}
+                  </span>
+                </div>
+
+                {/* PV & Amounts */}
+                <div className="flex justify-between px-1 pt-1 border-t border-gray-100">
                   <span className="text-[#5f5e5e]">Point Volume:</span>
                   <strong className="font-mono text-purple-700 font-bold">{totalPv} PV</strong>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-[#5f5e5e]">Shipping Address:</span>
-                  <span className="text-[#1a1c1c] truncate max-w-[200px]">{shippingAddress}</span>
+                <div className="flex justify-between px-1">
+                  <span className="text-[#5f5e5e]">Products Subtotal:</span>
+                  <span className="font-mono">₹{(totalMrpAmount - totalDiscount).toLocaleString("en-IN")}</span>
                 </div>
-                <div className="flex justify-between text-xs font-bold text-[#1a1c1c] pt-2 border-t border-gray-100">
+                <div className="flex justify-between px-1 text-[#006d36]">
+                  <span>Shipping Charges:</span>
+                  <span className="font-mono font-bold">₹{shippingCharge}</span>
+                </div>
+
+                {/* Tax Status */}
+                <div className="flex justify-between px-1 text-[11px] text-gray-500 font-mono">
+                  <span>GST Application:</span>
+                  <span className={isIntraState ? "text-[#006d36] font-bold" : "text-blue-700 font-bold"}>
+                    {isIntraState ? "CGST + SGST" : "IGST"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-xs font-bold text-[#1a1c1c] pt-2 border-t border-gray-100 px-1">
                   <span>Total Order Amount:</span>
                   <span className="font-mono">₹{totalAmount.toLocaleString("en-IN")}</span>
                 </div>

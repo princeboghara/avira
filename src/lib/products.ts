@@ -3,7 +3,7 @@ import { Product } from "@/types";
 export const PRODUCTS_CATALOG: Product[] = [
   {
     id: "prod_spirulina",
-    name: "Avira Organic Spirulina 500mg",
+    name: "Organic Spirulina 500mg",
     category: "CELLULAR_NUTRITION",
     description: "Pure Blue-Green Microalgae rich in chlorophyll, plant proteins, and antioxidants for natural cellular stamina.",
     netQuantity: "60 Veg Capsules",
@@ -15,7 +15,7 @@ export const PRODUCTS_CATALOG: Product[] = [
   },
   {
     id: "prod_tulsi",
-    name: "Avira Panch Tulsi Ark Drops",
+    name: "Panch Tulsi Ark Drops",
     category: "IMMUNITY",
     description: "Concentrated liquid extract of 5 sacred Tulsi varieties (Rama, Shyama, Van, Shukla, Surasa) for deep respiratory defense.",
     netQuantity: "30 ml Glass Dropper",
@@ -27,7 +27,7 @@ export const PRODUCTS_CATALOG: Product[] = [
   },
   {
     id: "prod_noni",
-    name: "Avira Noni Gold Premium Juice",
+    name: "Noni Gold Premium Juice",
     category: "CELLULAR_NUTRITION",
     description: "Enriched with Kokum and Morinda Citrifolia for superior gut detox, cellular regeneration, and joint vitality.",
     netQuantity: "500 ml Bottle",
@@ -39,7 +39,7 @@ export const PRODUCTS_CATALOG: Product[] = [
   },
   {
     id: "prod_curcumin",
-    name: "Avira Curcumin Plus 95% Piperine",
+    name: "Curcumin Plus 95% Piperine",
     category: "HERBAL_WELLNESS",
     description: "Standardized 95% curcuminoids enhanced with black pepper piperine for 2000% higher bioavailability and anti-inflammatory support.",
     netQuantity: "60 Veg Capsules",
@@ -51,7 +51,7 @@ export const PRODUCTS_CATALOG: Product[] = [
   },
   {
     id: "prod_seabuckthorn",
-    name: "Avira Sea Buckthorn Immunity Juice",
+    name: "Sea Buckthorn Immunity Juice",
     category: "IMMUNITY",
     description: "Himalayan superfruit rich in rare Omega-7, Vitamin C, and bioflavonoids for radiant skin and immune resilience.",
     netQuantity: "500 ml Bottle",
@@ -63,7 +63,7 @@ export const PRODUCTS_CATALOG: Product[] = [
   },
   {
     id: "prod_omega3",
-    name: "Avira Omega-3 Triple Strength",
+    name: "Omega-3 Triple Strength",
     category: "CELLULAR_NUTRITION",
     description: "Purified deep-sea fish oil providing 1000mg Omega-3 with 550mg EPA + 350mg DHA for cardiovascular and cognitive longevity.",
     netQuantity: "60 Softgels",
@@ -75,7 +75,7 @@ export const PRODUCTS_CATALOG: Product[] = [
   },
   {
     id: "prod_calcium",
-    name: "Avira Calcium & Vitamin D3 Bone Fortifier",
+    name: "Calcium & Vitamin D3 Bone Fortifier",
     category: "DAILY_CARE",
     description: "Easily absorbable calcium citrate with bioavailable Vitamin D3 and Magnesium for bone density and joint flexibility.",
     netQuantity: "60 Tablets",
@@ -87,7 +87,7 @@ export const PRODUCTS_CATALOG: Product[] = [
   },
   {
     id: "prod_ortho_oil",
-    name: "Avira Ortho Relief Ayurvedic Oil",
+    name: "Ortho Relief Ayurvedic Oil",
     category: "HERBAL_WELLNESS",
     description: "Traditional herbal formulation of Nilgiri, Gandhapura, and Mahavishgarbha oils for fast soothing of knee and muscle pain.",
     netQuantity: "100 ml Pump Bottle",
@@ -99,7 +99,7 @@ export const PRODUCTS_CATALOG: Product[] = [
   },
   {
     id: "prod_aloe_gel",
-    name: "Avira Pure Aloe Vera Multi-Purpose Gel",
+    name: "Pure Aloe Vera Multi-Purpose Gel",
     category: "DAILY_CARE",
     description: "99% pure cold-pressed organic aloe vera leaf pulp with Vitamin E for skin soothing, sunburn relief, and deep hydration.",
     netQuantity: "200 gm Jar",
@@ -111,7 +111,7 @@ export const PRODUCTS_CATALOG: Product[] = [
   },
   {
     id: "prod_diab_care",
-    name: "Avira Diabetic Care Karela Jamun Juice",
+    name: "Diabetic Care Karela Jamun Juice",
     category: "HERBAL_WELLNESS",
     description: "Potent blend of Karela, Jamun, Gurmar, and Methi seed extracts to naturally maintain healthy blood glucose levels.",
     netQuantity: "1000 ml Bottle",
@@ -123,7 +123,7 @@ export const PRODUCTS_CATALOG: Product[] = [
   },
   {
     id: "prod_collagen",
-    name: "Avira Pro-Collagen Youth Booster",
+    name: "Pro-Collagen Youth Booster",
     category: "DAILY_CARE",
     description: "Premium hydrolyzed marine collagen peptides with hyaluronic acid, glutathione, and biotin for firm skin and thick hair.",
     netQuantity: "30 Ready-to-Mix Sachets",

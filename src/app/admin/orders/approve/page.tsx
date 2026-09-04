@@ -10,11 +10,11 @@ import {
   ZoomOut,
   RotateCw,
   ExternalLink,
-  Store,
   CheckCircle2,
+  Eye,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { Shoppy } from "@/types";
+import OrderItemsModal from "@/components/orders/OrderItemsModal";
 
 interface AdminOrder {
   id: string;
@@ -44,7 +44,6 @@ interface AdminOrder {
 
 export default function AdminApproveOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
-  const [shoppies, setShoppies] = useState<Shoppy[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -53,9 +52,8 @@ export default function AdminApproveOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [approvingOrderId, setApprovingOrderId] = useState<string | null>(null);
 
-  // Shoppy Assignment Approval Modal
+  // Approval Modal
   const [approveModalOrder, setApproveModalOrder] = useState<AdminOrder | null>(null);
-  const [selectedShoppyForApproval, setSelectedShoppyForApproval] = useState<string>("AVS01");
 
   // Selected Payment Slip for Modal Preview
   const [selectedPaymentSlip, setSelectedPaymentSlip] = useState<{
@@ -69,14 +67,13 @@ export default function AdminApproveOrdersPage() {
   const [slipZoom, setSlipZoom] = useState<number>(1);
   const [slipRotation, setSlipRotation] = useState<number>(0);
 
+  // View Items Modal State
+  const [viewingOrderItems, setViewingOrderItems] = useState<AdminOrder | null>(null);
+
   const loadOrders = async () => {
     try {
-      const [ordersRes, shoppiesRes] = await Promise.all([
-        fetch("/api/admin/orders"),
-        fetch("/api/admin/shoppies"),
-      ]);
+      const ordersRes = await fetch("/api/admin/orders");
       const data = await ordersRes.json();
-      const shoppiesData = await shoppiesRes.json();
 
       if (data.success && data.orders) {
         const normalized = data.orders.map((o: AdminOrder) => ({
@@ -85,9 +82,6 @@ export default function AdminApproveOrdersPage() {
           pv: Number(o.pv || 0),
         }));
         setOrders(normalized);
-      }
-      if (shoppiesData.success && shoppiesData.shoppies) {
-        setShoppies(shoppiesData.shoppies);
       }
     } catch (err) {
       console.error("Error loading orders:", err);
@@ -140,11 +134,10 @@ export default function AdminApproveOrdersPage() {
 
   const openApproveModal = (ord: AdminOrder) => {
     setApproveModalOrder(ord);
-    setSelectedShoppyForApproval("AVS01");
   };
 
-  const handleConfirmApproval = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleConfirmApproval = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!approveModalOrder) return;
 
     setApprovingOrderId(approveModalOrder.id);
@@ -152,13 +145,10 @@ export default function AdminApproveOrdersPage() {
       const res = await fetch(`/api/admin/orders/${approveModalOrder.id}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          shoppyId: selectedShoppyForApproval,
-        }),
       });
       const data = await res.json();
       if (data.success) {
-        alert(`✅ Order #${approveModalOrder.id} approved successfully!`);
+        alert(`✅ Order #${approveModalOrder.id} approved successfully!\nMoved to Transfer Queue.`);
         setApproveModalOrder(null);
         await loadOrders();
       } else {
@@ -354,6 +344,14 @@ export default function AdminApproveOrdersPage() {
                           <span className="text-[10px] text-[#5f5e5e] font-mono block">
                             #{ord.id}
                           </span>
+                          <button
+                            type="button"
+                            onClick={() => setViewingOrderItems(ord)}
+                            className="text-[11px] font-bold text-[#006d36] hover:underline flex items-center gap-1 mt-1 cursor-pointer"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>View Items ({ord.items?.length || 1})</span>
+                          </button>
                         </td>
 
                         {/* 3. BILLED BY */}
@@ -451,8 +449,8 @@ export default function AdminApproveOrdersPage() {
                                 onClick={() => openApproveModal(ord)}
                                 className="px-3.5 py-1.5 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white text-xs font-bold shadow-xs cursor-pointer transition-all flex items-center gap-1.5"
                               >
-                                <Store className="w-3.5 h-3.5" />
-                                <span>Approve & Transfer</span>
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Approve</span>
                               </button>
                               <button
                                 type="button"
@@ -584,7 +582,7 @@ export default function AdminApproveOrdersPage() {
       )}
 
       {/* ========================================================
-          MODAL: APPROVE & TRANSFER ORDER TO SHOPPY
+          MODAL: APPROVE ORDER CONFIRMATION
          ======================================================== */}
       {approveModalOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fadeIn">
@@ -592,14 +590,14 @@ export default function AdminApproveOrdersPage() {
             <div className="flex items-center justify-between pb-3 border-b border-[#e2e2e2]">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#006d36] border border-emerald-200 flex items-center justify-center font-black">
-                  <Store className="w-5 h-5" />
+                  <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-black text-base text-[#1a1c1c]">
-                    Approve & Assign Order #{approveModalOrder.id}
+                    Approve Order #{approveModalOrder.id}
                   </h3>
                   <span className="text-xs text-[#5f5e5e] font-mono">
-                    Select the Shoppy Center responsible for packing and delivery
+                    Verify order payment & send to Transfer Queue
                   </span>
                 </div>
               </div>
@@ -613,13 +611,19 @@ export default function AdminApproveOrdersPage() {
             </div>
 
             {/* Order Summary Box */}
-            <div className="p-3.5 bg-emerald-50/60 rounded-2xl border border-emerald-200 text-xs space-y-1.5">
+            <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200 text-xs space-y-2">
               <div className="flex items-center justify-between font-mono">
                 <span className="font-bold text-[#1a1c1c]">
                   {approveModalOrder.fullName} ({approveModalOrder.memberId})
                 </span>
                 <span className="font-black text-[#006d36]">
-                  ₹{approveModalOrder.amount.toLocaleString("en-IN")} • {approveModalOrder.pv} PV
+                  ₹{approveModalOrder.amount.toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-600 font-mono text-[11px]">
+                <span>Billed By: <strong>{approveModalOrder.billedBy || approveModalOrder.memberId}</strong></span>
+                <span className="px-2 py-0.5 rounded bg-emerald-100 text-[#006d36] font-bold">
+                  +{approveModalOrder.pv} PV Credit
                 </span>
               </div>
               <p className="text-[#5f5e5e] text-[11px] truncate">
@@ -630,82 +634,54 @@ export default function AdminApproveOrdersPage() {
               </p>
             </div>
 
-            <form onSubmit={handleConfirmApproval} className="space-y-4 text-xs">
-              {/* Hub Destination Box */}
-              <div className="space-y-2 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                    <Store className="w-4 h-4 text-[#006d36]" />
-                    <span>Fulfillment Hub Destination:</span>
-                  </label>
-                  <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 font-mono font-bold text-[10px]">
-                    Direct Hub Delivery
-                  </span>
-                </div>
+            {/* Approval Info Box */}
+            <div className="p-3.5 bg-blue-50/70 rounded-2xl border border-blue-200 text-xs text-blue-900 space-y-1">
+              <p className="font-bold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-blue-600" />
+                What happens on Approval:
+              </p>
+              <ul className="list-disc list-inside text-[11px] text-blue-800 space-y-0.5 pl-1">
+                <li>Order status will be updated to <strong>APPROVED</strong>.</li>
+                <li><strong>+{approveModalOrder.pv} PV</strong> will be credited to member tree.</li>
+                <li>Order will move directly to the <strong>Transfer Orders</strong> page to assign a fulfillment shoppy.</li>
+              </ul>
+            </div>
 
-                <div className="p-3 bg-white rounded-xl border border-emerald-300 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-black text-slate-900 block font-mono">
-                      SURAT PARCEL HUB (AVS01)
-                    </span>
-                    <span className="text-[11px] text-slate-500 block">
-                      Ring Road Logistics Center, Surat, Gujarat
-                    </span>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-lg bg-[#006d36]/10 text-[#006d36] text-[11px] font-bold">
-                    Primary Hub
-                  </span>
-                </div>
-
-                {shoppies.length > 1 && (
-                  <select
-                    value={selectedShoppyForApproval}
-                    onChange={(e) => setSelectedShoppyForApproval(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-white border border-slate-300 font-bold text-slate-900 focus:outline-none focus:border-[#006d36] text-xs mt-2"
-                  >
-                    {shoppies.map((s) => (
-                      <option key={s.id} value={s.shoppyId}>
-                        {s.shoppyId} — {s.storeName} ({s.city}, {s.state})
-                      </option>
-                    ))}
-                  </select>
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#e2e2e2]">
+              <button
+                type="button"
+                onClick={() => setApproveModalOrder(null)}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleConfirmApproval()}
+                disabled={approvingOrderId === approveModalOrder.id}
+                className="px-5 py-2.5 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold cursor-pointer shadow-md shadow-emerald-950/20 disabled:opacity-60 flex items-center gap-1.5 text-xs"
+              >
+                {approvingOrderId === approveModalOrder.id ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Approving...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Confirm & Approve Order</span>
+                  </>
                 )}
-
-                <span className="text-[11px] text-slate-500 block">
-                  This order will transfer immediately to <strong>SURAT PARCEL HUB</strong> for packing and tracking generation.
-                </span>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#e2e2e2]">
-                <button
-                  type="button"
-                  onClick={() => setApproveModalOrder(null)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={approvingOrderId === approveModalOrder.id}
-                  className="px-5 py-2.5 rounded-xl bg-[#006d36] hover:bg-[#005025] text-white font-bold cursor-pointer shadow-md shadow-emerald-950/20 disabled:opacity-60 flex items-center gap-1.5"
-                >
-                  {approvingOrderId === approveModalOrder.id ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Approving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Confirm Approval & Transfer</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+              </button>
+            </div>
           </div>
         </div>
       )}
+      {/* Order Items Modal */}
+      <OrderItemsModal
+        order={viewingOrderItems}
+        onClose={() => setViewingOrderItems(null)}
+      />
     </AdminLayout>
   );
 }

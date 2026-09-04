@@ -334,10 +334,11 @@ export async function creditPurchasePV(
 
     // 1. Create order record only if not skipped (prevents duplicate orders)
     if (!skipOrderCreation) {
-      const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const random6 = Math.floor(100000 + Math.random() * 900000);
+      const orderId = `AO-${random6}`;
       await client.query(
-        `INSERT INTO orders (id, user_id, purchase_type, package_name, amount, pv, items, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        `INSERT INTO orders (id, invoice_no, user_id, purchase_type, package_name, amount, pv, items, status)
+         VALUES ($1, nextval('order_invoice_seq'), $2, $3, $4, $5, $6, $7, $8)`,
         [orderId, userId, purchaseType, packageName, amount, pv, JSON.stringify(items), "APPROVED"]
       );
     }

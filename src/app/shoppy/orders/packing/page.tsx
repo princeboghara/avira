@@ -13,8 +13,10 @@ import {
   X,
   Package,
   ShieldCheck,
+  Eye,
 } from "lucide-react";
 import { Order } from "@/types";
+import OrderItemsModal from "@/components/orders/OrderItemsModal";
 
 export default function ShoppyPackingOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -23,6 +25,7 @@ export default function ShoppyPackingOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [processingStatus, setProcessingStatus] = useState(false);
+  const [viewingOrderItems, setViewingOrderItems] = useState<Order | null>(null);
 
   // Dispatch Modal State
   const [dispatchModalOpen, setDispatchModalOpen] = useState(false);
@@ -122,8 +125,28 @@ export default function ShoppyPackingOrdersPage() {
     }
   };
 
-  const handlePrintLabels = () => {
-    window.print();
+  const handlePrintSlip = (orderId: string) => {
+    window.open(`/slip/${orderId}?print=1`, "_blank");
+  };
+
+  const handlePrintBill = (orderId: string) => {
+    window.open(`/invoice/${orderId}?print=1`, "_blank");
+  };
+
+  const handleBulkPrintSlips = () => {
+    if (selectedOrderIds.length === 0) {
+      alert("Please select at least one order to print slips.");
+      return;
+    }
+    window.open(`/slip/bulk?ids=${selectedOrderIds.join(",")}`, "_blank");
+  };
+
+  const handleBulkPrintBills = () => {
+    if (selectedOrderIds.length === 0) {
+      alert("Please select at least one order to print bills.");
+      return;
+    }
+    window.open(`/invoice/bulk?ids=${selectedOrderIds.join(",")}`, "_blank");
   };
 
   return (
@@ -144,29 +167,47 @@ export default function ShoppyPackingOrdersPage() {
               Orders In Packaging (Labeling & Courier)
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              Parcels packaged into boxes. Attach shipping partner and AWB tracking code to dispatch.
+              Verify packaged items, print dispatch slips or tax invoices, and assign courier AWB to dispatch.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handlePrintLabels}
-              className="shoppy-btn px-4 py-2.5 rounded-2xl text-xs font-black text-slate-700 flex items-center gap-2 cursor-pointer"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Print Labels</span>
-            </button>
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Bulk Print and Dispatch Toolbar */}
+            {selectedOrderIds.length > 0 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleBulkPrintSlips}
+                  className="px-3.5 py-2.5 rounded-2xl bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 font-black text-xs inline-flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
+                  title="Print Dispatch Slips for Selected Orders"
+                >
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  <span>Bulk Slips ({selectedOrderIds.length})</span>
+                </button>
 
-            {selectedOrderIds.length > 0 && (
-              <button
-                type="button"
-                onClick={() => openDispatchModal(selectedOrderIds)}
-                className="shoppy-btn-primary px-5 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2 cursor-pointer shadow-md"
-              >
-                <Truck className="w-4 h-4" />
-                <span>Dispatch {selectedOrderIds.length} Parcel(s)</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={handleBulkPrintBills}
+                  className="px-3.5 py-2.5 rounded-2xl bg-emerald-50 text-[#006d36] border border-emerald-200 hover:bg-emerald-100 font-black text-xs inline-flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
+                  title="Print GST Tax Invoices for Selected Orders"
+                >
+                  <Printer className="w-4 h-4 text-[#006d36]" />
+                  <span>Bulk Bills ({selectedOrderIds.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => openDispatchModal(selectedOrderIds)}
+                  className="shoppy-btn-primary px-4 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2 cursor-pointer shadow-md"
+                >
+                  <Truck className="w-4 h-4" />
+                  <span>Dispatch ({selectedOrderIds.length})</span>
+                </button>
+              </>
+            ) : (
+              <span className="text-xs font-mono text-slate-400 italic">
+                Select orders below to enable bulk slip & bill printing
+              </span>
             )}
           </div>
         </div>
@@ -192,8 +233,8 @@ export default function ShoppyPackingOrdersPage() {
           </div>
         </div>
 
-        {/* Table Neumorphic Container */}
-        <div className="shoppy-surface rounded-3xl p-6 space-y-4 border border-white/80">
+        {/* Clean Neumorphic Table Container */}
+        <div className="shoppy-surface rounded-3xl p-5 sm:p-6 space-y-4 border border-white/80">
           {loading ? (
             <div className="py-16 flex flex-col items-center justify-center text-slate-400 gap-2">
               <Loader2 className="w-8 h-8 animate-spin text-[#006d36]" />
@@ -206,16 +247,16 @@ export default function ShoppyPackingOrdersPage() {
               </div>
               <h3 className="font-black text-slate-800 text-base">No Parcels in Packing</h3>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                All packed orders have been dispatched, or send new orders from Assigned Orders stage.
+                All packed orders have been dispatched, or transfer new orders from Assigned Orders stage.
               </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <div className="shoppy-inset rounded-2xl p-2">
+              <div className="rounded-2xl border border-slate-200/90 bg-white shadow-[3px_3px_10px_rgba(0,0,0,0.03),-3px_-3px_10px_rgba(255,255,255,0.9)] overflow-hidden">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="text-slate-500 font-mono text-[11px] font-black uppercase border-b border-slate-300/60">
-                      <th className="py-3 px-4 w-10">
+                  <thead className="bg-slate-50/90 border-b border-slate-200/90">
+                    <tr className="text-slate-500 font-mono text-[11px] font-black uppercase">
+                      <th className="py-3 px-3.5 w-10 text-center">
                         <input
                           type="checkbox"
                           checked={
@@ -226,25 +267,41 @@ export default function ShoppyPackingOrdersPage() {
                           className="rounded text-[#006d36] focus:ring-0 cursor-pointer"
                         />
                       </th>
-                      <th className="py-3 px-4">Order ID & Date</th>
-                      <th className="py-3 px-4">Recipient Name</th>
-                      <th className="py-3 px-4">Package</th>
-                      <th className="py-3 px-4">Amount & PV</th>
-                      <th className="py-3 px-4">Shipping Destination</th>
-                      <th className="py-3 px-4 text-right">Dispatch Action</th>
+                      <th className="py-3 px-3.5">Order ID & Date</th>
+                      <th className="py-3 px-3.5">Recipient Details</th>
+                      <th className="py-3 px-3.5 min-w-[220px]">Order Items & Package</th>
+                      <th className="py-3 px-3.5">Amount & PV</th>
+                      <th className="py-3 px-3.5">Delivery Destination</th>
+                      <th className="py-3 px-3.5 text-right">Print & Dispatch</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-300/40">
+                  <tbody className="divide-y divide-slate-100">
                     {filteredOrders.map((ord) => {
                       const isSelected = selectedOrderIds.includes(ord.id);
+
+                      // Parse items breakdown
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      let orderItems: any[] = [];
+                      if (ord.items) {
+                        try {
+                          orderItems = typeof ord.items === "string" ? JSON.parse(ord.items) : ord.items;
+                        } catch {
+                          orderItems = [];
+                        }
+                      }
+                      if (!Array.isArray(orderItems)) orderItems = [];
+
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const totalUnits = orderItems.reduce((acc: number, it: any) => acc + (Number(it.quantity) || 1), 0);
+
                       return (
                         <tr
                           key={ord.id}
                           className={`transition-colors ${
-                            isSelected ? "bg-indigo-100/40" : "hover:bg-white/40"
+                            isSelected ? "bg-emerald-50/40" : "hover:bg-slate-50/60"
                           }`}
                         >
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-3.5 text-center">
                             <input
                               type="checkbox"
                               checked={isSelected}
@@ -252,7 +309,7 @@ export default function ShoppyPackingOrdersPage() {
                               className="rounded text-[#006d36] focus:ring-0 cursor-pointer"
                             />
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-3.5">
                             <span className="font-mono font-black text-slate-900 block">
                               #{ord.id}
                             </span>
@@ -264,23 +321,35 @@ export default function ShoppyPackingOrdersPage() {
                               })}
                             </span>
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-3.5">
                             <span className="font-black text-slate-900 block">
                               {ord.buyerName || ord.customerName}
                             </span>
                             <span className="font-mono text-[10px] text-slate-500 block">
                               {ord.buyerMobile || ord.customerMobile || "—"}
                             </span>
+                            {ord.memberId && (
+                              <span className="font-mono text-[9px] text-[#006d36] font-bold block">
+                                ID: {ord.memberId}
+                              </span>
+                            )}
                           </td>
-                          <td className="py-3 px-4">
-                            <span className="font-bold text-slate-800 block">
-                              {ord.packageName || "Product Package"}
-                            </span>
-                            <span className="text-[10px] font-mono text-indigo-700 font-bold block">
-                              Box Packed ✓
-                            </span>
+                          <td className="py-3 px-3.5">
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setViewingOrderItems(ord)}
+                                className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006d36] border border-emerald-200 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>View Items ({orderItems.length || 1})</span>
+                              </button>
+                              <span className="text-[9px] font-mono font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-md">
+                                Packed ✓
+                              </span>
+                            </div>
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-3.5">
                             <span className="font-mono font-black text-slate-900 block">
                               ₹{Number(ord.amount || 0).toLocaleString("en-IN")}
                             </span>
@@ -288,20 +357,51 @@ export default function ShoppyPackingOrdersPage() {
                               {ord.pv} PV
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-slate-600 max-w-[220px]">
+                          <td className="py-3 px-3.5 text-slate-600 max-w-[200px]">
                             <p className="line-clamp-2 text-[11px]">
                               {ord.buyerAddress || ord.shippingAddress || "Store Pickup"}
                             </p>
+                            {(ord.buyerCity || ord.buyerPincode) && (
+                              <p className="text-[10px] font-mono text-slate-400 mt-0.5">
+                                {ord.buyerCity} {ord.buyerPincode}
+                              </p>
+                            )}
                           </td>
-                          <td className="py-3 px-4 text-right">
-                            <button
-                              type="button"
-                              onClick={() => openDispatchModal([ord.id])}
-                              className="shoppy-btn-primary px-3 py-1.5 rounded-xl font-black text-xs inline-flex items-center gap-1 cursor-pointer"
-                            >
-                              <Truck className="w-3.5 h-3.5" />
-                              <span>Dispatch</span>
-                            </button>
+                          <td className="py-3 px-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Single Print Slip Button */}
+                              <button
+                                type="button"
+                                onClick={() => handlePrintSlip(ord.id)}
+                                className="p-1.5 px-2.5 rounded-xl bg-blue-50 hover:bg-blue-100/90 text-blue-800 border border-blue-200 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer transition-all shadow-[1px_1px_3px_rgba(0,0,0,0.02)] active:scale-95"
+                                title="Print Parcel Dispatch Slip"
+                              >
+                                <FileText className="w-3.5 h-3.5 text-blue-600" />
+                                <span>Slip</span>
+                              </button>
+
+                              {/* Single Print Bill Button */}
+                              <button
+                                type="button"
+                                onClick={() => handlePrintBill(ord.id)}
+                                className="p-1.5 px-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100/90 text-[#006d36] border border-emerald-200 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer transition-all shadow-[1px_1px_3px_rgba(0,0,0,0.02)] active:scale-95"
+                                title="Print GST Tax Invoice"
+                              >
+                                <Printer className="w-3.5 h-3.5 text-[#006d36]" />
+                                <span>Bill</span>
+                              </button>
+
+                              {/* Dispatch Action Button */}
+                              <button
+                                type="button"
+                                onClick={() => openDispatchModal([ord.id])}
+                                className="shoppy-btn-primary px-3 py-1.5 rounded-xl font-black text-xs inline-flex items-center gap-1 cursor-pointer shadow-xs active:scale-95"
+                                title="Attach Courier & Dispatch Parcel"
+                              >
+                                <Truck className="w-3.5 h-3.5" />
+                                <span>Dispatch</span>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -410,6 +510,11 @@ export default function ShoppyPackingOrdersPage() {
             </div>
           </div>
         )}
+        {/* Order Items Modal */}
+        <OrderItemsModal
+          order={viewingOrderItems}
+          onClose={() => setViewingOrderItems(null)}
+        />
       </div>
     </ShoppyLayout>
   );

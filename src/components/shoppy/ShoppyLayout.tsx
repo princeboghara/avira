@@ -38,12 +38,12 @@ export default function ShoppyLayout({
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans antialiased selection:bg-[#006d36] selection:text-white w-full max-w-full overflow-x-hidden relative">
+    <div className="flex min-h-screen bio-canvas-bg text-slate-800 font-sans antialiased selection:bg-[#006d36] selection:text-white w-full max-w-full overflow-x-hidden relative">
       {/* 1. DOCKED SIDEBAR: Visible on large desktop screens (>= 1280px) if pinned */}
       {isDesktopPinned && (
-        <div className="hidden xl:block shrink-0 transition-all duration-300">
+        <aside className="hidden xl:flex flex-col shrink-0 w-68 lg:w-72 h-screen sticky top-0 z-40 overflow-hidden transition-all duration-300">
           <ShoppySidebar />
-        </div>
+        </aside>
       )}
 
       {/* 2. UNIVERSAL SLIDE-OUT OVERLAY DRAWER: Opens on Laptop, Tablet & Mobile */}

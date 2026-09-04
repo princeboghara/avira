@@ -31,8 +31,14 @@ export async function GET(
     exists: true,
     memberId: user.memberId,
     fullName: user.fullName,
-    status: user.status,
+    mobile: user.mobile || "",
+    address: user.address || "",
+    pincode: user.pincode || "",
     city: user.city || "",
     state: user.state || "",
+    gstNumber: user.gstNumber || "",
+    gstin: user.gstNumber || "",
+    email: user.email || "",
+    status: user.status,
   });
 }

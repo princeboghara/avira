@@ -107,6 +107,13 @@ export interface SponsorInfo {
   exists: boolean;
   memberId: string;
   fullName: string;
+  mobile?: string;
+  address?: string;
+  pincode?: string;
+  city?: string;
+  state?: string;
+  gstin?: string;
+  gstNumber?: string;
   status?: string;
 }
 
@@ -171,6 +178,9 @@ export interface Product {
   categoryId?: string;
   category: string;
   hsnCode?: string;
+  hsnGst?: number;
+  gstRate?: number;
+  shippingCharge?: number;
   description?: string;
   netQuantity: string;
   stockQuantity?: number; // Available inventory stock units
@@ -187,9 +197,12 @@ export interface Product {
 export interface OrderItem {
   productId?: string;
   name: string;
+  hsnCode?: string;
   quantity: number;
   mrp?: number;
   price?: number;
+  discountPrice?: number;
+  gst?: number;
   pv: number;
   subtotalMrp?: number;
   subtotalPv?: number;
@@ -207,9 +220,14 @@ export interface Order {
   buyerCity?: string;
   buyerState?: string;
   buyerPincode?: string;
+  buyerGstin?: string;
   customerName?: string;
   customerMobile?: string;
   shippingAddress?: string;
+  recipientState?: string;
+  recipientPincode?: string;
+  consigneeGstin?: string;
+  consigneeMemberId?: string;
   transactionId?: string;
   paymentSlip?: string;
   rejectionReason?: string;
@@ -225,6 +243,7 @@ export interface Order {
   courierName?: string;
   trackingNumber?: string;
   dispatchedAt?: string;
+  invoiceNo?: number;
   createdAt: string;
 }
 
