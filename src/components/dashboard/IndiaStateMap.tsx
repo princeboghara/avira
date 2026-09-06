@@ -95,6 +95,7 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
   const [statesData, setStatesData] = useState<StateStat[]>([]);
   const [summary, setSummary] = useState<StateSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [networkScope, setNetworkScope] = useState<"all" | "team">("all");
 
   // Interaction States
   const [hoveredState, setHoveredState] = useState<StateStat | null>(null);
@@ -111,12 +112,18 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch state statistics from backend based on scope
+  // Fetch state statistics from backend based on networkScope and scope
   useEffect(() => {
     async function loadStats() {
       try {
         setLoading(true);
-        const res = await fetch(`/api/stats/states?scope=${scope}`);
+        const res = await fetch(`/api/stats/states?scope=${scope}&view=${networkScope}&_t=${Date.now()}`, {
+          cache: "no-store",
+          headers: {
+            "Pragma": "no-cache",
+            "Cache-Control": "no-cache",
+          },
+        });
         const data = await res.json();
         if (data.success) {
           setStatesData(data.states || []);
@@ -134,7 +141,7 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
       }
     }
     loadStats();
-  }, [scope]);
+  }, [scope, networkScope]);
 
   // Map state codes to stats dictionary
   const statsByCode = useMemo(() => {
@@ -157,10 +164,11 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
     if (isSelected) return "#059669"; // Fresh botanical emerald for selected
     if (isHovered) return "#34d399"; // Bright glowing mint on hover
 
+    const stat = statsByCode[code];
+
     // 1. Professional Pastel Multicolor mode
     if (viewMode === "multicolor") {
-      const stat = statsByCode[code];
-      if (scope === "member" && (!stat || stat.total === 0)) {
+      if (!stat || stat.total === 0) {
         return "#f1f5f9"; // Ultra-clean light slate for 0 member states
       }
       return STATE_PALETTE[code] || "#d1fae5";
@@ -168,7 +176,6 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
 
     // 2. Light Mint mode
     if (viewMode === "mint") {
-      const stat = statsByCode[code];
       if (stat && stat.total > 0) {
         return "#a7f3d0";
       }
@@ -176,7 +183,6 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
     }
 
     // 3. Heatmap Density Mode
-    const stat = statsByCode[code];
     if (!stat || stat.total === 0) {
       return "#f8fafc";
     }
@@ -329,26 +335,50 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
     <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-100 shadow-sm space-y-6 font-[Arial,sans-serif]">
       {/* 1. Header & Quick Summary */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-stone-100">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-emerald-50 text-[#059669] border border-emerald-200">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-3">
+            <span className="p-2.5 rounded-2xl bg-emerald-50 text-[#059669] border border-emerald-200 shadow-2xs">
               <Globe className="w-5 h-5" />
             </span>
             <div>
               <h2 className="text-xl font-bold text-stone-900 tracking-tight flex items-center gap-2">
-                <span>{isMember ? "India State Distribution" : "India National Network (Master Map)"}</span>
-                {!isMember && (
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100/80 text-[#059669] font-bold">
-                    Master Geographic Sync
-                  </span>
-                )}
+                <span>{networkScope === "all" ? "India Associates Geographic Network" : "My Team Downline Network"}</span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#059669] font-bold border border-emerald-200">
+                  {summary ? `${summary.totalMembers.toLocaleString()} Associates` : "Loading..."}
+                </span>
               </h2>
-              {!isMember && (
-                <p className="text-xs text-stone-500 font-bold mt-0.5">
-                  Master geographic distribution of all associates across 28 States & 8 Union Territories
-                </p>
-              )}
+              <p className="text-xs text-stone-500 font-bold mt-0.5">
+                {networkScope === "all"
+                  ? "Live geographic distribution across 28 States & 8 Union Territories (Pincode Mapped)"
+                  : "State-by-state geographic distribution of your active downline team"}
+              </p>
             </div>
+          </div>
+
+          {/* Network Scope Filter Buttons */}
+          <div className="inline-flex p-1 bg-stone-100 rounded-2xl border border-stone-200 text-xs font-bold shrink-0">
+            <button
+              type="button"
+              onClick={() => setNetworkScope("all")}
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                networkScope === "all"
+                  ? "bg-[#059669] text-white shadow-xs"
+                  : "text-stone-600 hover:text-[#059669]"
+              }`}
+            >
+              <span>🇮🇳 All India Network</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setNetworkScope("team")}
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                networkScope === "team"
+                  ? "bg-[#059669] text-white shadow-xs"
+                  : "text-stone-600 hover:text-[#059669]"
+              }`}
+            >
+              <span>👥 My Team</span>
+            </button>
           </div>
         </div>
 
@@ -595,23 +625,38 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
                         onClick={() => setSelectedState(stat)}
                       />
 
-                      {/* Standard Region Label Text */}
+                      {/* Standard Region Label Text with Member Count */}
                       {statePath.labelPos && !statePath.isSmallState && (
-                        <text
-                          x={statePath.labelPos.x}
-                          y={statePath.labelPos.y}
-                          textAnchor="middle"
-                          fontSize={statePath.labelPos.fontSize || "11"}
-                          fontWeight="bold"
-                          fill="#1e293b"
-                          stroke="#ffffff"
-                          strokeWidth="0.8"
-                          paintOrder="stroke"
-                          pointerEvents="none"
-                          className="select-none font-sans"
-                        >
-                          {statePath.code}
-                        </text>
+                        <g pointerEvents="none" className="select-none font-sans">
+                          <text
+                            x={statePath.labelPos.x}
+                            y={stat.total > 0 ? statePath.labelPos.y - 4 : statePath.labelPos.y}
+                            textAnchor="middle"
+                            fontSize={statePath.labelPos.fontSize || "11"}
+                            fontWeight="bold"
+                            fill="#0f172a"
+                            stroke="#ffffff"
+                            strokeWidth="1.2"
+                            paintOrder="stroke"
+                          >
+                            {statePath.code}
+                          </text>
+                          {stat.total > 0 && (
+                            <text
+                              x={statePath.labelPos.x}
+                              y={statePath.labelPos.y + 7.5}
+                              textAnchor="middle"
+                              fontSize="9.5"
+                              fontWeight="900"
+                              fill="#047857"
+                              stroke="#ffffff"
+                              strokeWidth="1.6"
+                              paintOrder="stroke"
+                            >
+                              {stat.total}
+                            </text>
+                          )}
+                        </g>
                       )}
                     </g>
                   );
@@ -656,28 +701,28 @@ export default function IndiaStateMap({ scope = "member" }: IndiaStateMapProps) 
                         filter="url(#pin-shadow)"
                       />
 
-                      {/* Code Tag Label Pill */}
+                      {/* Code Tag Label Pill with Live Count */}
                       <rect
                         x={hx + 8}
                         y={hy - 8}
-                        width="24"
+                        width={stat.total > 0 ? 38 : 24}
                         height="15"
                         rx="4"
-                        fill={isSelected ? "#059669" : "#ffffff"}
-                        stroke={isSelected ? "#059669" : "#cbd5e1"}
+                        fill={isSelected ? "#059669" : stat.total > 0 ? "#ecfdf5" : "#ffffff"}
+                        stroke={isSelected ? "#059669" : stat.total > 0 ? "#10b981" : "#cbd5e1"}
                         strokeWidth="1"
                         filter="url(#pin-shadow)"
                       />
                       <text
-                        x={hx + 20}
+                        x={hx + (stat.total > 0 ? 27 : 20)}
                         y={hy + 2.5}
                         textAnchor="middle"
-                        fontSize="9.5"
+                        fontSize="9"
                         fontWeight="bold"
-                        fill={isSelected ? "#ffffff" : "#1e293b"}
+                        fill={isSelected ? "#ffffff" : stat.total > 0 ? "#065f46" : "#1e293b"}
                         pointerEvents="none"
                       >
-                        {statePath.code}
+                        {stat.total > 0 ? `${statePath.code}:${stat.total}` : statePath.code}
                       </text>
                     </g>
                   );
