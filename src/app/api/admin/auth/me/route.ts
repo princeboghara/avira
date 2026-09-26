@@ -21,27 +21,30 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Lookup admin in database
-    const client = await pool.connect();
+    // Lookup admin in database if available
     let adminRecord: any = null;
-
     try {
-      if (payload.memberId && payload.memberId !== "ADMIN") {
-        const res = await client.query(
-          "SELECT * FROM v_users_full WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
-          [payload.memberId]
-        );
-        if (res.rows.length > 0) adminRecord = res.rows[0];
-      }
+      const client = await pool.connect();
+      try {
+        if (payload.memberId && payload.memberId !== "ADMIN") {
+          const res = await client.query(
+            "SELECT * FROM v_users_full WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
+            [payload.memberId]
+          );
+          if (res.rows.length > 0) adminRecord = res.rows[0];
+        }
 
-      if (!adminRecord) {
-        const res = await client.query(
-          "SELECT * FROM v_users_full WHERE role = 'ADMIN' ORDER BY created_at ASC LIMIT 1"
-        );
-        if (res.rows.length > 0) adminRecord = res.rows[0];
+        if (!adminRecord) {
+          const res = await client.query(
+            "SELECT * FROM v_users_full WHERE role = 'ADMIN' ORDER BY created_at ASC LIMIT 1"
+          );
+          if (res.rows.length > 0) adminRecord = res.rows[0];
+        }
+      } finally {
+        client.release();
       }
-    } finally {
-      client.release();
+    } catch (dbErr) {
+      console.warn("DB offline in admin auth me, using token session identity:", dbErr);
     }
 
     const user = adminRecord ? mapRowToUser(adminRecord) : null;

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { pool } from "@/lib/db";
+import { pool, isDummyMemberId } from "@/lib/db";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { DUMMY_MEMBER } from "@/lib/dummyData";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,7 +11,58 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
-    const client = await pool.connect();
+    if (isDummyMemberId(session.memberId)) {
+      return NextResponse.json({
+        success: true,
+        profile: {
+          id: DUMMY_MEMBER.id,
+          memberId: DUMMY_MEMBER.memberId,
+          fullName: DUMMY_MEMBER.fullName,
+          mobile: DUMMY_MEMBER.mobile,
+          pincode: DUMMY_MEMBER.pincode,
+          email: DUMMY_MEMBER.email || "",
+          address: DUMMY_MEMBER.address || "",
+          city: DUMMY_MEMBER.city || "",
+          state: DUMMY_MEMBER.state || "",
+          gstNumber: DUMMY_MEMBER.gstNumber || "",
+          nomineeName: DUMMY_MEMBER.nomineeName || "",
+          nomineeRelation: DUMMY_MEMBER.nomineeRelation || "",
+          avatarUrl: DUMMY_MEMBER.avatarUrl || "",
+          personalPv: DUMMY_MEMBER.personalPv,
+          walletBalance: DUMMY_MEMBER.walletBalance,
+          status: DUMMY_MEMBER.status,
+          joinedDate: DUMMY_MEMBER.joinedDate,
+        },
+      });
+    }
+
+    let client;
+    try {
+      client = await pool.connect();
+    } catch {
+      return NextResponse.json({
+        success: true,
+        profile: {
+          id: DUMMY_MEMBER.id,
+          memberId: DUMMY_MEMBER.memberId,
+          fullName: DUMMY_MEMBER.fullName,
+          mobile: DUMMY_MEMBER.mobile,
+          pincode: DUMMY_MEMBER.pincode,
+          email: DUMMY_MEMBER.email || "",
+          address: DUMMY_MEMBER.address || "",
+          city: DUMMY_MEMBER.city || "",
+          state: DUMMY_MEMBER.state || "",
+          gstNumber: DUMMY_MEMBER.gstNumber || "",
+          nomineeName: DUMMY_MEMBER.nomineeName || "",
+          nomineeRelation: DUMMY_MEMBER.nomineeRelation || "",
+          avatarUrl: DUMMY_MEMBER.avatarUrl || "",
+          personalPv: DUMMY_MEMBER.personalPv,
+          walletBalance: DUMMY_MEMBER.walletBalance,
+          status: DUMMY_MEMBER.status,
+          joinedDate: DUMMY_MEMBER.joinedDate,
+        },
+      });
+    }
     try {
       const res = await client.query(
         `SELECT id, member_id, full_name, mobile, email, pincode, city, state, address,

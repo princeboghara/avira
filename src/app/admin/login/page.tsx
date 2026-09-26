@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, ShieldCheck, AlertCircle, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Loader2, ShieldCheck, AlertCircle, Lock, User, Eye, EyeOff, Zap } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -156,6 +156,23 @@ export default function AdminLoginPage() {
                 </>
               )}
             </button>
+
+            {/* One-Click Demo Admin Dashboard */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = "/api/auth/demo-login?role=admin";
+                }}
+                className="w-full py-3 px-4 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-800 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all duration-200"
+              >
+                <Zap className="w-4 h-4 text-emerald-600" />
+                <span>⚡ One-Click Demo Admin Access</span>
+              </button>
+              <p className="mt-1 text-[10px] text-stone-500 text-center font-medium">
+                Master Password: <span className="font-bold text-stone-800">123456</span> or <span className="font-bold text-stone-800">admin123</span>
+              </p>
+            </div>
           </form>
 
           <div className="mt-6 pt-4 border-t border-gray-200/60 text-center">

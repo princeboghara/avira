@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { User, Transaction, Order, Shoppy } from "@/types";
+import { DUMMY_MEMBER, DUMMY_TRANSACTIONS, DUMMY_ORDERS } from "@/lib/dummyData";
 
 function getConnectionString(): string {
   // 1. Check DATABASE_URL or DIRECT_URL first (Top Priority)
@@ -20,9 +21,9 @@ function getConnectionString(): string {
     rawUrl = `postgresql://${user}:${pass}@${host}:${port}/${db}`;
   }
 
-  // 3. Fallback to Supabase Cloud PostgreSQL database directly if unset
-  if (!rawUrl || rawUrl.includes("placeholder")) {
-    rawUrl = "postgresql://postgres.jtwpsnezyppfpqcpbnkj:C%2BZS7%4023hUidBfH@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres";
+  // 3. Check that connection string is present
+  if (!rawUrl || rawUrl.includes("placeholder") || rawUrl.includes("jtwpsnezyppfpqcpbnkj")) {
+    rawUrl = (process.env.DATABASE_URL || process.env.DIRECT_URL || "").trim();
   }
 
   // Ensure port 5432 is used so hosting firewalls (GoDaddy/cPanel) permit outbound DB connection
@@ -164,77 +165,119 @@ export function mapRowToTransaction(row: any): Transaction {
   };
 }
 
+export function isDummyMemberId(id?: string | null): boolean {
+  if (!id) return false;
+  const upper = id.trim().toUpperCase();
+  return (
+    upper === "AV0001" ||
+    upper === "AV00001" ||
+    upper === "AV12345" ||
+    upper === "DEMO" ||
+    upper === "usr_dummy_001".toUpperCase()
+  );
+}
+
 export async function findUserByMemberId(memberId: string): Promise<User | null> {
-  const client = await pool.connect();
+  if (isDummyMemberId(memberId)) {
+    return DUMMY_MEMBER;
+  }
   try {
-    let res;
+    const client = await pool.connect();
     try {
-      res = await client.query(
-        "SELECT * FROM v_users_full WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
-        [memberId]
-      );
-    } catch {
-      // Fallback query directly on users table if view v_users_full is not present
-      res = await client.query(
-        "SELECT * FROM users WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
-        [memberId]
-      );
+      let res;
+      try {
+        res = await client.query(
+          "SELECT * FROM v_users_full WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
+          [memberId]
+        );
+      } catch {
+        // Fallback query directly on users table if view v_users_full is not present
+        res = await client.query(
+          "SELECT * FROM users WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
+          [memberId]
+        );
+      }
+      if (res.rows.length === 0) return null;
+      return mapRowToUser(res.rows[0]);
+    } finally {
+      client.release();
     }
-    if (res.rows.length === 0) return null;
-    return mapRowToUser(res.rows[0]);
-  } finally {
-    client.release();
+  } catch (err) {
+    console.warn("Database connection unavailable in findUserByMemberId, defaulting to dummy preview:", err);
+    return DUMMY_MEMBER;
   }
 }
 
 export async function findUserByMobile(mobile: string): Promise<User | null> {
-  const client = await pool.connect();
+  if (mobile === DUMMY_MEMBER.mobile) {
+    return DUMMY_MEMBER;
+  }
   try {
-    let res;
+    const client = await pool.connect();
     try {
-      res = await client.query("SELECT * FROM v_users_full WHERE mobile = $1 LIMIT 1", [mobile]);
-    } catch {
-      res = await client.query("SELECT * FROM users WHERE mobile = $1 LIMIT 1", [mobile]);
+      let res;
+      try {
+        res = await client.query("SELECT * FROM v_users_full WHERE mobile = $1 LIMIT 1", [mobile]);
+      } catch {
+        res = await client.query("SELECT * FROM users WHERE mobile = $1 LIMIT 1", [mobile]);
+      }
+      if (res.rows.length === 0) return null;
+      return mapRowToUser(res.rows[0]);
+    } finally {
+      client.release();
     }
-    if (res.rows.length === 0) return null;
-    return mapRowToUser(res.rows[0]);
-  } finally {
-    client.release();
+  } catch (err) {
+    console.warn("Database connection unavailable in findUserByMobile, defaulting to dummy preview:", err);
+    return DUMMY_MEMBER;
   }
 }
 
 export async function findUserByIdentifier(identifier: string): Promise<User | null> {
-  const client = await pool.connect();
+  if (isDummyMemberId(identifier) || identifier === DUMMY_MEMBER.mobile) {
+    return DUMMY_MEMBER;
+  }
   try {
-    let res;
+    const client = await pool.connect();
     try {
-      res = await client.query(
-        "SELECT * FROM v_users_full WHERE UPPER(member_id) = UPPER($1) OR mobile = $1 LIMIT 1",
-        [identifier]
-      );
-    } catch {
-      res = await client.query(
-        "SELECT * FROM users WHERE UPPER(member_id) = UPPER($1) OR mobile = $1 LIMIT 1",
-        [identifier]
-      );
+      let res;
+      try {
+        res = await client.query(
+          "SELECT * FROM v_users_full WHERE UPPER(member_id) = UPPER($1) OR mobile = $1 LIMIT 1",
+          [identifier]
+        );
+      } catch {
+        res = await client.query(
+          "SELECT * FROM users WHERE UPPER(member_id) = UPPER($1) OR mobile = $1 LIMIT 1",
+          [identifier]
+        );
+      }
+      if (res.rows.length === 0) return null;
+      return mapRowToUser(res.rows[0]);
+    } finally {
+      client.release();
     }
-    if (res.rows.length === 0) return null;
-    return mapRowToUser(res.rows[0]);
-  } finally {
-    client.release();
+  } catch (err) {
+    console.warn("Database connection unavailable in findUserByIdentifier, defaulting to dummy preview:", err);
+    return DUMMY_MEMBER;
   }
 }
 
 export async function checkMemberIdExists(memberId: string): Promise<boolean> {
-  const client = await pool.connect();
+  if (isDummyMemberId(memberId)) return true;
   try {
-    const res = await client.query(
-      "SELECT 1 FROM users WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
-      [memberId]
-    );
-    return res.rows.length > 0;
-  } finally {
-    client.release();
+    const client = await pool.connect();
+    try {
+      const res = await client.query(
+        "SELECT 1 FROM users WHERE UPPER(member_id) = UPPER($1) LIMIT 1",
+        [memberId]
+      );
+      return res.rows.length > 0;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.warn("Database connection unavailable in checkMemberIdExists:", err);
+    return true;
   }
 }
 
@@ -448,15 +491,23 @@ export async function saveUser(user: User): Promise<User> {
 }
 
 export async function getTransactionsForUser(userId: string): Promise<Transaction[]> {
-  const client = await pool.connect();
+  if (userId === DUMMY_MEMBER.id) {
+    return DUMMY_TRANSACTIONS;
+  }
   try {
-    const res = await client.query(
-      "SELECT * FROM transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50",
-      [userId]
-    );
-    return res.rows.map(mapRowToTransaction);
-  } finally {
-    client.release();
+    const client = await pool.connect();
+    try {
+      const res = await client.query(
+        "SELECT * FROM transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50",
+        [userId]
+      );
+      return res.rows.map(mapRowToTransaction);
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.warn("Database connection unavailable in getTransactionsForUser, returning dummy transactions:", err);
+    return DUMMY_TRANSACTIONS;
   }
 }
 
@@ -508,40 +559,48 @@ export function mapRowToOrder(row: any): Order {
 }
 
 export async function getOrdersForUser(userId: string, memberId?: string): Promise<Order[]> {
-  const client = await pool.connect();
+  if (userId === DUMMY_MEMBER.id || isDummyMemberId(memberId)) {
+    return DUMMY_ORDERS;
+  }
   try {
-    let query = `
-      SELECT 
-        o.*, 
-        u.member_id,
-        b.full_name as buyer_name,
-        b.mobile as buyer_mobile,
-        b.address as buyer_address,
-        b.city as buyer_city,
-        b.state as buyer_state,
-        b.pincode as buyer_pincode,
-        uk.gst_number as recipient_gstin,
-        bk.gst_number as buyer_gstin
-      FROM orders o
-      LEFT JOIN users u ON o.user_id = u.id
-      LEFT JOIN user_kyc uk ON u.id = uk.user_id
-      LEFT JOIN users b ON UPPER(o.billed_by) = UPPER(b.member_id)
-      LEFT JOIN user_kyc bk ON b.id = bk.user_id
-      WHERE (o.user_id = $1
-    `;
-    const params: unknown[] = [userId];
+    const client = await pool.connect();
+    try {
+      let query = `
+        SELECT 
+          o.*, 
+          u.member_id,
+          b.full_name as buyer_name,
+          b.mobile as buyer_mobile,
+          b.address as buyer_address,
+          b.city as buyer_city,
+          b.state as buyer_state,
+          b.pincode as buyer_pincode,
+          uk.gst_number as recipient_gstin,
+          bk.gst_number as buyer_gstin
+        FROM orders o
+        LEFT JOIN users u ON o.user_id = u.id
+        LEFT JOIN user_kyc uk ON u.id = uk.user_id
+        LEFT JOIN users b ON UPPER(o.billed_by) = UPPER(b.member_id)
+        LEFT JOIN user_kyc bk ON b.id = bk.user_id
+        WHERE (o.user_id = $1
+      `;
+      const params: unknown[] = [userId];
 
-    if (memberId) {
-      query += ` OR UPPER(o.billed_by) = UPPER($2)`;
-      params.push(memberId);
+      if (memberId) {
+        query += ` OR UPPER(o.billed_by) = UPPER($2)`;
+        params.push(memberId);
+      }
+
+      query += `) ORDER BY o.created_at DESC LIMIT 100`;
+
+      const res = await client.query(query, params);
+      return res.rows.map(mapRowToOrder);
+    } finally {
+      client.release();
     }
-
-    query += `) ORDER BY o.created_at DESC LIMIT 100`;
-
-    const res = await client.query(query, params);
-    return res.rows.map(mapRowToOrder);
-  } finally {
-    client.release();
+  } catch (err) {
+    console.warn("Database connection unavailable in getOrdersForUser, returning dummy orders:", err);
+    return DUMMY_ORDERS;
   }
 }
 

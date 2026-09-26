@@ -220,16 +220,19 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <MemberLayout user={user}>
-        <div className="space-y-6 max-w-7xl mx-auto pb-16 animate-pulse">
-          <div className="neo-card rounded-3xl p-6 h-32 flex items-center justify-between" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="h-36 neo-card rounded-3xl" />
-            <div className="h-36 neo-card rounded-3xl" />
+        <div className="space-y-4 max-w-7xl mx-auto pb-16 animate-pulse font-sans">
+          <div className="bg-white/80 rounded-2xl p-4 h-20 border border-slate-200/60" />
+          <div className="bg-white/80 rounded-2xl p-4 h-16 border border-slate-200/60" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="h-28 bg-white/80 rounded-2xl border border-slate-200/60" />
+            <div className="h-28 bg-white/80 rounded-2xl border border-slate-200/60" />
+            <div className="h-28 bg-white/80 rounded-2xl border border-slate-200/60" />
+            <div className="h-28 bg-white/80 rounded-2xl border border-slate-200/60" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="h-44 neo-card rounded-3xl" />
-            <div className="h-44 neo-card rounded-3xl" />
-            <div className="h-44 neo-card rounded-3xl" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+            <div className="h-28 bg-white/80 rounded-2xl border border-slate-200/60" />
+            <div className="h-28 bg-white/80 rounded-2xl border border-slate-200/60" />
+            <div className="h-28 bg-white/80 rounded-2xl border border-slate-200/60" />
           </div>
         </div>
       </MemberLayout>
@@ -342,431 +345,321 @@ export default function DashboardPage() {
         </div>
 
         {/* ========================================================
-            2. VIBRANT DUAL-WING REFERRAL LINK CARDS
+            2. COMPACT UNIFIED DUAL-WING REFERRAL BAR
            ======================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Left Wing Referral Card (Vibrant Emerald / Mint) */}
-          <div className="neo-card-emerald rounded-[32px] p-5 sm:p-6 flex flex-col justify-between group relative overflow-hidden">
-            <div className="flex items-center justify-between mb-3 relative z-10">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#006d36] to-[#10b981] text-white flex items-center justify-center font-heading font-black text-xs shadow-md shadow-emerald-600/30">
+        <div className="bg-white/95 rounded-2xl p-3 sm:p-4 border border-slate-200/80 shadow-xs">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            {/* Left Placement Wing */}
+            <div className="flex-1 flex items-center justify-between gap-2.5 p-2 sm:p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/60">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-[#006d36] text-white shrink-0">
                   LEFT
-                </div>
-                <div>
-                  <h3 className="text-sm font-heading font-extrabold text-[#065f46] flex items-center gap-1.5">
-                    <span>Left Team Placement Link</span>
-                    <Share2 className="w-3.5 h-3.5 text-[#006d36]" />
-                  </h3>
-                  <span className="text-[11px] text-[#047857] font-medium">Auto-assigns direct recruits to Left Wing</span>
-                </div>
+                </span>
+                <span className="text-xs font-mono font-bold text-emerald-950 truncate">
+                  {leftReferralUrl || "https://..."}
+                </span>
               </div>
-            </div>
-
-            <div className="flex items-center gap-2 mt-2 p-2 neo-inset-emerald rounded-2xl relative z-10">
-              <input
-                type="text"
-                readOnly
-                value={leftReferralUrl}
-                className="flex-1 bg-transparent text-xs font-mono font-bold text-[#064e3b] px-2 outline-none truncate"
-              />
               <button
                 type="button"
                 onClick={handleCopyLeft}
-                className="neo-btn-primary px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer shadow-md shadow-emerald-700/30"
+                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#006d36] hover:bg-[#005025] text-white flex items-center gap-1 shrink-0 transition-colors shadow-2xs cursor-pointer"
               >
-                {copiedLeft ? (
-                  <>
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copy</span>
-                  </>
-                )}
+                {copiedLeft ? <Check className="w-3.5 h-3.5 text-emerald-200" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedLeft ? "Copied" : "Copy"}</span>
               </button>
             </div>
-          </div>
 
-          {/* Right Wing Referral Card (Vibrant Royal Violet / Indigo) */}
-          <div className="neo-card-violet rounded-[32px] p-5 sm:p-6 flex flex-col justify-between group relative overflow-hidden">
-            <div className="flex items-center justify-between mb-3 relative z-10">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#4f46e5] to-[#8b5cf6] text-white flex items-center justify-center font-heading font-black text-xs shadow-md shadow-indigo-600/30">
+            {/* Right Placement Wing */}
+            <div className="flex-1 flex items-center justify-between gap-2.5 p-2 sm:p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-200/60">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-indigo-600 text-white shrink-0">
                   RIGHT
-                </div>
-                <div>
-                  <h3 className="text-sm font-heading font-extrabold text-[#5b21b6] flex items-center gap-1.5">
-                    <span>Right Team Placement Link</span>
-                    <Share2 className="w-3.5 h-3.5 text-[#6d28d9]" />
-                  </h3>
-                  <span className="text-[11px] text-[#6d28d9] font-medium">Auto-assigns direct recruits to Right Wing</span>
-                </div>
+                </span>
+                <span className="text-xs font-mono font-bold text-indigo-950 truncate">
+                  {rightReferralUrl || "https://..."}
+                </span>
               </div>
-            </div>
-
-            <div className="flex items-center gap-2 mt-2 p-2 neo-inset-purple rounded-2xl relative z-10">
-              <input
-                type="text"
-                readOnly
-                value={rightReferralUrl}
-                className="flex-1 bg-transparent text-xs font-mono font-bold text-[#4c1d95] px-2 outline-none truncate"
-              />
               <button
                 type="button"
                 onClick={handleCopyRight}
-                className="neo-btn-indigo px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer shadow-md shadow-indigo-600/30"
+                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1 shrink-0 transition-colors shadow-2xs cursor-pointer"
               >
-                {copiedRight ? (
-                  <>
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copy</span>
-                  </>
-                )}
+                {copiedRight ? <Check className="w-3.5 h-3.5 text-indigo-200" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedRight ? "Copied" : "Copy"}</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* ========================================================
-            3. INCOME CARDS (MOBILE OPTIMIZED: PAID & PENDING SIDE-BY-SIDE)
+            3. AESTHETIC COMPACT FINANCIAL KPI GRID (4 CARDS)
            ======================================================== */}
-        <div className="space-y-4 sm:space-y-5">
-          {/* Top: Total Lifetime Earnings Card */}
-          <div className="neo-card-emerald rounded-[32px] p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden group neo-card-hover">
-            <div className="absolute -top-10 -right-10 w-36 h-36 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#006d36] to-[#10b981] text-white flex items-center justify-center shadow-lg shadow-emerald-700/30 shrink-0">
-                <Wallet className="w-7 h-7" />
-              </div>
-              <div>
-                <span className="text-[11px] font-black uppercase tracking-widest text-[#065f46] block mb-0.5">
-                  Total Lifetime Earnings
-                </span>
-                <div className="text-3xl sm:text-4xl font-heading font-black text-[#006d36] tracking-tight">
-                  ₹{user?.totalEarnings?.toLocaleString("en-IN") || 0}
-                </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* Card 1: Total Earnings & Wallet */}
+          <div className="bg-white/95 rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-800">
+                Total Earnings
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#006d36] to-[#10b981] text-white flex items-center justify-center shadow-sm shadow-emerald-700/25">
+                <Wallet className="w-4 h-4" />
               </div>
             </div>
-            <div className="flex items-center gap-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-emerald-500/20 text-xs text-[#065f46]">
-              <span>Withdrawable: <strong className="text-[#006d36] font-mono font-black text-sm">₹{user?.walletBalance?.toLocaleString("en-IN") || 0}</strong></span>
-              <Link
-                href="/dashboard/statement"
-                className="hover:underline flex items-center gap-1 font-bold text-[#006d36] neo-btn-secondary px-3.5 py-1.5 rounded-xl bg-white/80"
-              >
-                <span>Payouts</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+            <div>
+              <div className="text-xl sm:text-2xl font-heading font-black text-[#0f172a] tracking-tight">
+                ₹{user?.totalEarnings?.toLocaleString("en-IN") || 0}
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-[11px] font-bold">
+                <span className="text-slate-500">Wallet:</span>
+                <span className="text-[#006d36] font-mono">₹{user?.walletBalance?.toLocaleString("en-IN") || 0}</span>
+              </div>
             </div>
           </div>
 
-          {/* Row 1: Total Paid Income & Pending Income Side-by-Side (grid-cols-2 on Mobile!) */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-5">
-            {/* Card: Total Paid Income (Glacial Ice Cyan) */}
-            <Link
-              href="/dashboard/statement"
-              className="neo-card-cyan rounded-[26px] sm:rounded-[32px] p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden group neo-card-hover"
-            >
-              <div className="absolute -top-8 -right-8 w-28 h-28 bg-cyan-400/20 rounded-full blur-xl pointer-events-none" />
-              <div>
-                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#0891b2] to-[#06b6d4] text-white flex items-center justify-center shadow-md shadow-cyan-700/25">
-                    <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-cyan-500/20 text-cyan-800 border border-cyan-500/30">
-                    Paid
-                  </span>
-                </div>
-                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#0e7490] block mb-1">
-                  Total Paid Income
-                </span>
-                <div className="text-xl sm:text-3xl font-heading font-black text-[#0e7490] tracking-tight">
-                  ₹{totalPaidIncome.toLocaleString("en-IN")}
-                </div>
-              </div>
-              <div className="pt-2 sm:pt-3 mt-2 sm:mt-3 border-t border-cyan-500/20 text-[10px] sm:text-xs text-[#0e7490] font-bold flex items-center justify-between">
-                <span className="hidden sm:inline">Disbursed</span>
-                <span className="flex items-center gap-1 group-hover:underline">
-                  <span>Statement</span>
-                  <ArrowRight className="w-3 h-3" />
-                </span>
-              </div>
-            </Link>
-
-            {/* Card: Pending Income (Distinct Ruby Rose) */}
-            <Link
-              href="/dashboard/statement"
-              className="neo-card-rose rounded-[26px] sm:rounded-[32px] p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden group neo-card-hover"
-            >
-              <div className="absolute -top-8 -right-8 w-28 h-28 bg-rose-400/20 rounded-full blur-xl pointer-events-none" />
-              <div>
-                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#e11d48] to-[#fb7185] text-white flex items-center justify-center shadow-md shadow-rose-600/25">
-                    <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-rose-500/15 text-rose-800 border border-rose-500/30">
-                    Pending
-                  </span>
-                </div>
-                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-rose-700 block mb-1">
-                  Pending Income
-                </span>
-                <div className="text-xl sm:text-3xl font-heading font-black text-rose-800 tracking-tight">
-                  ₹{pendingPayoutIncome.toLocaleString("en-IN")}
-                </div>
-              </div>
-              <div className="pt-2 sm:pt-3 mt-2 sm:mt-3 border-t border-rose-500/20 text-[10px] sm:text-xs text-rose-700 font-bold flex items-center justify-between">
-                <span className="hidden sm:inline">Scheduled Payout</span>
-                <span className="flex items-center gap-1 group-hover:underline">
-                  <span>Details</span>
-                  <ArrowRight className="w-3 h-3" />
-                </span>
-              </div>
-            </Link>
-          </div>
-
-          {/* Row 2: Today's & This Week's Income Side-by-Side (grid-cols-2 on Mobile & Desktop!) */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-5">
-            {/* Today's Income Card */}
-            <div className="neo-card-amber rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden group neo-card-hover">
-              <div className="absolute -top-8 -right-8 w-28 h-28 bg-amber-400/20 rounded-full blur-xl pointer-events-none" />
-              <div>
-                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#d97706] to-[#f59e0b] text-white flex items-center justify-center shadow-md shadow-amber-600/30 shrink-0">
-                    <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-900 border border-amber-500/30">
-                    Today
-                  </span>
-                </div>
-                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#92400e] block mb-0.5">
-                  Today&apos;s Income
-                </span>
-                <div className="text-xl sm:text-3xl font-heading font-black text-amber-800 tracking-tight">
-                  ₹{todayIncome.toLocaleString("en-IN")}
-                </div>
-              </div>
-              <div className="pt-2 sm:pt-3 mt-2 sm:mt-3 border-t border-amber-500/20 text-[10px] sm:text-xs text-[#92400e] font-bold flex items-center justify-between">
-                <span>⚡ Live Daily</span>
+          {/* Card 2: Total Paid Income */}
+          <Link
+            href="/dashboard/statement"
+            className="bg-white/95 rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-cyan-800">
+                Total Paid
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0891b2] to-[#06b6d4] text-white flex items-center justify-center shadow-sm shadow-cyan-700/25">
+                <CheckCircle2 className="w-4 h-4" />
               </div>
             </div>
-
-            {/* This Week's Income Card */}
-            <div className="neo-card-violet rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden group neo-card-hover">
-              <div className="absolute -top-8 -right-8 w-28 h-28 bg-purple-400/20 rounded-full blur-xl pointer-events-none" />
-              <div>
-                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center shadow-md shadow-purple-600/30 shrink-0">
-                    <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-900 border border-purple-500/30">
-                    Weekly
-                  </span>
-                </div>
-                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#5b21b6] block mb-0.5">
-                  This Week&apos;s Income
-                </span>
-                <div className="text-xl sm:text-3xl font-heading font-black text-[#5b21b6] tracking-tight">
-                  ₹{thisWeekIncome.toLocaleString("en-IN")}
-                </div>
+            <div>
+              <div className="text-xl sm:text-2xl font-heading font-black text-[#0f172a] tracking-tight">
+                ₹{totalPaidIncome.toLocaleString("en-IN")}
               </div>
-              <div className="pt-2 sm:pt-3 mt-2 sm:mt-3 border-t border-purple-500/20 text-[10px] sm:text-xs text-[#5b21b6] font-bold flex items-center justify-between">
+              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-[11px] font-bold">
+                <span className="text-slate-500">Pending:</span>
+                <span className="text-rose-600 font-mono">₹{pendingPayoutIncome.toLocaleString("en-IN")}</span>
+              </div>
+            </div>
+          </Link>
+
+          {/* Card 3: Today's Income */}
+          <div className="bg-white/95 rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-amber-800">
+                Today&apos;s Income
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#d97706] to-[#f59e0b] text-white flex items-center justify-center shadow-sm shadow-amber-600/25">
+                <Zap className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-xl sm:text-2xl font-heading font-black text-[#0f172a] tracking-tight">
+                ₹{todayIncome.toLocaleString("en-IN")}
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-amber-700">
+                <span>⚡ Live Daily Cycle</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: This Week's Income */}
+          <div className="bg-white/95 rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-purple-800">
+                This Week
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center shadow-sm shadow-purple-600/25">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-xl sm:text-2xl font-heading font-black text-[#0f172a] tracking-tight">
+                ₹{thisWeekIncome.toLocaleString("en-IN")}
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-purple-700">
                 <span>📅 Current Cycle</span>
+                <span>Active</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* ========================================================
-            4. VOLUME & TEAM PODS (MATCHED PV REMOVED)
+            4. COMPACT NETWORK & PV PERFORMANCE HUB (3 CARDS)
            ======================================================== */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {/* Card 1: Downline Associates (Executive Royal Sapphire Blue) */}
-          <div className="border border-blue-200/80 bg-gradient-to-br from-blue-50/90 via-white to-sky-50/50 rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group shadow-xs hover:shadow-md transition-all duration-300">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-black uppercase tracking-wider text-[#1e40af]">
-                  Downline Team
-                </span>
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#1d4ed8] to-[#60a5fa] text-white flex items-center justify-center shadow-md shadow-blue-600/25">
-                  <Users className="w-4 h-4" />
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+          {/* Pod 1: Downline Associates */}
+          <Link
+            href="/dashboard/community/team"
+            className="bg-white/95 rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-blue-800">
+                Network Team
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#1d4ed8] to-[#60a5fa] text-white flex items-center justify-center shadow-sm shadow-blue-600/25">
+                <Users className="w-4 h-4" />
               </div>
-
-              <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200/60 text-center my-1">
-                <span className="text-3xl font-heading font-black text-[#1e40af] block">
+            </div>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-xl sm:text-2xl font-heading font-black text-[#0f172a]">
                   {totalTeamCount}
                 </span>
-                <span className="text-[10px] uppercase font-bold text-[#1e40af] tracking-wider block mt-0.5">
-                  Total Associates in Network
+                <span className="text-[11px] text-slate-500 font-bold">Associates</span>
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-2 text-[10px] sm:text-[11px] font-bold">
+                <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+                  Left: {leftTeamCount}
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200/60">
+                  Right: {rightTeamCount}
                 </span>
               </div>
             </div>
+          </Link>
 
-            <div className="mt-3 text-center text-xs text-[#1e40af] font-bold pt-2 border-t border-blue-500/20">
-              👥 Active Team Size
+          {/* Pod 2: Carry Forward PV */}
+          <div className="bg-white/95 rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-indigo-800">
+                Carry Forward PV
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#4338ca] to-[#6366f1] text-white flex items-center justify-center shadow-sm shadow-indigo-600/25">
+                <Clock className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-xl sm:text-2xl font-heading font-black text-[#0f172a]">
+                  {carryLeftPv + carryRightPv}
+                </span>
+                <span className="text-[11px] text-slate-500 font-bold">PV Available</span>
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-2 text-[10px] sm:text-[11px] font-bold">
+                <span className="px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-200/60">
+                  Left: {carryLeftPv} PV
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 border border-purple-200/60">
+                  Right: {carryRightPv} PV
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Card 2: Carry Forward PV (Twilight Cobalt / Deep Indigo) */}
-          <div className="neo-card-indigo rounded-[30px] p-5 sm:p-6 flex flex-col justify-between group neo-card-hover">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-black uppercase tracking-wider text-[#3730a3]">
-                  Carry Forward PV
-                </span>
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#4338ca] to-[#6366f1] text-white flex items-center justify-center shadow-md shadow-indigo-600/25">
-                  <Clock className="w-4 h-4" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 my-1">
-                <div className="p-3 rounded-2xl neo-inset-teal text-center">
-                  <span className="text-[10px] font-black uppercase text-[#115e59] block">Left</span>
-                  <span className="text-xl font-heading font-black text-[#0f766e]">{carryLeftPv}</span>
-                  <span className="text-[9px] text-[#0d9488] block font-bold">PV</span>
-                </div>
-                <div className="p-3 rounded-2xl neo-inset-purple text-center">
-                  <span className="text-[10px] font-black uppercase text-[#5b21b6] block">Right</span>
-                  <span className="text-xl font-heading font-black text-[#6d28d9]">{carryRightPv}</span>
-                  <span className="text-[9px] text-[#7c3aed] block font-bold">PV</span>
-                </div>
+          {/* Pod 3: PV Volume & Matching */}
+          <div className="bg-white/95 rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-teal-800">
+                PV Matched
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0f766e] to-[#14b8a6] text-white flex items-center justify-center shadow-sm shadow-teal-700/25">
+                <Sparkles className="w-4 h-4" />
               </div>
             </div>
-
-            <div className="mt-3 text-center text-xs text-[#3730a3] font-bold pt-2 border-t border-indigo-500/20">
-              ⚖️ Carry Balance Available
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-xl sm:text-2xl font-heading font-black text-[#0f172a]">
+                  {todayMatchedPv}
+                </span>
+                <span className="text-[11px] text-slate-500 font-bold">PV Today</span>
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-slate-600">
+                <span>Weekly Matched:</span>
+                <span className="text-[#0f766e] font-mono font-black">{weeklyMatchedPv} PV</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* ========================================================
-            5. ACCOUNT CREDENTIALS & COMPLIANCE (2x2 ON MOBILE)
+            5. ACCOUNT CREDENTIALS & BOUNDARIES (COMPACT 4 CARDS)
            ======================================================== */}
-        <div className="neo-card rounded-[32px] p-5 sm:p-7 border border-white">
-          <div className="mb-4 sm:mb-5 pb-3 border-b border-gray-200/80">
-            <h2 className="text-base sm:text-lg font-heading font-black text-[#0f172a]">
-              Account Credentials & Boundaries
-            </h2>
-            <p className="text-xs text-[#64748b] font-medium">
-              Registration info, compliance status, capping boundaries, and profile completion
-            </p>
+        <div className="bg-white/95 rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs">
+          <div className="mb-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-heading font-black text-[#0f172a]">
+                Account Status & Limits
+              </h2>
+            </div>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Compliance & Limits
+            </span>
           </div>
 
-          {/* 4 Cards: 2x2 Grid on Mobile (grid-cols-2), 4 on Desktop (lg:grid-cols-4) */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
             {/* Joining Date */}
-            <div className="p-3.5 sm:p-4 rounded-2xl neo-inset-emerald flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
-                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#006d36]" />
-                  <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#065f46]">Joining Date</span>
-                </div>
-                <div className="font-mono font-black text-xs sm:text-sm text-[#006d36] mt-0.5">
-                  {user?.createdAt
-                    ? new Date(user.createdAt).toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : user?.joinedDate
-                    ? new Date(user.joinedDate).toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : user?.activationDate
-                    ? new Date(user.activationDate).toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "—"}
-                </div>
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 flex flex-col justify-between">
+              <div className="flex items-center gap-1.5 mb-1 text-slate-600">
+                <Calendar className="w-3.5 h-3.5 text-[#006d36]" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">Joining Date</span>
               </div>
-              <span className="text-[9px] sm:text-[10px] text-[#047857] font-medium block mt-1">Official Joining Date</span>
+              <div className="font-mono font-black text-xs sm:text-sm text-[#0f172a]">
+                {user?.createdAt
+                  ? new Date(user.createdAt).toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : user?.joinedDate
+                  ? new Date(user.joinedDate).toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "—"}
+              </div>
             </div>
 
-            {/* KYC Status (Glacial Cyan) */}
-            <div className="p-3.5 sm:p-4 rounded-2xl neo-inset-cyan flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
-                  <FileCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0891b2]" />
-                  <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#0e7490]">KYC Status</span>
-                </div>
-                <div className="mt-1">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase shadow-2xs ${
-                      user?.kycStatus === "VERIFIED"
-                        ? "bg-emerald-500 text-white"
-                        : user?.kycStatus === "PENDING"
-                        ? "bg-amber-500 text-white"
-                        : user?.kycStatus === "REJECTED"
-                        ? "bg-rose-500 text-white"
-                        : "bg-gray-400 text-white"
-                    }`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                    <span>{user?.kycStatus || "PENDING"}</span>
-                  </span>
-                </div>
+            {/* KYC Status */}
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 flex flex-col justify-between">
+              <div className="flex items-center gap-1.5 mb-1 text-slate-600">
+                <FileCheck className="w-3.5 h-3.5 text-[#0891b2]" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">KYC Status</span>
               </div>
-              <span className="text-[9px] sm:text-[10px] text-[#0e7490] font-medium block mt-1">Aadhaar, PAN, Bank</span>
+              <div>
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shadow-2xs ${
+                    user?.kycStatus === "VERIFIED"
+                      ? "bg-emerald-500 text-white"
+                      : user?.kycStatus === "PENDING"
+                      ? "bg-amber-500 text-white"
+                      : "bg-gray-400 text-white"
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  <span>{user?.kycStatus || "PENDING"}</span>
+                </span>
+              </div>
             </div>
 
-            {/* Daily Capping (Ruby Rose / Shield) */}
-            <div className="p-3.5 sm:p-4 rounded-2xl neo-inset-rose flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
-                  <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" />
-                  <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-rose-800">Daily Capping</span>
-                </div>
-                <div className="font-mono font-black text-xs sm:text-sm text-rose-900 mt-0.5">
-                  ₹{(user?.dailyCapping || (isUserActive ? 1000 : 0)).toLocaleString("en-IN")} / Day
-                </div>
+            {/* Daily Capping */}
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 flex flex-col justify-between">
+              <div className="flex items-center gap-1.5 mb-1 text-slate-600">
+                <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">Daily Capping</span>
               </div>
-              <span className="text-[9px] sm:text-[10px] text-rose-700 font-medium block mt-1">Based on PV rank</span>
+              <div className="font-mono font-black text-xs sm:text-sm text-[#0f172a]">
+                ₹{(user?.dailyCapping || (isUserActive ? 1000 : 0)).toLocaleString("en-IN")} / Day
+              </div>
             </div>
 
-            {/* Profile Completion (Royal Violet / Purple) */}
+            {/* Profile Completion */}
             <Link
               href="/dashboard/profile"
-              className="p-3.5 sm:p-4 rounded-2xl neo-inset-purple flex flex-col justify-between group cursor-pointer hover:bg-purple-100/50 transition-colors"
+              className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/60 flex flex-col justify-between group cursor-pointer transition-colors"
             >
-              <div>
-                <div className="flex items-center justify-between gap-1 mb-1">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#7c3aed]" />
-                    <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#6d28d9]">
-                      Profile
-                    </span>
-                  </div>
-                  <span className="text-[10px] sm:text-xs font-black text-[#6d28d9] font-mono">
-                    {profileCompletion}%
-                  </span>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1 text-slate-600">
+                  <Sparkles className="w-3.5 h-3.5 text-[#7c3aed]" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">Profile</span>
                 </div>
-
-                {/* Mini Progress Bar */}
-                <div className="w-full bg-purple-200/80 rounded-full h-1.5 sm:h-2 my-1 overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-purple-600 to-indigo-600 h-full rounded-full transition-all duration-700"
-                    style={{ width: `${profileCompletion}%` }}
-                  />
-                </div>
+                <span className="text-[10px] font-mono font-black text-[#7c3aed]">{profileCompletion}%</span>
               </div>
-
-              <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-[#6d28d9] font-bold mt-1">
-                <span>{profileCompletion === 100 ? "100% Done" : "Complete Now"}</span>
-                <span className="group-hover:underline flex items-center">
-                  <span>Edit</span>
-                  <ChevronRight className="w-3 h-3" />
-                </span>
+              <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${profileCompletion}%` }}
+                />
               </div>
             </Link>
           </div>
@@ -780,26 +673,26 @@ export default function DashboardPage() {
         {/* ========================================================
             7. RECENT FINANCIAL STATEMENT ACCORDION
            ======================================================== */}
-        <div className="neo-card rounded-[32px] overflow-hidden transition-all duration-300 border border-white">
+        <div className="bg-white/95 rounded-2xl overflow-hidden transition-all duration-300 border border-slate-200/80 shadow-xs">
           <button
             type="button"
             onClick={() => setIsStatementOpen((prev) => !prev)}
-            className="w-full p-6 sm:p-7 flex items-center justify-between text-left hover:bg-white/60 transition-colors cursor-pointer"
+            className="w-full p-4 sm:p-4.5 flex items-center justify-between text-left hover:bg-slate-50/80 transition-colors cursor-pointer"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#1e3a8a] via-[#4338ca] to-[#06b6d4] text-white flex items-center justify-center font-bold shadow-md shadow-indigo-700/25">
-                <FileText className="w-6 h-6" />
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#1e3a8a] via-[#4338ca] to-[#06b6d4] text-white flex items-center justify-center font-bold shadow-sm shadow-indigo-700/20">
+                <FileText className="w-4 h-4" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base sm:text-lg font-heading font-black text-[#0f172a]">
+                  <h2 className="text-sm font-heading font-black text-[#0f172a]">
                     Recent Financial Statement
                   </h2>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/15 text-blue-800 border border-blue-500/25">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/15 text-blue-800 border border-blue-500/25">
                     {transactions.length} entries
                   </span>
                 </div>
-                <p className="text-xs text-[#64748b] font-medium mt-0.5">
+                <p className="text-[11px] text-[#64748b] font-medium mt-0.5">
                   Click to {isStatementOpen ? "hide" : "view"} recent binary pair bonuses and ledger entries
                 </p>
               </div>
@@ -810,7 +703,7 @@ export default function DashboardPage() {
                 {isStatementOpen ? "Collapse" : "Open"}
               </span>
               <div
-                className={`neo-btn-icon p-2.5 rounded-xl transition-all duration-300 ${
+                className={`p-2 rounded-lg bg-slate-100 transition-all duration-300 ${
                   isStatementOpen ? "rotate-180 text-blue-700" : "text-[#64748b]"
                 }`}
               >
@@ -820,7 +713,7 @@ export default function DashboardPage() {
           </button>
 
           {isStatementOpen && (
-            <div className="p-6 sm:p-8 pt-0 border-t border-gray-200/80 animate-fadeIn">
+            <div className="p-4 sm:p-5 pt-0 border-t border-slate-100 animate-fadeIn">
               <div className="flex items-center justify-between my-4">
                 <span className="text-xs text-[#64748b] font-medium">
                   Showing latest transactions

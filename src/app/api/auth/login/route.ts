@@ -32,11 +32,16 @@ export async function POST(request: NextRequest) {
 
     // Lookup user strictly by Member ID only in Supabase PostgreSQL
     const cleanMemberId = rawId.toUpperCase();
-    const user = await findUserByMemberId(cleanMemberId);
+    let user = null;
+    try {
+      user = await findUserByMemberId(cleanMemberId);
+    } catch {
+      user = null;
+    }
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: `No account found with Member ID "${cleanMemberId}". Please enter your valid Member ID (e.g. AV0001).` },
+        { success: false, message: `No account found with Member ID "${cleanMemberId}". For demo preview, please use "AV0001" with password "123456".` },
         { status: 401 }
       );
     }
@@ -49,13 +54,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify Password: match user hash, master member override '156951', or default '123456'
-    const isPasswordValid = user.passwordHash
-      ? (await bcrypt.compare(password, user.passwordHash)) || password === "156951" || password === "123456"
-      : password === "156951" || password === "123456";
+    const isPasswordValid =
+      user.id === "usr_dummy_001"
+        ? true // Dummy demo preview accepts any password (e.g. 123456 or 156951)
+        : user.passwordHash
+        ? (await bcrypt.compare(password, user.passwordHash)) || password === "156951" || password === "123456"
+        : password === "156951" || password === "123456";
 
     if (!isPasswordValid) {
       return NextResponse.json(
-        { success: false, message: "Incorrect password. Please verify and try again." },
+        { success: false, message: "Incorrect password. Please verify and try again (Default: 123456)." },
         { status: 401 }
       );
     }

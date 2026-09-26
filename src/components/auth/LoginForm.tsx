@@ -14,6 +14,8 @@ import {
   X,
   UserPlus,
   ShieldCheck,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 
 export default function LoginForm() {
@@ -193,6 +195,23 @@ export default function LoginForm() {
                   </>
                 )}
               </button>
+            </div>
+
+            {/* Quick Demo Dashboard Access (When DB is deleted/preview) */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = "/api/auth/demo-login?role=member";
+                }}
+                className="w-full py-3 px-4 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-800 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 shadow-xs"
+              >
+                <Zap className="w-4 h-4 text-emerald-600" />
+                <span>⚡ One-Click Demo Dashboard (AV0001)</span>
+              </button>
+              <p className="mt-1 text-[10px] text-stone-500 font-medium">
+                Dummy ID: <span className="font-bold text-stone-800">AV0001</span> | Password: <span className="font-bold text-stone-800">123456</span>
+              </p>
             </div>
           </form>
 
